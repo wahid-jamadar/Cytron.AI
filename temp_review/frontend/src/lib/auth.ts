@@ -1,0 +1,3 @@
+[
+  "import jwtDecode from 'jwt-decode';\n\nconst authenticate = (token: string) => {\n  localStorage.setItem('token', token);\n};\n\nconst logout = () => {\n  localStorage.removeItem('token');\n};\n\nconst getToken = () => {\n  return localStorage.getItem('token');\n};\n\nconst getDecodedToken = () => {\n  const token = getToken();\n  if (token) {\n    return jwtDecode(token);\n  }\n  return null;\n};\n\nexport { authenticate, logout, getToken, getDecodedToken };"
+]

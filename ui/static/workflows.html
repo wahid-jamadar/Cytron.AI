@@ -1,0 +1,423 @@
+{% extends "base.html" %}
+
+{% block title %}Agent Workflows - Cytron.AI{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ── Workflow List Container ───────────────────────── */
+  .runs-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .run-workflow-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: all var(--transition-fast);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  }
+
+  .run-workflow-card:hover {
+    border-color: var(--border-glow);
+    box-shadow: 0 4px 12px rgba(23, 23, 28, 0.03);
+  }
+
+  .run-header-summary {
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+    background: var(--surface);
+    transition: background var(--transition-fast);
+  }
+  .run-header-summary:hover {
+    background: var(--surface-2);
+  }
+
+  .run-info-group {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .project-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-sm);
+    background: var(--accent-glow);
+    border: 1.5px solid var(--border-glow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent);
+    font-size: 1.2rem;
+  }
+
+  .project-details {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .project-name {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .run-metadata {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .run-metadata strong {
+    font-family: var(--mono);
+    color: var(--text);
+  }
+
+  .expand-indicator {
+    color: var(--text-dim);
+    font-size: 1.1rem;
+    transition: transform var(--transition-fast);
+  }
+
+  .run-workflow-card.expanded .expand-indicator {
+    transform: rotate(180deg);
+    color: var(--text);
+  }
+
+  .run-workflow-details {
+    padding: 1.75rem 1.5rem;
+    background: var(--surface-2);
+    border-top: 1px solid var(--border);
+    display: none;
+  }
+
+  .run-workflow-card.expanded .run-workflow-details {
+    display: block;
+  }
+
+  /* ── Pipeline Visualization ─────────────────────────── */
+  .pipeline-flow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 0.25rem;
+    margin-top: 0.5rem;
+  }
+
+  .pipeline-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 105px;
+    position: relative;
+    padding: 8px;
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    transition: all var(--transition-fast);
+  }
+
+  .pipeline-node:hover {
+    border-color: var(--border-glow);
+    box-shadow: 0 4px 10px rgba(23, 23, 28, 0.02);
+  }
+
+  .node-indicator {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--surface-3);
+    border: 1.5px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    transition: all var(--transition-normal);
+  }
+
+  .node-name {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+
+  /* Connector Line */
+  .pipeline-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    width: 22px;
+  }
+
+  /* State classes for pipeline nodes */
+  .node-pending .node-indicator {
+    background: var(--surface-2);
+    border-color: var(--border);
+    color: var(--text-dim);
+  }
+
+  .node-running .node-indicator {
+    background: rgba(158, 197, 255, 0.15);
+    border-color: var(--info);
+    color: var(--info);
+    animation: pulse-node 1.5s ease-in-out infinite alternate;
+  }
+  .node-running .node-name {
+    color: var(--info);
+    font-weight: 800;
+  }
+
+  .node-completed .node-indicator {
+    background: rgba(169, 230, 195, 0.15);
+    border-color: var(--success);
+    color: var(--success);
+  }
+  .node-completed .node-name {
+    color: var(--text);
+  }
+
+  .node-failed .node-indicator {
+    background: rgba(244, 182, 168, 0.15);
+    border-color: var(--error);
+    color: var(--error);
+  }
+  .node-failed .node-name {
+    color: var(--error);
+  }
+
+  @keyframes pulse-node {
+    0% { box-shadow: 0 0 4px rgba(59, 130, 246, 0.15); border-color: rgba(59, 130, 246, 0.5); }
+    100% { box-shadow: 0 0 12px rgba(59, 130, 246, 0.4); border-color: var(--info); }
+  }
+
+  .no-runs-message {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    color: var(--text-muted);
+    font-size: 0.88rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="header-section" style="margin-bottom: 2rem;">
+  <div class="header-title">
+    <h1 style="font-size: 1.8rem; font-weight: 800; color: var(--text); margin-bottom: 0.25rem;">Agent Workflows</h1>
+    <p style="color: var(--text-muted); font-size: 0.88rem;">Observe the live structural progress of active and historical multi-agent runs</p>
+  </div>
+</div>
+
+<!-- Active and Historical Workflows List -->
+<div class="runs-container" id="workflows-list-container">
+  <div class="no-runs-message">
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+      <i class="ti ti-loader ti-spin" style="font-size: 1.5rem; color: var(--accent);"></i>
+      <span>Loading live workflow runs...</span>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Sequence of stages mapped to keys
+  const stageSequence = [
+    { key: "project_planner", name: "Planner", icon: "ti-map" },
+    { key: "requirement_analyzer", name: "Analyzer", icon: "ti-clipboard-list" },
+    { key: "database_agent", name: "Database", icon: "ti-database" },
+    { key: "backend_agent", name: "Backend", icon: "ti-server" },
+    { key: "frontend_agent", name: "Frontend", icon: "ti-layout" },
+    { key: "testing_agent", name: "Testing", icon: "ti-flask" },
+    { key: "code_review_agent", name: "Review", icon: "ti-search" },
+    { key: "bug_fixing_agent", name: "Fixing", icon: "ti-tool" },
+    { key: "deployment_agent", name: "Deploy", icon: "ti-cloud-upload" },
+    { key: "documentation_agent", name: "Docs", icon: "ti-book" }
+  ];
+
+  function getHeaders(extraHeaders = {}) {
+    const headers = { ...extraHeaders };
+    const token = localStorage.getItem('eto_access');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    return headers;
+  }
+
+  async function fetchWorkflows() {
+    try {
+      const response = await fetch('/api/hub/workflows', {
+        headers: getHeaders()
+      });
+      if (!response.ok) throw new Error("Failed to fetch workflows data");
+      const runs = await response.json();
+
+      renderWorkflows(runs);
+    } catch (err) {
+      console.error(err);
+      document.getElementById('workflows-list-container').innerHTML = `
+        <div class="no-runs-message" style="border-color: rgba(239,68,68,0.15); color: var(--error); background: rgba(239,68,68,0.02);">
+          <i class="ti ti-alert-triangle" style="font-size: 1.5rem; margin-bottom: 0.5rem; display: block; color: var(--error);"></i>
+          Error synchronizing workflows: ${err.message}
+        </div>
+      `;
+    }
+  }
+
+  function toggleCard(cardId) {
+    const card = document.getElementById(cardId);
+    card.classList.toggle('expanded');
+  }
+
+  function renderWorkflows(runs) {
+    const container = document.getElementById('workflows-list-container');
+    if (runs.length === 0) {
+      container.innerHTML = `
+        <div class="no-runs-message">
+          <i class="ti ti-git-branch" style="font-size: 1.5rem; margin-bottom: 0.5rem; display: block; color: var(--text-dim);"></i>
+          No workflow runs found. Initiate a project creation to monitor the agent pipeline graph.
+        </div>
+      `;
+      return;
+    }
+
+    // Capture expanded states of current cards to preserve them on reload
+    const expandedIds = Array.from(document.querySelectorAll('.run-workflow-card.expanded')).map(el => el.id);
+
+    container.innerHTML = '';
+    runs.forEach((run, index) => {
+      const cardId = `run-card-${run.id}`;
+      const isExpanded = expandedIds.includes(cardId) || (index === 0 && expandedIds.length === 0);
+      
+      const card = document.createElement('div');
+      card.className = `run-workflow-card ${isExpanded ? 'expanded' : ''}`;
+      card.id = cardId;
+
+      const durationStr = getDurationString(run.created_at, run.completed_at);
+      const timeStr = run.created_at ? new Date(run.created_at).toLocaleString() : 'N/A';
+
+      // Build workflow nodes HTML
+      let nodesHtml = '';
+      stageSequence.forEach((stage, sIdx) => {
+        // Find matching task for this run
+        const task = run.tasks.find(t => t.agent_name.toLowerCase().replace(/\s/g, '_') === stage.key || t.agent_name.toLowerCase() === stage.key.replace(/_/g, ' '));
+        
+        let nodeStatus = 'pending';
+        let statusIcon = `ti ${stage.icon}`;
+
+        if (task) {
+          if (task.status === 'completed') {
+            nodeStatus = 'completed';
+            statusIcon = 'ti ti-circle-check';
+          } else if (task.status === 'failed') {
+            nodeStatus = 'failed';
+            statusIcon = 'ti ti-circle-x';
+          } else if (task.status === 'running' || task.status === 'initializing') {
+            nodeStatus = 'running';
+            statusIcon = 'ti ti-loader ti-spin';
+          }
+        }
+
+        nodesHtml += `
+          <div class="pipeline-node node-${nodeStatus}">
+            <div class="node-indicator">
+              <i class="${statusIcon}"></i>
+            </div>
+            <span class="node-name">${stage.name}</span>
+          </div>
+        `;
+
+        if (sIdx < stageSequence.length - 1) {
+          nodesHtml += `
+            <div class="pipeline-arrow">
+              <i class="ti ti-chevron-right"></i>
+            </div>
+          `;
+        }
+      });
+
+      // Status badge class mapper
+      let badgeClass = 'status-idle';
+      if (run.status === 'running') badgeClass = 'status-running';
+      else if (run.status === 'completed') badgeClass = 'status-completed';
+      else if (run.status === 'failed') badgeClass = 'status-failed';
+
+      card.innerHTML = `
+        <div class="run-header-summary" onclick="toggleCard('${cardId}')">
+          <div class="run-info-group">
+            <div class="project-icon">
+              <i class="ti ti-box"></i>
+            </div>
+            <div class="project-details">
+              <span class="project-name">${run.project_name}</span>
+              <div class="run-metadata">
+                <span>Run ID: <strong>#${run.id}</strong></span>
+                <span>•</span>
+                <span>Created: ${timeStr}</span>
+                <span>•</span>
+                <span>Duration: <strong>${durationStr}</strong></span>
+              </div>
+            </div>
+          </div>
+          <div class="run-info-group">
+            <span class="status-badge ${badgeClass}">${run.status}</span>
+            <i class="ti ti-chevron-down expand-indicator"></i>
+          </div>
+        </div>
+        
+        <div class="run-workflow-details">
+          <div style="font-size: 0.65rem; font-weight: 700; text-transform: uppercase; color: var(--text-dim); margin-bottom: 0.75rem; letter-spacing: 0.05em;">
+            Pipeline Stage Telemetry
+          </div>
+          <div class="pipeline-flow">
+            ${nodesHtml}
+          </div>
+        </div>
+      `;
+
+      container.appendChild(card);
+    });
+  }
+
+  function getDurationString(start, end) {
+    if (!start) return 'N/A';
+    const sTime = new Date(start).getTime();
+    const eTime = end ? new Date(end).getTime() : Date.now();
+    const diffMs = eTime - sTime;
+    
+    const minutes = Math.floor(diffMs / 60000);
+    const seconds = Math.floor((diffMs % 60000) / 1000);
+    
+    if (minutes > 0) {
+      return `${minutes}m ${seconds}s`;
+    }
+    return `${seconds}s`;
+  }
+
+  // Load and poll data
+  fetchWorkflows();
+  setInterval(fetchWorkflows, 3000);
+</script>
+{% endblock %}

@@ -1,0 +1,353 @@
+{% extends "base.html" %}
+
+{% block title %}AI Agents Telemetry - Cytron.AI{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ── Metric Cards Grid ────────────────────────────── */
+  .metrics-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+  }
+
+  .metric-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  }
+
+  .metric-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+  }
+
+  .metric-val {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--text);
+    font-family: var(--mono);
+    line-height: 1.1;
+  }
+
+  .metric-desc {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+  }
+
+  /* ── Agent Node Grid ──────────────────────────────── */
+  .agents-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .agent-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    transition: all var(--transition-fast);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    position: relative;
+  }
+
+  .agent-card:hover {
+    border-color: var(--border-glow);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(23, 23, 28, 0.03);
+  }
+
+  .agent-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .agent-name {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .agent-metrics-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    font-size: 0.8rem;
+  }
+
+  .metric-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .metric-item span:first-child {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--text-dim);
+    letter-spacing: 0.02em;
+  }
+
+  .metric-item span:last-child {
+    color: var(--text);
+    font-weight: 700;
+    font-family: var(--mono);
+    font-size: 0.85rem;
+  }
+
+  .bar-container {
+    width: 100%;
+    height: 4px;
+    background: var(--surface-3);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 4px;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .fill-purple { background: var(--accent); }
+  .fill-blue { background: var(--accent-2); }
+
+  .agent-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid var(--border);
+    padding-top: 0.85rem;
+  }
+
+  .stage-info {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .stage-info i {
+    font-size: 0.9rem;
+    color: var(--accent);
+  }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="header-section" style="margin-bottom: 2rem;">
+  <div class="header-title">
+    <h1 style="font-size: 1.8rem; font-weight: 800; color: var(--text); margin-bottom: 0.25rem;">AI Agent Observatory</h1>
+    <p style="color: var(--text-muted); font-size: 0.88rem;">Real-time performance metrics and process controller for the multi-agent fleet</p>
+  </div>
+</div>
+
+<!-- Metrics Overview -->
+<div class="metrics-summary">
+  <div class="metric-card">
+    <span class="metric-label">Active Agents</span>
+    <span class="metric-val" id="active-agents-count">0 / 11</span>
+    <span class="metric-desc">Executing background tasks</span>
+  </div>
+  <div class="metric-card">
+    <span class="metric-label">System CPU Usage</span>
+    <span class="metric-val" id="avg-cpu-load">0.0%</span>
+    <span class="metric-desc">Average across active agents</span>
+  </div>
+  <div class="metric-card">
+    <span class="metric-label">Memory Usage</span>
+    <span class="metric-val" id="avg-mem-load">0.0%</span>
+    <span class="metric-desc">Average fleet memory footprint</span>
+  </div>
+  <div class="metric-card">
+    <span class="metric-label">Total Executions</span>
+    <span class="metric-val" id="total-runs">0</span>
+    <span class="metric-desc">Lifetime tasks completed</span>
+  </div>
+</div>
+
+<!-- Agent Node Grid -->
+<div class="agents-grid" id="agents-grid-container">
+  <!-- Sourced dynamically via API -->
+</div>
+
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Complete list of system agents to maintain status cards
+  const systemAgents = [
+    { key: "project_planner", name: "Project Planner" },
+    { key: "requirement_analyzer", name: "Requirement Analyzer" },
+    { key: "database_agent", name: "Database Agent" },
+    { key: "backend_agent", name: "Backend Agent" },
+    { key: "frontend_agent", name: "Frontend Agent" },
+    { key: "testing_agent", name: "Testing Agent" },
+    { key: "code_review_agent", name: "Code Review Agent" },
+    { key: "bug_fixing_agent", name: "Bug Fixing Agent" },
+    { key: "deployment_agent", name: "Deployment Agent" },
+    { key: "documentation_agent", name: "Documentation Agent" }
+  ];
+
+  function getHeaders(extraHeaders = {}) {
+    const headers = { ...extraHeaders };
+    const token = localStorage.getItem('eto_access');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    return headers;
+  }
+
+  async function restartAgent(taskId, agentName) {
+    if (!taskId) return;
+    try {
+      const response = await fetch(`/api/hub/agents/${taskId}/restart`, {
+        method: 'POST',
+        headers: getHeaders({ 'Content-Type': 'application/json' })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        showToast(`Successfully requested restart for ${agentName}`);
+        fetchTelemetry();
+      } else {
+        showToast(`Failed: ${data.detail || 'Unknown error'}`);
+      }
+    } catch (err) {
+      showToast(`Error: ${err.message}`);
+    }
+  }
+
+  async function fetchTelemetry() {
+    try {
+      const response = await fetch('/api/hub/agents', {
+        headers: getHeaders()
+      });
+      if (!response.ok) throw new Error("Failed to fetch agent telemetry");
+      const tasks = await response.json();
+
+      updateOverview(tasks);
+      renderAgentCards(tasks);
+
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  function updateOverview(tasks) {
+    // 1. Active agents
+    const activeTasks = tasks.filter(t => t.status === 'running' || t.status === 'initializing' || t.status === 'waiting');
+    document.getElementById('active-agents-count').innerText = `${activeTasks.length} / 11`;
+
+    // 2. Average CPU and Mem
+    if (activeTasks.length > 0) {
+      const avgCpu = activeTasks.reduce((acc, t) => acc + (t.cpu_usage || 0), 0) / activeTasks.length;
+      const avgMem = activeTasks.reduce((acc, t) => acc + (t.memory_usage || 0), 0) / activeTasks.length;
+      document.getElementById('avg-cpu-load').innerText = `${avgCpu.toFixed(1)}%`;
+      document.getElementById('avg-mem-load').innerText = `${avgMem.toFixed(1)}%`;
+    } else {
+      document.getElementById('avg-cpu-load').innerText = '0.0%';
+      document.getElementById('avg-mem-load').innerText = '0.0%';
+    }
+
+    // 3. Total executions
+    document.getElementById('total-runs').innerText = tasks.length;
+  }
+
+  function renderAgentCards(tasks) {
+    const container = document.getElementById('agents-grid-container');
+    container.innerHTML = '';
+
+    systemAgents.forEach(agent => {
+      // Find the latest task matching this agent
+      const latestTask = tasks.find(t => t.agent_name.toLowerCase().replace(/\s/g, '_') === agent.key || t.agent_name.toLowerCase() === agent.key.replace(/_/g, ' '));
+      
+      const status = latestTask ? latestTask.status : 'idle';
+      const cpu = latestTask ? latestTask.cpu_usage : 0;
+      const mem = latestTask ? latestTask.memory_usage : 0;
+      const duration = latestTask ? latestTask.execution_duration_ms : 0;
+      const stage = latestTask ? latestTask.output_stage : 'Awaiting prompt';
+      const progress = latestTask ? latestTask.progress_pct : 0;
+      const taskId = latestTask ? latestTask.id : null;
+
+      // Status badge class mapper
+      let badgeClass = 'status-idle';
+      if (status === 'running' || status === 'initializing') badgeClass = 'status-running';
+      else if (status === 'completed') badgeClass = 'status-completed';
+      else if (status === 'failed') badgeClass = 'status-failed';
+
+      const card = document.createElement('div');
+      card.className = 'agent-card';
+      card.innerHTML = `
+        <div class="agent-header">
+          <span class="agent-name">${agent.name}</span>
+          <span class="status-badge ${badgeClass}">${status}</span>
+        </div>
+        
+        <div class="agent-metrics-row">
+          <div class="metric-item">
+            <span>CPU Load</span>
+            <span>${cpu.toFixed(1)}%</span>
+            <div class="bar-container">
+              <div class="bar-fill fill-purple" style="width: ${Math.min(100, cpu)}%"></div>
+            </div>
+          </div>
+          <div class="metric-item">
+            <span>Memory Load</span>
+            <span>${mem.toFixed(1)}%</span>
+            <div class="bar-container">
+              <div class="bar-fill fill-blue" style="width: ${Math.min(100, mem)}%"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="agent-metrics-row">
+          <div class="metric-item">
+            <span>Execution Time</span>
+            <span>${duration ? (duration / 1000).toFixed(1) + 's' : '0.0s'}</span>
+          </div>
+          <div class="metric-item">
+            <span>Progress</span>
+            <span>${progress ? progress.toFixed(0) + '%' : '0%'}</span>
+          </div>
+        </div>
+
+        <div class="agent-footer">
+          <div class="stage-info">
+            <i class="ti ti-terminal-2"></i>
+            <span style="max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--mono); font-size: 0.68rem;">${stage || 'No logs yet'}</span>
+          </div>
+          <button class="btn btn-secondary" onclick="restartAgent(${taskId}, '${agent.name}')" ${!taskId ? 'disabled' : ''} style="font-size: 0.72rem; padding: 4px 8px; border-radius: var(--radius-sm);">
+            <i class="ti ti-rotate" style="font-size: 0.75rem;"></i> Restart
+          </button>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+
+
+  // Poll telemetry endpoint every 3 seconds
+  fetchTelemetry();
+  setInterval(fetchTelemetry, 3000);
+</script>
+{% endblock %}

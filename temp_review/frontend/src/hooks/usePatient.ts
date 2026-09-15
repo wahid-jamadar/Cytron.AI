@@ -1,0 +1,3 @@
+[
+  "import { useState, useEffect } from 'react';\nimport api from '../lib/api';\n\nconst usePatient = () => {\n  const [patient, setPatient] = useState({});\n  const [loading, setLoading] = useState(false);\n  const [error, setError] = useState(null);\n\n  const fetchPatient = async () => {\n    setLoading(true);\n    try {\n      const response = await api.get('/api/v1/patient/medical-record');\n      setPatient(response.data);\n    } catch (error) {\n      setError(error);\n    } finally {\n      setLoading(false);\n    }\n  };\n\n  return { patient, loading, error, fetchPatient };\n};\n\nexport default usePatient;"
+]

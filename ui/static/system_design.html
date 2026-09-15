@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+
+{% block title %}System Design Generator - Cytron.AI{% endblock %}
+
+{% block content %}
+<div style="text-align: center; margin-bottom: 2rem;">
+  <div class="logo-badge" style="display: inline-flex; align-items: center; gap: 8px; background: rgba(124,58,237,0.15); border: 1px solid var(--border-glow); border-radius: 100px; padding: 6px 16px; font-size: 0.75rem; color: var(--accent-2); font-weight: 600; text-transform: uppercase; margin-bottom: 1rem;"><i class="ti ti-sitemap"></i> System Design Generator</div>
+  <h1 style="font-size: 2.5rem; margin-bottom: 1rem;">System Design Generator</h1>
+  <p style="color: var(--text-muted);">Produce architecture diagrams, APIs, and infrastructure recommendations.</p>
+</div>
+
+<div class="input-card" style="padding: 2rem;">
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;">
+    <div>
+      <label class="input-label" style="color: var(--accent-2);"><i class="ti ti-sitemap"></i> Architecture</label>
+      <select id="sd-arch" style="width: 100%; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none; color: var(--text); font-family: var(--font); font-size: 0.95rem; padding: 0.75rem; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        <option value="Microservices">Microservices</option>
+        <option value="Monolithic">Monolithic</option>
+        <option value="Event-Driven">Event-Driven</option>
+        <option value="Serverless">Serverless</option>
+      </select>
+    </div>
+    <div>
+      <label class="input-label" style="color: var(--success);"><i class="ti ti-activity"></i> Traffic Estimate</label>
+      <select id="sd-traffic" style="width: 100%; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none; color: var(--text); font-family: var(--font); font-size: 0.95rem; padding: 0.75rem; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        <option value="Low (< 100 req/s)">Low (&lt; 100 req/s)</option>
+        <option value="Medium (100 - 1000 req/s)">Medium (100 - 1000 req/s)</option>
+        <option value="High (1000 - 10000 req/s)">High (1000 - 10000 req/s)</option>
+        <option value="Massive (> 10000 req/s)">Massive (&gt; 10000 req/s)</option>
+      </select>
+    </div>
+    <div>
+      <label class="input-label" style="color: var(--warning);"><i class="ti ti-cloud"></i> Infrastructure</label>
+      <select id="sd-infra" style="width: 100%; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none; color: var(--text); font-family: var(--font); font-size: 0.95rem; padding: 0.75rem; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        <option value="AWS">AWS</option>
+        <option value="Google Cloud Platform">GCP</option>
+        <option value="Microsoft Azure">Azure</option>
+        <option value="On-Premise">On-Premise / Bare Metal</option>
+        <option value="Cloud Agnostic (Kubernetes)">Cloud Agnostic (Kubernetes)</option>
+      </select>
+    </div>
+  </div>
+  
+  <div style="margin-bottom: 1.5rem;">
+    <label class="input-label" style="color: var(--info);"><i class="ti ti-chart-arrows"></i> Scalability & Availability Priorities</label>
+    <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" id="sd-opt-ha" checked style="accent-color: var(--accent);"> <span style="font-size: 0.9rem; color: var(--text);">High Availability (Multi-AZ)</span>
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" id="sd-opt-cache" checked style="accent-color: var(--accent);"> <span style="font-size: 0.9rem; color: var(--text);">Caching Strategy (Redis/Memcached)</span>
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" id="sd-opt-cdn" style="accent-color: var(--accent);"> <span style="font-size: 0.9rem; color: var(--text);">Global CDN</span>
+      </label>
+    </div>
+  </div>
+
+  <div>
+    <label class="input-label"><i class="ti ti-pencil"></i> System Requirements & Use Cases</label>
+    <textarea id="sd-requirements" placeholder="Describe the core system use cases, data flow, and specific integration points..." style="width: 100%; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none; resize: vertical; color: var(--text); font-family: var(--font); font-size: 0.95rem; line-height: 1.6; min-height: 120px; padding: 1rem; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+  </div>
+</div>
+
+<button class="run-btn" onclick="runService()">
+  <i class="ti ti-sparkles"></i> Run System Design Generator
+</button>
+
+<div class="result-card" id="result-card" style="display: none; background: var(--surface); border: 1px solid var(--success); border-radius: var(--radius); padding: 1.75rem;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+    <div class="result-title" style="font-size: 1.1rem; font-weight: 700; color: var(--success); display: flex; align-items: center; gap: 8px;"><i class="ti ti-circle-check"></i> Result</div>
+    <button id="copy-btn" onclick="copyResult()" style="display: none; background: var(--surface-3); border: 1px solid var(--border); color: var(--text); padding: 6px 12px; border-radius: var(--radius-sm); cursor: pointer; align-items: center; gap: 5px; font-family: var(--font); font-size: 0.85rem; transition: background 0.2s;"><i class="ti ti-copy"></i> Copy</button>
+  </div>
+  <div class="result-grid" id="result-grid"></div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .markdown-body {
+    font-family: var(--font);
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: var(--text);
+  }
+  .markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4 {
+    color: #ffffff;
+    margin-top: 1.5em;
+    margin-bottom: 0.75em;
+    font-weight: 600;
+  }
+  .markdown-body h1 { font-size: 1.8rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5em; }
+  .markdown-body h2 { font-size: 1.5rem; }
+  .markdown-body h3 { font-size: 1.25rem; }
+  .markdown-body p { margin-bottom: 1em; }
+  .markdown-body ul, .markdown-body ol { margin-bottom: 1em; padding-left: 2em; }
+  .markdown-body li { margin-bottom: 0.25em; }
+  .markdown-body pre {
+    background: #0d1117;
+    padding: 1em;
+    border-radius: var(--radius-sm);
+    overflow-x: auto;
+    margin-bottom: 1em;
+    border: 1px solid var(--border);
+  }
+  .markdown-body code {
+    font-family: var(--mono);
+    font-size: 0.85em;
+    background: rgba(255,255,255,0.1);
+    padding: 0.2em 0.4em;
+    border-radius: 3px;
+  }
+  .markdown-body pre code {
+    background: transparent;
+    padding: 0;
+  }
+  .markdown-body blockquote {
+    border-left: 4px solid var(--accent);
+    padding-left: 1em;
+    color: var(--text-muted);
+    margin: 1em 0;
+    background: rgba(124,58,237,0.05);
+    padding: 0.5em 1em;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  }
+  .markdown-body table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1em;
+  }
+  .markdown-body th, .markdown-body td {
+    border: 1px solid var(--border);
+    padding: 8px 12px;
+    text-align: left;
+  }
+  .markdown-body th { background: var(--surface-3); font-weight: 600; }
+  .markdown-body a { color: var(--info); text-decoration: none; }
+  .markdown-body a:hover { text-decoration: underline; }
+  .markdown-body .language-mermaid {
+    background: var(--surface);
+    display: flex;
+    justify-content: center;
+    padding: 1rem;
+    border-radius: var(--radius-sm);
+  }
+</style>
+{% endblock %}
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>
+  if (window.mermaid) {
+    mermaid.initialize({ startOnLoad: false, theme: 'dark' });
+  }
+
+  function copyResult() {
+    const content = document.querySelector('.markdown-body').innerText;
+    navigator.clipboard.writeText(content).then(() => {
+      const btn = document.getElementById('copy-btn');
+      const original = btn.innerHTML;
+      btn.innerHTML = '<i class="ti ti-check"></i> Copied!';
+      btn.style.color = 'var(--success)';
+      setTimeout(() => {
+        btn.innerHTML = original;
+        btn.style.color = 'var(--text)';
+      }, 2000);
+    });
+  }
+
+  function runService() {
+    const btn = document.querySelector('.run-btn');
+    const originalBtnText = btn.innerHTML;
+    
+    const arch = document.getElementById('sd-arch').value;
+    const traffic = document.getElementById('sd-traffic').value;
+    const infra = document.getElementById('sd-infra').value;
+    const optHa = document.getElementById('sd-opt-ha').checked;
+    const optCache = document.getElementById('sd-opt-cache').checked;
+    const optCdn = document.getElementById('sd-opt-cdn').checked;
+    const reqs = document.getElementById('sd-requirements').value;
+    
+    const consolidatedInput = `Architecture: ${arch}\nTraffic: ${traffic}\nInfrastructure: ${infra}\nHigh Availability: ${optHa}\nCaching: ${optCache}\nCDN: ${optCdn}\n\nRequirements:\n${reqs}`;
+    
+    if (typeof startProcessingProgress === 'function') {
+      startProcessingProgress([
+        "Analyzing system constraints...",
+        "Designing network topology...",
+        "Selecting optimal infrastructure...",
+        "Planning data storage solutions...",
+        "Evaluating scalability bottlenecks...",
+        "Drafting system architecture document..."
+      ]);
+    } else {
+      btn.innerHTML = '<i class="ti ti-loader ti-spin"></i> Processing...';
+    }
+    btn.disabled = true;
+    document.getElementById('copy-btn').style.display = 'none';
+    
+    // Real processing via API
+    fetch('/system-design/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ requirements: consolidatedInput })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (typeof stopProcessingProgress === 'function') stopProcessingProgress();
+      btn.innerHTML = originalBtnText;
+      btn.disabled = false;
+      document.getElementById('result-card').style.display = 'block';
+      let outputHTML = '';
+      if (data.status === 'success') {
+        const rawMarkdown = data.output;
+        let htmlContent = marked.parse(rawMarkdown);
+        let purifiedHtml = DOMPurify.sanitize(htmlContent);
+        outputHTML = `<div class="markdown-body">${purifiedHtml}</div>`;
+        document.getElementById('copy-btn').style.display = 'flex';
+      } else {
+        outputHTML = `<div style="color: var(--error);">${data.error}</div>`;
+      }
+      document.getElementById('result-grid').innerHTML = outputHTML;
+      
+      // Render mermaid diagrams
+      if (window.mermaid) {
+        document.querySelectorAll('.language-mermaid').forEach((el, index) => {
+          const graphDefinition = el.textContent;
+          const id = `mermaid-graph-${index}`;
+          mermaid.render(id, graphDefinition).then((result) => {
+            el.parentNode.outerHTML = `<div class="language-mermaid">${result.svg}</div>`;
+          }).catch(err => {
+            console.error('Mermaid render error:', err);
+          });
+        });
+      }
+    })
+    .catch(err => {
+      if (typeof stopProcessingProgress === 'function') stopProcessingProgress();
+      btn.innerHTML = originalBtnText;
+      btn.disabled = false;
+      document.getElementById('result-card').style.display = 'block';
+      document.getElementById('result-grid').innerHTML = `<div style="color: var(--error);">Error generating system design.</div>`;
+    });
+  }
+</script>
+{% endblock %}

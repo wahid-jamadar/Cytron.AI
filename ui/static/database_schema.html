@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Database Schema Creation - Cytron.AI{% endblock %}
+
+{% block content %}
+<div style="text-align: center; margin-bottom: 2rem;">
+  <div class="logo-badge" style="display: inline-flex; align-items: center; gap: 8px; background: rgba(124,58,237,0.15); border: 1px solid var(--border-glow); border-radius: 100px; padding: 6px 16px; font-size: 0.75rem; color: var(--accent-2); font-weight: 600; text-transform: uppercase; margin-bottom: 1rem;"><i class="ti ti-database"></i> Database Schema Creation</div>
+  <h1 style="font-size: 2.5rem; margin-bottom: 1rem;">Database Schema Creation</h1>
+  <p style="color: var(--text-muted);">Generate ER diagrams, SQL scripts, and normalization suggestions.</p>
+</div>
+
+<div class="input-card" style="padding: 2rem;">
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;">
+    <div>
+      <label class="input-label" style="color: var(--accent-2);"><i class="ti ti-server"></i> Database Engine</label>
+      <select id="ds-engine" style="width: 100%; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none; color: var(--text); font-family: var(--font); font-size: 0.95rem; padding: 0.75rem; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        <option value="PostgreSQL">PostgreSQL</option>
+        <option value="MySQL">MySQL</option>
+        <option value="SQLite">SQLite</option>
+        <option value="SQL Server">Microsoft SQL Server</option>
+        <option value="Oracle">Oracle</option>
+      </select>
+    </div>
+    <div>
+      <label class="input-label" style="color: var(--warning);"><i class="ti ti-database"></i> ORM / Framework</label>
+      <select id="ds-orm" style="width: 100%; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none; color: var(--text); font-family: var(--font); font-size: 0.95rem; padding: 0.75rem; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        <option value="SQL (Raw)">Raw SQL DDL</option>
+        <option value="SQLAlchemy (Python)">SQLAlchemy (Python)</option>
+        <option value="Prisma (Node.js)">Prisma (Node.js)</option>
+        <option value="Hibernate (Java)">Hibernate (Java)</option>
+        <option value="GORM (Go)">GORM (Go)</option>
+      </select>
+    </div>
+  </div>
+  
+  <div>
+    <label class="input-label" style="color: var(--info);"><i class="ti ti-sitemap"></i> Entity & Relationship Definitions</label>
+    <div style="background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1rem; margin-bottom: 0.5rem;">
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;"><i class="ti ti-bulb" style="color: var(--warning);"></i> <strong>Tip:</strong> Describe your entities and how they relate (e.g., "A User has many Posts. A Post belongs to a User. A Post has many Comments...").</p>
+    </div>
+    <textarea id="ds-entities" placeholder="Users: id, username, email, password_hash, created_at&#10;Posts: id, user_id, title, content, published_at&#10;Relationships: User 1:N Posts..." style="width: 100%; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none; resize: vertical; color: var(--text); font-family: var(--mono); font-size: 0.9rem; line-height: 1.6; min-height: 200px; padding: 1rem; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+  </div>
+</div>
+
+<button class="run-btn" onclick="runService()">
+  <i class="ti ti-sparkles"></i> Run Database Schema Creation
+</button>
+
+<div class="result-card" id="result-card" style="display: none; background: var(--surface); border: 1px solid var(--success); border-radius: var(--radius); padding: 1.75rem;">
+  <div class="result-title" style="font-size: 1.1rem; font-weight: 700; color: var(--success); margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px;"><i class="ti ti-circle-check"></i> Result</div>
+  <div class="result-grid" id="result-grid"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function runService() {
+    const btn = document.querySelector('.run-btn');
+    const originalBtnText = btn.innerHTML;
+    
+    const engine = document.getElementById('ds-engine').value;
+    const orm = document.getElementById('ds-orm').value;
+    const entities = document.getElementById('ds-entities').value;
+    
+    const consolidatedInput = `Engine: ${engine}\nORM: ${orm}\n\nEntities & Relationships:\n${entities}`;
+    
+    if (typeof startProcessingProgress === 'function') {
+      startProcessingProgress([
+        "Analyzing data entities...",
+        "Identifying relationships...",
+        "Normalizing database structure...",
+        "Applying database engine constraints...",
+        "Generating SQL/ORM models...",
+        "Finalizing schema diagram..."
+      ]);
+    } else {
+      btn.innerHTML = '<i class="ti ti-loader ti-spin"></i> Processing...';
+    }
+    btn.disabled = true;
+    
+    // Mock processing
+    setTimeout(() => {
+      if (typeof stopProcessingProgress === 'function') stopProcessingProgress();
+      btn.innerHTML = originalBtnText;
+      btn.disabled = false;
+      document.getElementById('result-card').style.display = 'block';
+      document.getElementById('result-grid').innerHTML = '<div style="padding: 10px 14px; background: var(--surface-2); border-radius: var(--radius-sm); border: 1px solid var(--border);">Database Schema generated successfully! (Backend integration pending)</div>';
+    }, 4500);
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Something Went Wrong — Cytron.AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          animation: {
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'float-slow': 'float 8s ease-in-out infinite',
+            'shake': 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both',
+          },
+          keyframes: {
+            float: {
+              '0%, 100%': { transform: 'translateY(0px) translateX(0px)' },
+              '50%': { transform: 'translateY(-10px) translateX(5px)' },
+            },
+            shake: {
+              '10%, 90%': { transform: 'translate3d(-1px, 0, 0)' },
+              '20%, 80%': { transform: 'translate3d(2px, 0, 0)' },
+              '30%, 50%, 70%': { transform: 'translate3d(-4px, 0, 0)' },
+              '40%, 60%': { transform: 'translate3d(4px, 0, 0)' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .bg-grid-pattern {
+        background-size: 30px 30px;
+        background-image: 
+          linear-gradient(to right, rgba(239, 68, 68, 0.03) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(239, 68, 68, 0.03) 1px, transparent 1px);
+      }
+      .dark .bg-grid-pattern {
+        background-image: 
+          linear-gradient(to right, rgba(255, 255, 255, 0.01) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(255, 255, 255, 0.01) 1px, transparent 1px);
+      }
+      .glassmorphism {
+        @apply bg-white/60 dark:bg-[#0f1117]/60 backdrop-blur-xl border border-slate-200/50 dark:border-white/5 shadow-xl dark:shadow-2xl;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 dark:bg-[#07080d] text-slate-800 dark:text-[#e8eaf0] min-h-screen font-sans transition-colors duration-300 overflow-x-hidden relative flex flex-col justify-between">
+
+  <!-- Background decorative gradients -->
+  <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+    <div class="absolute -top-[40%] -left-[20%] w-[80vw] h-[80vw] rounded-full bg-red-500/10 dark:bg-red-900/5 blur-[120px] animate-pulse-slow"></div>
+    <div class="absolute -bottom-[30%] -right-[10%] w-[60vw] h-[60vw] rounded-full bg-purple-500/5 dark:bg-purple-900/5 blur-[120px] animate-pulse-slow" style="animation-delay: 1.5s;"></div>
+    <div class="absolute inset-0 bg-grid-pattern opacity-100"></div>
+  </div>
+
+  <!-- Top Utilities Bar -->
+  <header class="relative z-10 flex items-center justify-between px-6 py-4 border-b border-slate-200/50 dark:border-white/5 bg-slate-50/50 dark:bg-[#07080d]/50 backdrop-blur-md">
+    <div class="flex items-center gap-2.5">
+      <img src="/static/Cytron.AI-Logo.png" alt="Cytron.AI" style="height: 28px; width: auto;" class="object-contain" />
+      <div>
+        <span class="text-xs block text-slate-400 dark:text-slate-500">Autonomous Orchestration v1.0</span>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <!-- Error Type Selector for Demo -->
+      <div class="flex items-center gap-1.5 px-3 py-1 rounded-lg border border-slate-200 dark:border-white/10 bg-white/40 dark:bg-white/5 text-xs text-slate-500 dark:text-slate-400">
+        <span>Error Type:</span>
+        <button onclick="setErrorType('server')" id="btn-server" class="px-1.5 py-0.5 rounded hover:bg-slate-200 dark:hover:bg-white/10 font-semibold text-red-500">Server</button>
+        <button onclick="setErrorType('permission')" id="btn-permission" class="px-1.5 py-0.5 rounded hover:bg-slate-200 dark:hover:bg-white/10 font-semibold">Permission</button>
+        <button onclick="setErrorType('exception')" id="btn-exception" class="px-1.5 py-0.5 rounded hover:bg-slate-200 dark:hover:bg-white/10 font-semibold">Exception</button>
+      </div>
+
+      <button onclick="toggleTheme()" class="flex items-center justify-center w-9 h-9 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 transition-all text-slate-600 dark:text-slate-400" title="Toggle Theme">
+        <i id="theme-icon" class="ti ti-sun text-lg dark:hidden"></i>
+        <i id="theme-icon-dark" class="ti ti-moon text-lg hidden dark:block"></i>
+      </button>
+      <a href="/hub" class="text-xs font-semibold px-3.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 transition-all text-slate-600 dark:text-slate-400 flex items-center gap-1">
+        <i class="ti ti-chevron-left"></i> Back to services
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="relative z-10 flex-1 flex flex-col items-center justify-center px-4 py-8 max-w-4xl mx-auto w-full">
+    
+    <div class="glassmorphism w-full rounded-2xl p-8 md:p-12 flex flex-col items-center text-center relative overflow-hidden transition-all duration-300">
+      
+      <!-- Large Premium Error Illustration -->
+      <div class="relative w-64 h-64 mb-6 flex items-center justify-center">
+        
+        <!-- Background Grid showing Broken Nodes -->
+        <svg class="absolute w-full h-full text-slate-200 dark:text-slate-800/40" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Disconnected Web Lines -->
+          <!-- Arch to Backend (Broken with gap and X symbol) -->
+          <path d="M100 45 L100 70 M100 85 L100 100" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="2 2" />
+          <circle cx="100" cy="77" r="4" fill="#ef4444" />
+          
+          <!-- Core to Database (Broken/Offline) -->
+          <path d="M143 75 L125 87 M112 95 L100 102" stroke="#64748b" stroke-width="1" stroke-dasharray="3 3" />
+          
+          <!-- Core to DevOps (Broken/Alert) -->
+          <path d="M100 150 L100 135 M100 120 L100 105" stroke="#ef4444" stroke-width="1.5" />
+          <path d="M96 128 L104 128" stroke="#ef4444" stroke-width="1.5" />
+        </svg>
+
+        <!-- Dynamic Illustration Container -->
+        <div class="relative z-10 flex items-center justify-center w-full h-full animate-shake">
+          
+          <!-- Central Alert Core -->
+          <div class="absolute w-22 h-22 rounded-full bg-red-500/10 dark:bg-red-500/5 border border-red-500/40 dark:border-red-500/20 flex items-center justify-center shadow-lg transition-all duration-300">
+            <div id="core-icon-container" class="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center text-red-500 shadow-inner animate-pulse-slow">
+              <i id="error-core-icon" class="ti ti-server-off text-3xl"></i>
+            </div>
+            <!-- Glow core behind -->
+            <div class="absolute -inset-2 rounded-full bg-red-500/15 blur-lg -z-10"></div>
+          </div>
+
+          <!-- Disconnected Agent (Top) -->
+          <div class="absolute top-[10%] left-1/2 -translate-x-1/2 flex flex-col items-center gap-1">
+            <div class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-[#161b26] border border-red-500/40 dark:border-red-500/30 flex items-center justify-center text-red-400 dark:text-red-500/70 shadow-md">
+              <i class="ti ti-cloud-computing text-lg"></i>
+            </div>
+          </div>
+
+          <!-- Broken Database (Right) -->
+          <div class="absolute top-[40%] right-[10%] flex flex-col items-center gap-1">
+            <div class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-[#161b26] border border-slate-300 dark:border-slate-800 flex items-center justify-center text-slate-400 dark:text-slate-600 shadow-md">
+              <i class="ti ti-database-off text-lg"></i>
+            </div>
+          </div>
+
+          <!-- Broken Testing (Left) -->
+          <div class="absolute top-[40%] left-[10%] flex flex-col items-center gap-1">
+            <div class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-[#161b26] border border-red-500/30 dark:border-red-500/20 flex items-center justify-center text-red-400 dark:text-red-500/50 shadow-md">
+              <i class="ti ti-flask-off text-lg"></i>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Title & Main Error Header -->
+      <h2 id="error-title" class="text-2xl md:text-3xl font-extrabold mb-3 tracking-tight text-slate-900 dark:text-white">
+        Something Went Wrong
+      </h2>
+      <p id="error-desc" class="text-sm md:text-base text-slate-500 dark:text-slate-400 max-w-lg mb-8 leading-relaxed">
+        The orchestrator failed during the server compilation stage. Verify your server connection status and try executing the pipeline again.
+      </p>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-3 w-full sm:w-auto relative z-20 mb-8">
+        <button onclick="retryPipeline()" class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-red-600 via-rose-600 to-purple-600 hover:from-red-500 hover:via-rose-500 hover:to-purple-500 text-white font-semibold text-sm shadow-md hover:shadow-red-500/25 transition-all duration-300 flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer">
+          <i class="ti ti-refresh text-base"></i> Retry Connection
+        </button>
+        <button onclick="reportIssue()" class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-white dark:bg-[#161b26] hover:bg-slate-100 dark:hover:bg-[#1e2537] border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 font-semibold text-sm transition-all duration-300 flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer">
+          <i class="ti ti-bug text-base text-slate-400"></i> Report Issue
+        </button>
+        <button onclick="location.href='empty.html'" class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-transparent hover:bg-slate-200/50 dark:hover:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 font-semibold text-sm transition-all duration-300 flex items-center justify-center gap-1 cursor-pointer">
+          Return Home
+        </button>
+      </div>
+
+      <!-- Expandable Technical Details (Collapsible Drawer) -->
+      <div class="w-full max-w-2xl border border-slate-200 dark:border-white/5 rounded-xl overflow-hidden bg-slate-100/50 dark:bg-[#07080d]/40">
+        <button onclick="toggleDetails()" class="w-full px-5 py-3.5 flex items-center justify-between font-semibold text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer select-none">
+          <span class="flex items-center gap-2"><i class="ti ti-terminal text-sm"></i> Technical Details / Diagnostic Logs</span>
+          <i id="details-arrow" class="ti ti-chevron-down text-sm transition-transform duration-300"></i>
+        </button>
+        <div id="details-drawer" class="max-h-0 transition-all duration-300 overflow-hidden text-left bg-slate-900 text-slate-300">
+          <pre id="error-logs" class="p-5 font-mono text-xs overflow-x-auto leading-relaxed max-h-72">
+// Cytron.AI Diagnostic Stack Trace
+[ERROR] 2026-07-28 21:54:12 - Connection aborted by host system
+[FATAL] Pipeline orchestrator exited with code 1
+Traceback (most recent call last):
+  File "orchestrator/runner.py", line 87, in run_stage
+    result = await stage.execute(context)
+  File "orchestrator/stages/server.py", line 42, in execute
+    raise ConnectionResetError("Could not handshake with upstream agent API service")
+ConnectionResetError: [Errno 10054] An existing connection was forcibly closed by the remote host
+          </pre>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="relative z-10 text-center py-8 text-xs text-slate-400 dark:text-slate-600 border-t border-slate-200/50 dark:border-white/5 bg-slate-50/50 dark:bg-[#07080d]/50 backdrop-blur-md">
+    <div class="max-w-4xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <span>Cytron.AI Platform — Design States Showcase</span>
+      <div class="flex gap-4">
+        <a href="/hub" class="hover:text-slate-600 dark:hover:text-slate-400 transition-colors">Hub</a>
+        <span>·</span>
+        <a href="/docs" target="_blank" class="hover:text-slate-600 dark:hover:text-slate-400 transition-colors">API Docs</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const errorsData = {
+      server: {
+        title: "Server Connection Failed",
+        desc: "The orchestrator could not communicate with the remote agent server. The system encountered a socket reset error while transferring project parameters.",
+        coreIcon: "ti-server-off",
+        badgeColor: "bg-red-500/20",
+        ctaText: "Retry Connection",
+        logs: `// Cytron.AI Diagnostic Stack Trace (Server Handshake)
+[ERROR] 2026-07-28 21:54:12 - Connection aborted by host system
+[FATAL] Pipeline orchestrator exited with code 1
+Traceback (most recent call last):
+  File "orchestrator/runner.py", line 87, in run_stage
+    result = await stage.execute(context)
+  File "orchestrator/stages/server.py", line 42, in execute
+    raise ConnectionResetError("Could not handshake with upstream agent API service")
+ConnectionResetError: [Errno 10054] An existing connection was forcibly closed by the remote host`
+      },
+      permission: {
+        title: "Write Permission Rejected",
+        desc: "Unable to write codebase elements to target repository folder. The system OAuth key lacks pull/push scope authorization on the specified path.",
+        coreIcon: "ti-shield-lock",
+        badgeColor: "bg-orange-500/20",
+        ctaText: "Re-authorize Git OAuth",
+        logs: `// Cytron.AI OAuth Scope Check
+[WARNING] 2026-07-28 21:55:04 - POST /repos/user/project/contents/src failed (403 Forbidden)
+[FATAL] RepositoryAgent write permission error
+Error: Scope 'write:repo' is missing or has expired.
+Traceback (most recent call last):
+  File "agents/repository_agent.py", line 124, in commit_files
+    raise PermissionError("GitHub Token lacks write authority on 'main' branch")
+PermissionError: Token lacks write authority on 'main' branch. Check developer credentials.`
+      },
+      exception: {
+        title: "Unexpected Code Crash",
+        desc: "An unhandled exception occurred in the Database Schema Agent while resolving structural relationships. The schema definition contains invalid circular dependencies.",
+        coreIcon: "ti-bug-off",
+        badgeColor: "bg-purple-500/20",
+        ctaText: "Force Re-Compile",
+        logs: `// Cytron.AI DB Engine Unhandled Thread Exception
+[FATAL] 2026-07-28 21:55:58 - Database normalization failed
+TypeError: Cannot read properties of undefined (reading 'schema_relations')
+  at DatabaseAgent.resolveRelations (agents/db_agent.js:54:33)
+  at DatabaseAgent.generateERDiagram (agents/db_agent.js:189:22)
+  at async Pipeline.run (core/pipeline.js:105:12)
+[CRITICAL] Core execution thread has been cancelled due to javascript heap memory abort.`
+      }
+    };
+
+    let activeError = "server";
+
+    function setErrorType(type) {
+      activeError = type;
+      
+      // Update buttons style in header selector
+      document.querySelectorAll('[id^="btn-"]').forEach(btn => {
+        btn.classList.remove('text-red-500', 'text-orange-500', 'text-purple-500');
+      });
+      const currentBtn = document.getElementById(`btn-${type}`);
+      if (type === 'server') currentBtn.classList.add('text-red-500');
+      if (type === 'permission') currentBtn.classList.add('text-orange-500');
+      if (type === 'exception') currentBtn.classList.add('text-purple-500');
+
+      // Update contents
+      const data = errorsData[type];
+      document.getElementById('error-title').textContent = data.title;
+      document.getElementById('error-desc').textContent = data.desc;
+      document.getElementById('error-logs').textContent = data.logs;
+      document.getElementById('error-core-icon').className = `ti ${data.coreIcon} text-3xl`;
+
+      // Update CTA text
+      const ctaBtn = document.querySelector('.bg-gradient-to-r');
+      ctaBtn.innerHTML = `<i class="ti ti-refresh text-base animate-spin"></i> ${data.ctaText}`;
+      
+      // Remove spin on load
+      setTimeout(() => {
+        ctaBtn.innerHTML = `<i class="ti ti-refresh text-base"></i> ${data.ctaText}`;
+      }, 400);
+
+      // Trigger shake animation again
+      const ill = document.querySelector('.animate-shake');
+      ill.classList.remove('animate-shake');
+      void ill.offsetWidth; // Trigger reflow
+      ill.classList.add('animate-shake');
+    }
+
+    function retryPipeline() {
+      const ctaBtn = document.querySelector('.bg-gradient-to-r');
+      const origText = ctaBtn.textContent.trim();
+      ctaBtn.innerHTML = `<i class="ti ti-loader-2 text-base animate-spin"></i> Retrying...`;
+      ctaBtn.disabled = true;
+
+      setTimeout(() => {
+        ctaBtn.disabled = false;
+        alert(`Retry action executed for state: ${activeError}`);
+        ctaBtn.innerHTML = `<i class="ti ti-refresh text-base"></i> ${origText}`;
+      }, 1500);
+    }
+
+    function reportIssue() {
+      alert(`Diagnostic logs copied to clipboard! Opening ticket tracker...`);
+      navigator.clipboard.writeText(document.getElementById('error-logs').textContent);
+    }
+
+    function toggleDetails() {
+      const drawer = document.getElementById('details-drawer');
+      const arrow = document.getElementById('details-arrow');
+      if (drawer.style.maxHeight && drawer.style.maxHeight !== '0px') {
+        drawer.style.maxHeight = '0px';
+        arrow.style.transform = 'rotate(0deg)';
+      } else {
+        drawer.style.maxHeight = drawer.scrollHeight + 'px';
+        arrow.style.transform = 'rotate(180deg)';
+      }
+    }
+
+    // Theme switching logic
+    function toggleTheme() {
+      const html = document.documentElement;
+      const isDark = html.classList.contains('dark');
+      if (isDark) {
+        html.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+      } else {
+        html.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+      }
+    }
+
+    // Set theme on load
+    if (localStorage.getItem('theme') === 'light' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: light)').matches)) {
+      document.documentElement.classList.remove('dark');
+    } else {
+      document.documentElement.classList.add('dark');
+    }
+
+    // Initialize Default State
+    setErrorType('server');
+  </script>
+</body>
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cytron.AI — Splash Screen</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <style>
+    /* ── Reset & tokens ─────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:           #07080d;
+      --text:         #e8eaf0;
+      --accent:       #7c3aed;
+      --accent-2:     #a855f7;
+      --font:         'Inter', system-ui, sans-serif;
+    }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── Splash Screen ──────────────────────────────────── */
+    #splash-screen {
+      position: fixed; inset: 0; z-index: 9999;
+      background: var(--bg);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center;
+      padding: 2rem;
+      transition: opacity 0.5s ease;
+    }
+    #splash-screen h1 {
+      font-size: clamp(2.5rem, 6vw, 4rem);
+      font-weight: 800;
+      background: linear-gradient(135deg, #fff 0%, var(--accent-2) 60%, var(--accent) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      margin-bottom: 1rem;
+      animation: splashSlideDown 0.8s ease-out;
+    }
+    #splash-screen p {
+      font-size: 1.25rem; color: var(--text);
+      max-width: 700px; line-height: 1.6;
+      animation: splashFadeIn 1.5s ease-out;
+    }
+    #splash-screen .services-list {
+      margin-top: 2rem;
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 12px;
+      animation: splashFadeIn 2s ease-out;
+    }
+    #splash-screen .service-item {
+      background: rgba(124,58,237,0.15); border: 1px solid var(--accent);
+      border-radius: 100px; padding: 10px 20px;
+      font-weight: 600; color: var(--accent-2);
+    }
+    @keyframes splashSlideDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes splashFadeIn { from { opacity: 0; } to { opacity: 1; } }
+  </style>
+</head>
+<body>
+<!-- Splash Screen -->
+<div id="splash-screen">
+  <img src="/static/Cytron.AI-Logo.png" alt="Cytron.AI" style="height: 64px; width: auto; margin-bottom: 20px;" class="object-contain" />
+  <p>Get ready for an amazing journey! We enthusiastically analyze, plan, build, review, test, and deploy your dream web application automatically using powerful AI agents!</p>
+  <div class="services-list">
+    <div class="service-item"><i class="ti ti-clipboard-list"></i> Requirement Analysis</div>
+    <div class="service-item"><i class="ti ti-sitemap"></i> Project Planning</div>
+    <div class="service-item"><i class="ti ti-bolt"></i> Agent Building</div>
+    <div class="service-item"><i class="ti ti-search"></i> Code Review</div>
+    <div class="service-item"><i class="ti ti-flask"></i> Testing</div>
+    <div class="service-item"><i class="ti ti-rocket"></i> Deployment</div>
+  </div>
+</div>
+
+<script>
+  // ── Splash Screen ──────────────────────────────────────────────────────────
+  window.addEventListener('DOMContentLoaded', () => {
+    const splash = document.getElementById('splash-screen');
+    if (splash) {
+        setTimeout(() => {
+          splash.style.opacity = '0';
+          setTimeout(() => {
+            window.location.href = '/hub';
+          }, 500);
+        }, 4000);
+    }
+  });
+</script>
+</body>
+</html>

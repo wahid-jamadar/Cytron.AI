@@ -1,0 +1,382 @@
+{% extends "base.html" %}
+
+{% block title %}Technology Templates - Cytron.AI{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ── Tabs & Browser ─────────────────────────────────── */
+  .browser-tabs {
+    display: flex;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 12px;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .browser-tab {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .browser-tab:hover {
+    color: var(--text);
+    background: var(--surface-3);
+  }
+
+  .browser-tab.active {
+    background: var(--accent-glow);
+    color: var(--accent);
+    border-color: var(--border-glow);
+  }
+
+  /* ── Templates Grid ─────────────────────────────────── */
+  .templates-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+    gap: 1.25rem;
+  }
+
+  .template-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    transition: all var(--transition-fast);
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  }
+
+  .template-card:hover {
+    border-color: var(--border-glow);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(23, 23, 28, 0.03);
+  }
+
+  .template-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .language-tag {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: rgba(158, 197, 255, 0.12);
+    color: var(--info);
+    border: 1px solid rgba(158, 197, 255, 0.25);
+  }
+
+  .template-deps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .dep-pill {
+    font-size: 0.68rem;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: var(--surface-3);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  .template-schema {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: var(--mono);
+  }
+
+  /* ── Detail Modal ────────────────────────────────────── */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(23, 23, 28, 0.4); backdrop-filter: blur(4px);
+    z-index: 9999; display: none; align-items: center; justify-content: center;
+  }
+
+  .modal-overlay.show { display: flex; }
+
+  .template-modal {
+    background: var(--surface); border: 1px solid var(--border-glow); border-radius: var(--radius);
+    padding: 2rem; max-width: 580px; width: 90%; box-shadow: 0 15px 45px rgba(23, 23, 28, 0.1);
+    display: flex; flex-direction: column; gap: 1.25rem;
+  }
+
+  .modal-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+  }
+
+  .modal-name-group {
+    display: flex; flex-direction: column; gap: 4px;
+  }
+
+  .modal-title { font-size: 1.2rem; font-weight: 800; color: var(--text); }
+  
+  .modal-close-icon {
+    color: var(--text-dim); font-size: 1.25rem; cursor: pointer; transition: color var(--transition-fast);
+  }
+  .modal-close-icon:hover { color: var(--text); }
+
+  .modal-section-title {
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+    color: var(--text-dim); letter-spacing: 0.05em; margin-bottom: 0.5rem;
+  }
+
+  .modal-body-scroll {
+    display: flex; flex-direction: column; gap: 1.25rem; max-height: 380px; overflow-y: auto;
+    padding-right: 8px;
+  }
+
+  .guidelines-box {
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 1rem; font-size: 0.8rem; line-height: 1.6; color: var(--text-muted);
+  }
+  .guidelines-box ul {
+    margin-left: 1.25rem;
+  }
+
+  .files-box {
+    background: var(--surface-3); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 1rem; font-family: var(--mono); font-size: 0.72rem; color: var(--accent);
+    display: flex; flex-direction: column; gap: 6px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="header-section" style="margin-bottom: 2rem;">
+  <div class="header-title">
+    <h1 style="font-size: 1.8rem; font-weight: 800; color: var(--text); margin-bottom: 0.25rem;">Technology Templates</h1>
+    <p style="color: var(--text-muted); font-size: 0.88rem;">Framework presets and architectural schemas supported by the code generation engines</p>
+  </div>
+</div>
+
+<!-- Browser Tabs -->
+<div class="browser-tabs">
+  <button class="browser-tab active" id="tab-frontend" onclick="switchCategory('frontend')">
+    <i class="ti ti-layout"></i> Frontend Frameworks
+  </button>
+  <button class="browser-tab" id="tab-backend" onclick="switchCategory('backend')">
+    <i class="ti ti-server"></i> Backend Frameworks
+  </button>
+  <button class="browser-tab" id="tab-architecture" onclick="switchCategory('architecture')">
+    <i class="ti ti-sitemap"></i> Architecture Patterns
+  </button>
+</div>
+
+<!-- Templates Grid -->
+<div class="templates-grid" id="templates-grid-container">
+  <div style="text-align: center; padding: 4rem; grid-column: 1 / -1; color: var(--text-muted);">
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+      <i class="ti ti-loader ti-spin" style="font-size: 1.5rem; color: var(--accent);"></i>
+      <span>Loading framework registries...</span>
+    </div>
+  </div>
+</div>
+
+<!-- Template Detail Modal -->
+<div id="template-modal-overlay" class="modal-overlay" onclick="closeModal()">
+  <div class="template-modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-name-group">
+        <div id="modal-tag" style="margin-bottom: 4px;"></div>
+        <div id="modal-title" class="modal-title">Template Name</div>
+      </div>
+      <i class="ti ti-x modal-close-icon" onclick="closeModal()"></i>
+    </div>
+    
+    <div class="modal-body-scroll">
+      <div>
+        <div class="modal-section-title">Prompt Guidelines</div>
+        <div id="modal-guidelines" class="guidelines-box">
+          Instructions for generation...
+        </div>
+      </div>
+
+      <div id="modal-schema-section">
+        <div class="modal-section-title">Folder Structure Blueprint</div>
+        <div id="modal-schema" class="files-box">
+          Files listed...
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer" style="display: flex; justify-content: flex-end;">
+      <button class="btn btn-secondary" onclick="closeModal()" style="font-size: 0.75rem; padding: 4px 10px;">Close</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  let registries = {
+    frontend: [],
+    backend: [],
+    architecture: []
+  };
+  let currentCategory = 'frontend';
+
+  function getHeaders(extraHeaders = {}) {
+    const headers = { ...extraHeaders };
+    const token = localStorage.getItem('eto_access');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    return headers;
+  }
+
+  async function fetchTemplates() {
+    try {
+      const response = await fetch('/api/hub/templates', {
+        headers: getHeaders()
+      });
+      if (!response.ok) throw new Error("Failed to fetch templates registry");
+      registries = await response.json();
+
+      renderGrid();
+    } catch (err) {
+      console.error(err);
+      document.getElementById('templates-grid-container').innerHTML = `
+        <div style="text-align: center; padding: 3rem; grid-column: 1 / -1; color: var(--error); background: rgba(239, 68, 68, 0.02); border-radius: var(--radius); border: 1px solid rgba(239,68,68,0.15);">
+          <i class="ti ti-alert-triangle" style="font-size: 1.5rem; margin-bottom: 0.5rem; display: block; color: var(--error);"></i>
+          Failed to load tech registry: ${err.message}
+        </div>
+      `;
+    }
+  }
+
+  function switchCategory(category) {
+    document.querySelectorAll('.browser-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(`tab-${category}`).classList.add('active');
+    currentCategory = category;
+    renderGrid();
+  }
+
+  function renderGrid() {
+    const container = document.getElementById('templates-grid-container');
+    const items = registries[currentCategory] || [];
+
+    if (items.length === 0) {
+      container.innerHTML = `
+        <div style="text-align: center; padding: 4rem; grid-column: 1 / -1; color: var(--text-dim);">
+          No templates registered for this category.
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = '';
+    items.forEach(t => {
+      const card = document.createElement('div');
+      card.className = 'template-card';
+      card.onclick = () => showModal(t);
+
+      let headerTagsHtml = '';
+      if (t.language) {
+        headerTagsHtml = `<span class="language-tag">${t.language}</span>`;
+      } else if (currentCategory === 'architecture') {
+        headerTagsHtml = `<span class="language-tag" style="background: rgba(185, 167, 255, 0.12); color: var(--accent); border-color: rgba(185, 167, 255, 0.25)">Pattern</span>`;
+      } else {
+        headerTagsHtml = `<span class="language-tag" style="background: rgba(157, 232, 224, 0.12); color: var(--info); border-color: rgba(157, 232, 224, 0.25)">UI</span>`;
+      }
+
+      let bodyHtml = '';
+      if (currentCategory !== 'architecture') {
+        const deps = t.key_deps && t.key_deps.length > 0 ? t.key_deps : ['vanilla'];
+        const depPills = deps.map(d => `<span class="dep-pill">${d}</span>`).join('');
+        bodyHtml = `
+          <div class="template-deps">${depPills}</div>
+          <div class="template-schema">
+            <i class="ti ti-folder" style="color: var(--accent);"></i>
+            <span>${t.files_schema}</span>
+          </div>
+        `;
+      } else {
+        // Architecture description summary
+        const summary = t.prompt_guidelines.split('\n')[0].replace(/^-/, '').trim();
+        bodyHtml = `
+          <div style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.55;">
+            ${summary}
+          </div>
+        `;
+      }
+
+      card.innerHTML = `
+        <div class="template-title">
+          <span>${t.name}</span>
+          ${headerTagsHtml}
+        </div>
+        ${bodyHtml}
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  function showModal(template) {
+    document.getElementById('modal-title').innerText = template.name;
+    
+    // Tag
+    let categoryName = currentCategory === 'frontend' ? 'Frontend Framework' : currentCategory === 'backend' ? 'Backend Framework' : 'Architecture Design';
+    document.getElementById('modal-tag').innerHTML = `<span class="language-tag" style="font-size: 0.6rem;">${categoryName}</span>`;
+
+    // Guidelines
+    let guidelines = template.prompt_guidelines;
+    if (guidelines.startsWith('-') || guidelines.includes('\n-')) {
+      const listItems = guidelines.split('\n').map(l => l.replace(/^-/, '').trim()).filter(l => l);
+      document.getElementById('modal-guidelines').innerHTML = `<ul>${listItems.map(i => `<li>${i}</li>`).join('')}</ul>`;
+    } else {
+      document.getElementById('modal-guidelines').innerText = guidelines;
+    }
+
+    // Schema
+    const schemaSec = document.getElementById('modal-schema-section');
+    if (template.files_schema) {
+      schemaSec.style.display = 'block';
+      const files = template.files_schema.split(',').map(f => f.trim());
+      document.getElementById('modal-schema').innerHTML = files.map(f => `
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <i class="ti ti-file" style="color: var(--accent-2);"></i>
+          <span>${f}</span>
+        </div>
+      `).join('');
+    } else {
+      schemaSec.style.display = 'none';
+    }
+
+    document.getElementById('template-modal-overlay').classList.add('show');
+  }
+
+  function closeModal() {
+    document.getElementById('template-modal-overlay').classList.remove('show');
+  }
+
+  fetchTemplates();
+</script>
+{% endblock %}

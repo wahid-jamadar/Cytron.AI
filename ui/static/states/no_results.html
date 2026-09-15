@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>No Results Found — Cytron.AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          animation: {
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'float-slow': 'float 8s ease-in-out infinite',
+            'scan-line': 'scan 2.5s ease-in-out infinite',
+          },
+          keyframes: {
+            float: {
+              '0%, 100%': { transform: 'translateY(0px) translateX(0px)' },
+              '50%': { transform: 'translateY(-8px) translateX(4px)' },
+            },
+            scan: {
+              '0%, 100%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(80px)' }
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .bg-grid-pattern {
+        background-size: 30px 30px;
+        background-image: 
+          linear-gradient(to right, rgba(99, 102, 241, 0.04) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(99, 102, 241, 0.04) 1px, transparent 1px);
+      }
+      .dark .bg-grid-pattern {
+        background-image: 
+          linear-gradient(to right, rgba(255, 255, 255, 0.01) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(255, 255, 255, 0.01) 1px, transparent 1px);
+      }
+      .glassmorphism {
+        @apply bg-white/60 dark:bg-[#0f1117]/60 backdrop-blur-xl border border-slate-200/50 dark:border-white/5 shadow-xl dark:shadow-2xl;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 dark:bg-[#07080d] text-slate-800 dark:text-[#e8eaf0] min-h-screen font-sans transition-colors duration-300 overflow-x-hidden relative flex flex-col justify-between">
+
+  <!-- Background decorative gradients -->
+  <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+    <div class="absolute -top-[40%] -left-[20%] w-[80vw] h-[80vw] rounded-full bg-blue-500/10 dark:bg-blue-600/5 blur-[120px] animate-pulse-slow"></div>
+    <div class="absolute -bottom-[30%] -right-[10%] w-[60vw] h-[60vw] rounded-full bg-cyan-500/5 dark:bg-cyan-600/3 blur-[120px] animate-pulse-slow" style="animation-delay: 1.5s;"></div>
+    <div class="absolute inset-0 bg-grid-pattern opacity-100"></div>
+  </div>
+
+  <!-- Top Utilities Bar -->
+  <header class="relative z-10 flex items-center justify-between px-6 py-4 border-b border-slate-200/50 dark:border-white/5 bg-slate-50/50 dark:bg-[#07080d]/50 backdrop-blur-md">
+    <div class="flex items-center gap-2.5">
+      <img src="/static/Cytron.AI-Logo.png" alt="Cytron.AI" style="height: 28px; width: auto;" class="object-contain" />
+      <div>
+        <span class="text-xs block text-slate-400 dark:text-slate-500">Autonomous Orchestration v1.0</span>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <!-- Search Input Mock (For Interactive UI Demonstration) -->
+      <div class="relative hidden sm:block">
+        <input type="text" id="search-input-top" placeholder="Search codebase..." onkeydown="handleSearch(event)" class="w-56 px-3 py-1.5 pl-8 text-xs rounded-lg border border-slate-200 dark:border-white/10 bg-white/40 dark:bg-white/5 outline-none focus:border-blue-500 transition-all font-sans text-slate-700 dark:text-slate-300">
+        <i class="ti ti-search absolute left-2.5 top-2 text-slate-400 text-xs"></i>
+      </div>
+
+      <button onclick="toggleTheme()" class="flex items-center justify-center w-9 h-9 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 transition-all text-slate-600 dark:text-slate-400" title="Toggle Theme">
+        <i id="theme-icon" class="ti ti-sun text-lg dark:hidden"></i>
+        <i id="theme-icon-dark" class="ti ti-moon text-lg hidden dark:block"></i>
+      </button>
+      <a href="/hub" class="text-xs font-semibold px-3.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 transition-all text-slate-600 dark:text-slate-400 flex items-center gap-1">
+        <i class="ti ti-chevron-left"></i> Back to services
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="relative z-10 flex-1 flex flex-col items-center justify-center px-4 py-8 max-w-4xl mx-auto w-full">
+    
+    <div class="glassmorphism w-full rounded-2xl p-8 md:p-12 flex flex-col items-center text-center relative overflow-hidden transition-all duration-300">
+      
+      <!-- Search Scanning Illustration -->
+      <div class="relative w-64 h-52 mb-6 flex items-center justify-center">
+        <!-- Floating files/directories vector -->
+        <svg class="absolute w-full h-full text-slate-200 dark:text-slate-800/40" viewBox="0 0 200 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Folder Node (Top-Left) -->
+          <rect x="25" y="30" width="35" height="25" rx="3" stroke="currentColor" stroke-width="1.5" />
+          <path d="M25 36 H60" stroke="currentColor" stroke-width="1.5" />
+          <line x1="30" y1="45" x2="45" y2="45" stroke="currentColor" stroke-width="1" />
+          
+          <!-- Repository Node (Top-Right) -->
+          <rect x="140" y="35" width="30" height="30" rx="3" stroke="currentColor" stroke-width="1.5" />
+          <circle cx="155" cy="50" r="6" stroke="currentColor" stroke-width="1.5" />
+          <line x1="140" y1="42" x2="170" y2="42" stroke="currentColor" stroke-width="1" />
+
+          <!-- Code Graph Nodes (Bottom) -->
+          <circle cx="50" cy="120" r="10" stroke="currentColor" stroke-width="1.5" />
+          <circle cx="150" cy="120" r="10" stroke="currentColor" stroke-width="1.5" />
+          <line x1="60" y1="120" x2="140" y2="120" stroke="currentColor" stroke-dasharray="2 3" />
+          
+          <!-- Searching line connection to central magnifying point -->
+          <line x1="42" y1="55" x2="100" y2="80" stroke="currentColor" stroke-dasharray="3 3" />
+          <line x1="140" y1="50" x2="100" y2="80" stroke="currentColor" stroke-dasharray="3 3" />
+          <line x1="50" y1="110" x2="100" y2="80" stroke="currentColor" stroke-dasharray="3 3" />
+          <line x1="150" y1="110" x2="100" y2="80" stroke="currentColor" stroke-dasharray="3 3" />
+        </svg>
+
+        <!-- Scanning Beam Grid -->
+        <div class="absolute w-28 h-20 border-l border-r border-blue-500/20 bg-gradient-to-b from-blue-500/5 to-transparent top-[20%] overflow-hidden">
+          <!-- Scanning active bar -->
+          <div class="w-full h-0.5 bg-blue-500/40 shadow-[0_0_8px_rgba(59,130,246,0.5)] animate-scan-line"></div>
+        </div>
+
+        <!-- Central Scanner Tool -->
+        <div class="relative z-10 flex flex-col items-center justify-center animate-float-slow">
+          <div class="w-18 h-18 rounded-full bg-slate-100 dark:bg-[#161b26] border border-slate-200 dark:border-slate-800 flex items-center justify-center shadow-lg transition-colors duration-300">
+            <i class="ti ti-zoom-question text-3xl text-slate-400 dark:text-slate-600"></i>
+          </div>
+          <span class="text-[9px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-bold mt-2">Zero Matches</span>
+        </div>
+      </div>
+
+      <!-- Title & Description -->
+      <h2 class="text-2xl md:text-3xl font-extrabold mb-3 tracking-tight text-slate-900 dark:text-white">
+        No Results Found
+      </h2>
+      <p id="search-query-display" class="text-sm md:text-base text-slate-500 dark:text-slate-400 max-w-md mb-8 leading-relaxed">
+        We searched all folders, repositories, and dependency code graphs for this request, but couldn't find matching nodes.
+      </p>
+
+      <!-- Checklist Suggestions -->
+      <div class="w-full max-w-sm text-left glassmorphism p-5 rounded-xl border border-slate-200 dark:border-white/5 mb-8">
+        <span class="text-[10px] uppercase tracking-wider font-extrabold text-slate-400 dark:text-slate-500 block mb-3">Search Recommendations</span>
+        <ul class="space-y-2 text-xs text-slate-600 dark:text-slate-300 font-medium">
+          <li class="flex items-center gap-2">
+            <i class="ti ti-check text-blue-500 text-sm"></i> Double-check spelling and character syntax
+          </li>
+          <li class="flex items-center gap-2">
+            <i class="ti ti-check text-blue-500 text-sm"></i> Try utilizing broader, more general keywords
+          </li>
+          <li class="flex items-center gap-2">
+            <i class="ti ti-check text-blue-500 text-sm"></i> Remove tags, branches, or file-type filter constraints
+          </li>
+          <li class="flex items-center gap-2">
+            <i class="ti ti-check text-blue-500 text-sm"></i> Scope searches inside alternative modules
+          </li>
+        </ul>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-3.5 w-full sm:w-auto relative z-20 mb-10">
+        <button onclick="document.getElementById('search-input-top').focus()" class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-600 hover:from-blue-500 hover:via-indigo-500 hover:to-cyan-500 text-white font-semibold text-sm shadow-md hover:shadow-blue-500/25 transition-all duration-300 flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer">
+          <i class="ti ti-search text-base"></i> Search Again
+        </button>
+        <button onclick="clearSearchFilters()" class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-white dark:bg-[#161b26] hover:bg-slate-100 dark:hover:bg-[#1e2537] border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 font-semibold text-sm transition-all duration-300 flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer">
+          Clear Active Filters
+        </button>
+      </div>
+
+      <!-- Recents & Recommended Footer -->
+      <div class="w-full border-t border-slate-200 dark:border-white/5 pt-6 grid grid-cols-1 sm:grid-cols-2 gap-6 text-left">
+        <!-- Recent searches -->
+        <div>
+          <span class="text-[9px] uppercase tracking-wider font-extrabold text-slate-400 dark:text-slate-500 block mb-2.5">Recent Searches</span>
+          <div class="flex flex-col gap-1.5">
+            <button onclick="executeSuggestedSearch('auth-controller.go')" class="text-xs text-slate-500 hover:text-blue-500 dark:text-slate-400 dark:hover:text-blue-400 transition-colors flex items-center gap-1.5 text-left font-mono">
+              <i class="ti ti-history text-[11px]"></i> auth-controller.go
+            </button>
+            <button onclick="executeSuggestedSearch('database-normalizer')" class="text-xs text-slate-500 hover:text-blue-500 dark:text-slate-400 dark:hover:text-blue-400 transition-colors flex items-center gap-1.5 text-left font-mono">
+              <i class="ti ti-history text-[11px]"></i> database-normalizer
+            </button>
+            <button onclick="executeSuggestedSearch('docker-compose.prod.yml')" class="text-xs text-slate-500 hover:text-blue-500 dark:text-slate-400 dark:hover:text-blue-400 transition-colors flex items-center gap-1.5 text-left font-mono">
+              <i class="ti ti-history text-[11px]"></i> docker-compose.prod.yml
+            </button>
+          </div>
+        </div>
+
+        <!-- Suggested Queries -->
+        <div>
+          <span class="text-[9px] uppercase tracking-wider font-extrabold text-slate-400 dark:text-slate-500 block mb-2.5">Suggested Searches</span>
+          <div class="flex flex-wrap gap-2">
+            <button onclick="executeSuggestedSearch('JWT Authenticator')" class="text-[11px] px-2.5  py-1 rounded bg-slate-100 dark:bg-[#161b26] border border-slate-200 dark:border-white/5 hover:border-blue-500 text-slate-600 dark:text-slate-300 font-medium transition-colors">
+              JWT Authenticator
+            </button>
+            <button onclick="executeSuggestedSearch('Postgres Pool')" class="text-[11px] px-2.5 py-1 rounded bg-slate-100 dark:bg-[#161b26] border border-slate-200 dark:border-white/5 hover:border-blue-500 text-slate-600 dark:text-slate-300 font-medium transition-colors">
+              Postgres Pool
+            </button>
+            <button onclick="executeSuggestedSearch('Redis Cache')" class="text-[11px] px-2.5 py-1 rounded bg-slate-100 dark:bg-[#161b26] border border-slate-200 dark:border-white/5 hover:border-blue-500 text-slate-600 dark:text-slate-300 font-medium transition-colors">
+              Redis Cache
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="relative z-10 text-center py-8 text-xs text-slate-400 dark:text-slate-600 border-t border-slate-200/50 dark:border-white/5 bg-slate-50/50 dark:bg-[#07080d]/50 backdrop-blur-md">
+    <div class="max-w-4xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <span>Cytron.AI Platform — Design States Showcase</span>
+      <div class="flex gap-4">
+        <a href="/hub" class="hover:text-slate-600 dark:hover:text-slate-400 transition-colors">Hub</a>
+        <span>·</span>
+        <a href="/docs" target="_blank" class="hover:text-slate-600 dark:hover:text-slate-400 transition-colors">API Docs</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    function handleSearch(event) {
+      if (event.key === 'Enter') {
+        const query = event.target.value.trim();
+        if (query) {
+          executeSuggestedSearch(query);
+        }
+      }
+    }
+
+    function executeSuggestedSearch(query) {
+      document.getElementById('search-input-top').value = query;
+      document.getElementById('search-query-display').innerHTML = `We searched all folders, repositories, and dependency code graphs for <strong class="text-blue-500 dark:text-blue-400 font-mono font-bold">"${query}"</strong> but couldn't find matching nodes.`;
+      
+      // Animate search container shake
+      const ill = document.querySelector('.animate-float-slow');
+      ill.classList.remove('animate-float-slow');
+      void ill.offsetWidth;
+      ill.classList.add('animate-float-slow');
+    }
+
+    function clearSearchFilters() {
+      alert('Search filtering constraints cleared.');
+      executeSuggestedSearch('');
+      document.getElementById('search-query-display').textContent = "We searched all folders, repositories, and dependency code graphs for this request, but couldn't find matching nodes.";
+    }
+
+    // Theme switching logic
+    function toggleTheme() {
+      const html = document.documentElement;
+      const isDark = html.classList.contains('dark');
+      if (isDark) {
+        html.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+      } else {
+        html.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+      }
+    }
+
+    // Set theme on load
+    if (localStorage.getItem('theme') === 'light' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: light)').matches)) {
+      document.documentElement.classList.remove('dark');
+    } else {
+      document.documentElement.classList.add('dark');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en" class="theme-light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Cytron.AI{% endblock %}</title>
+  
+  <!-- Typography and Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/tabler-icons.min.css" />
+  
+  <!-- Central Design System Stylesheet -->
+  <link rel="stylesheet" href="/static/style.css" />
+
+  <!-- Blocking Theme Initializer (Prevents Visual Fashing/FOUC) -->
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('ui_theme') || 'light';
+      document.documentElement.className = 'theme-' + savedTheme;
+    })();
+  </script>
+
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+  <div class="dashboard-layout">
+    <!-- 1. Left Sidebar Navigation -->
+    <aside class="dashboard-sidebar" id="app-sidebar">
+      <a href="/hub" class="sidebar-brand">
+        <img src="/static/Cytron.AI-Logo.png" alt="Cytron.AI" style="height: 36px; width: auto;" class="object-contain" />
+        <div class="logo-text">
+          <span>Cytron.AI</span>
+        </div>
+      </a>
+
+      <!-- Dynamic Switcher for Administrative Users -->
+      <div class="sidebar-switcher-container" id="dashboard-switcher" style="display: none; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem;">
+        <span class="status-indicator-label" style="display: block; margin-bottom: 0.5rem; padding-left: 0.25rem;">Current Workspace</span>
+        <div style="position: relative; width: 100%;">
+          <button id="switcher-btn" class="form-input" style="display: flex; align-items: center; justify-content: space-between; font-weight: 600; cursor: pointer; text-align: left;">
+            <span style="display: flex; align-items: center; gap: 8px;"><i class="ti ti-smart-home" style="color: var(--accent);"></i> System Dashboard</span>
+            <i class="ti ti-chevron-down" style="color: var(--text-muted); font-size: 0.75rem;"></i>
+          </button>
+          <div id="switcher-dropdown" style="display: none; position: absolute; left: 0; right: 0; margin-top: 0.35rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05); padding: 0.35rem 0; z-index: 100;">
+            <a href="/hub" style="display: flex; align-items: center; gap: 8px; padding: 0.5rem 0.75rem; font-size: 0.8rem; font-weight: 600; color: var(--text); background: var(--surface-3); border-left: 2px solid var(--accent);">
+              <i class="ti ti-smart-home" style="color: var(--accent);"></i> System Dashboard
+            </a>
+            <a href="/app/#/admin" style="display: flex; align-items: center; gap: 8px; padding: 0.5rem 0.75rem; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); border-left: 2px solid transparent; transition: all 0.2s;">
+              <i class="ti ti-shield" style="color: var(--accent);"></i> Admin Panel
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation links -->
+      <nav class="sidebar-nav">
+        <a href="/hub" class="nav-item"><i class="ti ti-smart-home"></i> <span>Home</span></a>
+        <a href="/agents" class="nav-item"><i class="ti ti-robot"></i> <span>Agents</span></a>
+        <a href="/workflows" class="nav-item"><i class="ti ti-git-branch"></i> <span>Workflows</span></a>
+        <a href="/history" class="nav-item"><i class="ti ti-history"></i> <span>History</span></a>
+        <a href="/templates" class="nav-item"><i class="ti ti-layout-grid"></i> <span>Templates</span></a>
+        <a href="/settings" class="nav-item"><i class="ti ti-settings"></i> <span>Settings</span></a>
+      </nav>
+
+      <!-- Sidebar footer with system status and telemetry -->
+      <div class="sidebar-footer">
+        <div class="system-status-card">
+          <div class="status-indicator-row">
+            <span class="status-indicator-label">System State</span>
+            <div class="status-indicator-dot-wrap">
+              <span class="pulse-dot"></span>
+              <span class="status-text">Operational</span>
+            </div>
+          </div>
+          <div class="sparkline-container" style="height: 24px;">
+            <svg viewBox="0 0 100 30" width="100%" height="30" id="status-sparkline">
+              <defs>
+                <linearGradient id="spark-glow" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="var(--success)" stop-opacity="0.25" />
+                  <stop offset="100%" stop-color="var(--success)" stop-opacity="0" />
+                </linearGradient>
+              </defs>
+              <path id="sparkline-bg" d="M 0 30" fill="url(#spark-glow)" />
+              <path id="sparkline-path" d="" fill="none" stroke="var(--success)" stroke-width="2" stroke-linecap="round" />
+              <circle id="sparkline-head" cx="0" cy="0" r="2.5" fill="var(--success)" />
+            </svg>
+          </div>
+          <div class="system-telemetry-row">
+            <div class="telemetry-item">
+              <span class="telemetry-label">Active Agents</span>
+              <span class="telemetry-value" id="active-agents-val">12</span>
+            </div>
+            <div class="telemetry-item">
+              <span class="telemetry-label">Tasks</span>
+              <span class="telemetry-value" id="tasks-today-val">248</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </aside>
+
+    <!-- 2. Main content container -->
+    <div class="dashboard-main">
+      <header class="dashboard-topbar">
+        <div class="topbar-left">
+          <button class="sidebar-toggle-btn" id="sidebar-toggle">
+            <i class="ti ti-menu-2"></i>
+          </button>
+          
+          <nav class="breadcrumbs" aria-label="Breadcrumb">
+            <a href="/hub" class="breadcrumb-item">Workspace</a>
+            <span class="breadcrumb-separator">/</span>
+            <span class="breadcrumb-item active" id="current-page-breadcrumb">Hub</span>
+          </nav>
+        </div>
+
+        <div class="topbar-right">
+          <!-- Trigger command palette or filter -->
+          <div class="search-wrapper" id="palette-search-trigger" style="cursor: pointer;">
+            <i class="ti ti-search"></i>
+            <input type="text" placeholder="Search commands..." disabled style="cursor: pointer;" />
+            <span class="shortcut-badge">Ctrl K</span>
+          </div>
+
+          <!-- Theme switcher -->
+          <button class="action-btn" id="theme-toggle" title="Change Visual Theme">
+            <i class="ti ti-sun" id="theme-icon"></i>
+          </button>
+
+          <!-- Notification Log dropdown -->
+          <div class="notif-wrapper" style="position: relative;">
+            <button class="action-btn" id="notif-toggle" title="Diagnostics Notification Logs">
+              <i class="ti ti-bell"></i>
+              <span class="notif-badge"></span>
+            </button>
+            <div class="notif-dropdown" id="notif-dropdown" style="display: none; position: absolute; right: 0; width: 300px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.5rem; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05); z-index: 200;">
+              <div class="dropdown-header">
+                <h3>Diagnostics Stream</h3>
+                <span class="clear-notif" id="clear-notifs-btn" style="cursor: pointer; color: var(--accent); font-weight: 600;">Clear</span>
+              </div>
+              <div class="dropdown-content" id="notif-list" style="max-height: 240px; overflow-y: auto;">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Profile drop menu -->
+          <div class="profile-wrapper" style="position: relative;">
+            <button class="profile-btn" id="profile-toggle">
+              <img src="/static/profile.png" alt="Profile" />
+              <span class="profile-name">Wahid Jamadar</span>
+              <i class="ti ti-chevron-down" style="font-size: 0.75rem;"></i>
+            </button>
+            <div class="profile-dropdown" id="profile-dropdown" style="display: none; position: absolute; right: 0; width: 240px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.5rem; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05); z-index: 200;">
+              <div style="padding: 0.5rem; border-bottom: 1px solid var(--border); margin-bottom: 0.5rem;">
+                <h4 class="profile-name" style="font-size: 0.85rem; color: var(--text);">Wahid Jamadar</h4>
+                <p id="profile-email-text" style="font-size: 0.7rem; color: var(--text-muted);">wahid@e2e-agent.ai</p>
+              </div>
+              <a href="/settings" style="display: flex; align-items: center; gap: 8px; padding: 0.45rem 0.5rem; font-size: 0.8rem; color: var(--text-muted);"><i class="ti ti-user-circle"></i> Profile Settings</a>
+              <a href="/settings" style="display: flex; align-items: center; gap: 8px; padding: 0.45rem 0.5rem; font-size: 0.8rem; color: var(--text-muted);"><i class="ti ti-key"></i> API Preferences</a>
+              <a href="/agents" style="display: flex; align-items: center; gap: 8px; padding: 0.45rem 0.5rem; font-size: 0.8rem; color: var(--text-muted);"><i class="ti ti-device-computer-camera"></i> Diagnostic Telemetry</a>
+              <div style="height: 1px; background: var(--border); margin: 0.4rem 0;"></div>
+              <a href="/app/#/admin" id="profile-admin-link" style="display: none; align-items: center; gap: 8px; padding: 0.45rem 0.5rem; font-size: 0.8rem; color: var(--accent); font-weight: 600;"><i class="ti ti-shield"></i> Admin Panel</a>
+              <div id="profile-admin-divider" style="display: none; height: 1px; background: var(--border); margin: 0.4rem 0;"></div>
+              <a href="#logout" class="logout-link" id="disconnect-btn" style="display: flex; align-items: center; gap: 8px; padding: 0.45rem 0.5rem; font-size: 0.8rem; color: var(--error); font-weight: 600;"><i class="ti ti-logout"></i> Logout Session</a>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Scrollable workspace view -->
+      <main class="app-content">
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+
+  <!-- 3. Global Keyboard-Driven Command Palette Modal -->
+  <div class="command-palette-backdrop" id="command-palette" style="display: none;">
+    <div class="command-palette">
+      <div class="command-palette-search">
+        <i class="ti ti-search"></i>
+        <input type="text" id="command-palette-input" placeholder="Search commands, pages, services..." autocomplete="off" />
+        <span class="esc-badge">ESC</span>
+      </div>
+      <div class="command-palette-results" id="command-palette-results">
+        <!-- Results rendered dynamically via JS -->
+      </div>
+      <div class="command-palette-footer">
+        <span><kbd>↑↓</kbd> to navigate</span>
+        <span><kbd>Enter</kbd> to execute</span>
+        <span><kbd>Esc</kbd> to close</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Global Toast alerts element -->
+  <div id="toast-el" class="toast">
+    <i class="ti ti-circle-check" style="color: var(--success); font-size: 1.2rem;"></i>
+    <span id="toast-message">Operation successful</span>
+  </div>
+
+  <!-- 5. Reusable Global loading state overlay -->
+  <div id="global-processing-overlay" style="display: none; position: fixed; inset: 0; background: rgba(23, 23, 28, 0.45); backdrop-filter: blur(4px); z-index: 9999; flex-direction: column; align-items: center; justify-content: center;">
+    <div style="background: var(--surface); border: 1px solid var(--border-glow); border-radius: var(--radius); padding: 2rem; box-shadow: 0 10px 40px rgba(23, 23, 28, 0.08); text-align: center; width: 340px;">
+      <div style="position: relative; width: 50px; height: 50px; margin: 0 auto 1.5rem;">
+        <div style="position: absolute; inset: 0; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+        <i class="ti ti-brain" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 1.5rem; color: var(--accent);"></i>
+      </div>
+      <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text);">Processing Request</h3>
+      <p id="processing-status-message" style="font-size: 0.8rem; color: var(--accent-2); font-weight: 500;">Initializing AI engine...</p>
+      <div style="margin-top: 1.25rem; height: 3px; background: var(--surface-3); border-radius: 2px; overflow: hidden;">
+        <div style="height: 100%; width: 30%; background: var(--accent); border-radius: 2px; animation: progress-indeterminate 1.5s ease-in-out infinite;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. Layout Style Helper Animations -->
+  <style>
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes progress-indeterminate { 0% { transform: translateX(-100%); width: 30%; } 50% { transform: translateX(100%); width: 50%; } 100% { transform: translateX(300%); width: 30%; } }
+  </style>
+
+  <!-- 7. Shell Interactions and Dynamic Data binding scripts -->
+  <script>
+    // ── Theme switching and class assignment ─────────────
+    const themeToggle = document.getElementById('theme-toggle');
+    const themeIcon = document.getElementById('theme-icon');
+    
+    function applyTheme(theme) {
+      document.documentElement.className = 'theme-' + theme;
+      localStorage.setItem('ui_theme', theme);
+      if (theme === 'light') {
+        themeIcon.className = 'ti ti-sun';
+      } else if (theme === 'dark') {
+        themeIcon.className = 'ti ti-moon';
+      } else {
+        themeIcon.className = 'ti ti-moon-stars';
+      }
+    }
+    
+    themeToggle.addEventListener('click', () => {
+      const current = localStorage.getItem('ui_theme') || 'light';
+      let next = 'light';
+      if (current === 'light') next = 'dark';
+      else if (current === 'dark') next = 'oled';
+      applyTheme(next);
+      
+      // If we are on settings page, update the selector value
+      const settingsThemeSelect = document.getElementById('pref-theme');
+      if (settingsThemeSelect) {
+        settingsThemeSelect.value = next;
+      }
+    });
+
+    // Initialize state
+    applyTheme(localStorage.getItem('ui_theme') || 'light');
+
+    // ── Active Navigation State & Breadcrumbs ──────────
+    document.addEventListener('DOMContentLoaded', () => {
+      const path = window.location.pathname;
+      const navItems = document.querySelectorAll('.sidebar-nav .nav-item');
+      let foundActive = false;
+
+      navItems.forEach(item => {
+        const href = item.getAttribute('href');
+        if (path === href || (href !== '/hub' && path.startsWith(href))) {
+          item.classList.add('active');
+          foundActive = true;
+        } else {
+          item.classList.remove('active');
+        }
+      });
+
+      // Secondary rule for sub-pages
+      if (!foundActive) {
+        const homePaths = [
+          '/hub', '/requirement-analyzer', '/system-design', '/database-schema', 
+          '/code-generation', '/code-review', '/test-case-generator', 
+          '/documentation-generator', '/sql-query-generator', '/build-complete-project'
+        ];
+        if (homePaths.includes(path)) {
+          const homeItem = document.querySelector('.sidebar-nav .nav-item[href="/hub"]');
+          if (homeItem) homeItem.classList.add('active');
+        }
+      }
+
+      // Breadcrumb updates
+      const breadcrumbEl = document.getElementById('current-page-breadcrumb');
+      if (breadcrumbEl) {
+        const pathMap = {
+          '/hub': 'Service Hub',
+          '/agents': 'Agent Observability',
+          '/workflows': 'Workflows Orchestrator',
+          '/history': 'Audit Runs History',
+          '/templates': 'Technology Catalog',
+          '/settings': 'System Settings',
+          '/states': 'States Showcase',
+          '/requirement-analyzer': 'Requirement Analyzer',
+          '/system-design': 'System Design Workspace',
+          '/database-schema': 'Database Design Workspace',
+          '/code-generation': 'Code Generator',
+          '/code-review': 'Code Reviewer',
+          '/test-case-generator': 'Testing Pipeline',
+          '/documentation-generator': 'Docs Generator',
+          '/sql-query-generator': 'SQL Engine',
+          '/build-complete-project': 'Build complete'
+        };
+        const label = pathMap[path] || document.title.replace(' - Cytron.AI', '');
+        breadcrumbEl.textContent = label;
+      }
+    });
+
+    // ── Sidebar Responsive Drawer Toggle ─────────────────
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+    const appSidebar = document.getElementById('app-sidebar');
+    if (sidebarToggle && appSidebar) {
+      sidebarToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        appSidebar.classList.toggle('mobile-open');
+      });
+      document.addEventListener('click', () => {
+        appSidebar.classList.remove('mobile-open');
+      });
+      appSidebar.addEventListener('click', (e) => e.stopPropagation());
+    }
+
+    // ── Dropdowns triggers ──────────────────────────────
+    const profileToggle = document.getElementById('profile-toggle');
+    const profileDropdown = document.getElementById('profile-dropdown');
+    const notifToggle = document.getElementById('notif-toggle');
+    const notifDropdown = document.getElementById('notif-dropdown');
+
+    if (profileToggle && profileDropdown) {
+      profileToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        profileDropdown.style.display = profileDropdown.style.display === 'block' ? 'none' : 'block';
+        if (notifDropdown) notifDropdown.style.display = 'none';
+      });
+    }
+
+    if (notifToggle && notifDropdown) {
+      notifToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        notifDropdown.style.display = notifDropdown.style.display === 'block' ? 'none' : 'block';
+        if (profileDropdown) profileDropdown.style.display = 'none';
+      });
+    }
+
+    document.addEventListener('click', () => {
+      if (profileDropdown) profileDropdown.style.display = 'none';
+      if (notifDropdown) notifDropdown.style.display = 'none';
+    });
+
+    if (profileDropdown) profileDropdown.addEventListener('click', (e) => e.stopPropagation());
+    if (notifDropdown) notifDropdown.addEventListener('click', (e) => e.stopPropagation());
+
+    // ── Workspace Switcher for Admins ───────────────────
+    const switcherBtn = document.getElementById('switcher-btn');
+    const switcherDropdown = document.getElementById('switcher-dropdown');
+    if (switcherBtn && switcherDropdown) {
+      switcherBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        switcherDropdown.style.display = switcherDropdown.style.display === 'block' ? 'none' : 'block';
+      });
+      document.addEventListener('click', () => {
+        switcherDropdown.style.display = 'none';
+      });
+      switcherDropdown.addEventListener('click', (e) => e.stopPropagation());
+    }
+
+    // ── Toast notifier helper ──────────────────────────
+    function showToast(msg) {
+      const toast = document.getElementById('toast-el');
+      const message = document.getElementById('toast-message');
+      if (toast && message) {
+        message.textContent = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+      }
+    }
+
+    // ── Global Processing Progress Overlay helpers ────────
+    const defaultMessages = [
+      "Analyzing project requirements...",
+      "Identifying boundary constraints...",
+      "Mapping active architectural patterns...",
+      "Refining code segments...",
+      "Checking lint constraints...",
+      "Executing pipeline validation steps...",
+      "Writing structured results..."
+    ];
+    let processingInterval;
+    function startProcessingProgress(customMessages = []) {
+      const overlay = document.getElementById('global-processing-overlay');
+      const messageEl = document.getElementById('processing-status-message');
+      if (!overlay || !messageEl) return;
+      
+      const msgs = customMessages.length > 0 ? customMessages : defaultMessages;
+      overlay.style.display = 'flex';
+      
+      let index = 0;
+      messageEl.textContent = msgs[index];
+      
+      processingInterval = setInterval(() => {
+        index = (index + 1) % msgs.length;
+        messageEl.textContent = msgs[index];
+      }, 2500);
+    }
+    function stopProcessingProgress() {
+      const overlay = document.getElementById('global-processing-overlay');
+      if (overlay) overlay.style.display = 'none';
+      clearInterval(processingInterval);
+    }
+
+    // ── Status Sparkline updates (Telemetry simulation) ─
+    let sparklineData = [12, 10, 15, 12, 18, 14, 16, 22, 18, 20, 24, 20, 26, 22, 25];
+    function renderSparkline() {
+      const pathEl = document.getElementById('sparkline-path');
+      const bgEl = document.getElementById('sparkline-bg');
+      const headEl = document.getElementById('sparkline-head');
+      if (!pathEl || !bgEl || !headEl) return;
+      
+      const width = 100;
+      const height = 30;
+      const maxVal = 30;
+      const step = width / (sparklineData.length - 1);
+      
+      let d = '';
+      let bgD = 'M 0 30';
+      
+      sparklineData.forEach((val, idx) => {
+        const x = idx * step;
+        const y = height - (val / maxVal) * (height - 6) - 3;
+        
+        if (idx === 0) {
+          d += `M ${x} ${y}`;
+        } else {
+          d += ` L ${x} ${y}`;
+        }
+        bgD += ` L ${x} ${y}`;
+        
+        if (idx === sparklineData.length - 1) {
+          headEl.setAttribute('cx', x.toString());
+          headEl.setAttribute('cy', y.toString());
+        }
+      });
+      
+      bgD += ` L ${width} 30 Z`;
+      pathEl.setAttribute('d', d);
+      bgEl.setAttribute('d', bgD);
+    }
+    
+    renderSparkline();
+    setInterval(() => {
+      const last = sparklineData[sparklineData.length - 1];
+      const nextVal = Math.max(5, Math.min(29, Math.round(last + (Math.random() - 0.5) * 8)));
+      sparklineData.shift();
+      sparklineData.push(nextVal);
+      renderSparkline();
+      
+      // Update values
+      const activeAgents = document.getElementById('active-agents-val');
+      const tasksToday = document.getElementById('tasks-today-val');
+      if (activeAgents && Math.random() > 0.8) {
+        activeAgents.textContent = Math.max(8, Math.min(16, parseInt(activeAgents.textContent) + (Math.random() > 0.5 ? 1 : -1))).toString();
+      }
+      if (tasksToday && Math.random() > 0.4) {
+        tasksToday.textContent = (parseInt(tasksToday.textContent) + Math.floor(Math.random() * 2)).toString();
+      }
+    }, 2000);
+
+    // ── Diagnostic notification logger list ─────────────
+    let notificationLogs = [
+      { time: 'Just now', msg: "Requirement Analyzer: Synced functional specifications.", icon: 'ti-clipboard-check', color: 'var(--pastel-violet)' },
+      { time: '5m ago', msg: "Project Generator: Created database entity migration.", icon: 'ti-database-export', color: 'var(--pastel-blue)' },
+      { time: '15m ago', msg: "Reviewer: Inspected auth logic: 0 leaks, 1 advice.", icon: 'ti-shield-check', color: 'var(--pastel-cyan)' },
+      { time: '1h ago', msg: "Docs Engine: Compiled complete project OpenAPI specifications.", icon: 'ti-book', color: 'var(--pastel-yellow)' }
+    ];
+    
+    const notifList = document.getElementById('notif-list');
+    const clearNotifs = document.getElementById('clear-notifs-btn');
+    const notifBadge = document.querySelector('.notif-badge');
+    
+    function renderNotifications() {
+      if (!notifList || !notifBadge) return;
+      notifList.innerHTML = '';
+      if (notificationLogs.length === 0) {
+        notifList.innerHTML = `
+          <div style="padding: 1.5rem 1rem; text-align: center; color: var(--text-dim); font-size: 0.78rem;">
+            <i class="ti ti-circle-check" style="font-size: 1.5rem; color: var(--success); display: block; margin-bottom: 0.5rem;"></i>
+            All systems verified.
+          </div>
+        `;
+        notifBadge.style.display = 'none';
+        return;
+      }
+      notifBadge.style.display = 'block';
+      notificationLogs.forEach(log => {
+        const div = document.createElement('div');
+        div.style.display = 'flex';
+        div.style.alignItems = 'center';
+        div.style.gap = '10px';
+        div.style.padding = '0.5rem';
+        div.style.borderBottom = '1px solid var(--border)';
+        div.innerHTML = `
+          <div style="width: 24px; height: 24px; border-radius: 50%; background: ${log.color}22; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: ${log.color}; flex-shrink: 0;">
+            <i class="ti ${log.icon}"></i>
+          </div>
+          <div style="display: flex; flex-direction: column;">
+            <span style="font-size: 0.75rem; color: var(--text); line-height: 1.3;">${log.msg}</span>
+            <span style="font-size: 0.65rem; color: var(--text-dim); margin-top: 1px;">${log.time}</span>
+          </div>
+        `;
+        notifList.appendChild(div);
+      });
+    }
+    renderNotifications();
+    if (clearNotifs) {
+      clearNotifs.addEventListener('click', () => {
+        notificationLogs = [];
+        renderNotifications();
+      });
+    }
+
+    // ── Command Palette Modal Search & Trigger ──────────
+    const searchTrigger = document.getElementById('palette-search-trigger');
+    const commandPalette = document.getElementById('command-palette');
+    const paletteInput = document.getElementById('command-palette-input');
+    const paletteResults = document.getElementById('command-palette-results');
+    
+    const commandItems = [
+      { section: 'Pages', label: 'Go to AI Service Hub', path: '/hub', icon: 'ti-smart-home', shortcut: 'G H' },
+      { section: 'Pages', label: 'Go to Agent Observability', path: '/agents', icon: 'ti-robot', shortcut: 'G A' },
+      { section: 'Pages', label: 'Go to Orchestration Pipelines', path: '/workflows', icon: 'ti-git-branch', shortcut: 'G W' },
+      { section: 'Pages', label: 'Go to Run Audit History', path: '/history', icon: 'ti-history', shortcut: 'G R' },
+      { section: 'Pages', label: 'Go to Technology Catalog', path: '/templates', icon: 'ti-layout-grid', shortcut: 'G T' },
+      { section: 'Pages', label: 'Go to System Settings', path: '/settings', icon: 'ti-settings', shortcut: 'G S' },
+      
+      { section: 'AI Workspaces', label: 'Launch: AI Requirement Analyzer', path: '/requirement-analyzer', icon: 'ti-clipboard-list', shortcut: 'L R' },
+      { section: 'AI Workspaces', label: 'Launch: System Design Generator', path: '/system-design', icon: 'ti-sitemap', shortcut: 'L S' },
+      { section: 'AI Workspaces', label: 'Launch: Database Schema Creation', path: '/database-schema', icon: 'ti-database', shortcut: 'L D' },
+      { section: 'AI Workspaces', label: 'Launch: Code Generation', path: '/code-generation', icon: 'ti-code', shortcut: 'L C' },
+      { section: 'AI Workspaces', label: 'Launch: Smart Code Review', path: '/code-review', icon: 'ti-search', shortcut: 'L V' },
+      { section: 'AI Workspaces', label: 'Launch: Test Case Generator', path: '/test-case-generator', icon: 'ti-flask', shortcut: 'L T' },
+      { section: 'AI Workspaces', label: 'Launch: Documentation Generator', path: '/documentation-generator', icon: 'ti-book', shortcut: 'L O' },
+      { section: 'AI Workspaces', label: 'Launch: SQL Query Generator', path: '/sql-query-generator', icon: 'ti-terminal-2', shortcut: 'L Q' },
+      { section: 'AI Workspaces', label: 'Launch: Build Complete Project', path: '/build-complete-project', icon: 'ti-rocket', shortcut: 'L B' },
+
+      { section: 'Visual Themes', label: 'Switch to Theme: Warm Off-White (Light)', action: 'light', icon: 'ti-sun', shortcut: 'T L' },
+      { section: 'Visual Themes', label: 'Switch to Theme: Premium Dark', action: 'dark', icon: 'ti-moon', shortcut: 'T D' },
+      { section: 'Visual Themes', label: 'Switch to Theme: Pure Black (OLED)', action: 'oled', icon: 'ti-moon-stars', shortcut: 'T O' }
+    ];
+
+    let selectedIndex = 0;
+    let filteredItems = [];
+
+    function togglePalette() {
+      if (commandPalette.style.display === 'none') {
+        commandPalette.style.display = 'flex';
+        paletteInput.value = '';
+        paletteInput.focus();
+        filterPalette('');
+      } else {
+        commandPalette.style.display = 'none';
+      }
+    }
+
+    if (searchTrigger) searchTrigger.addEventListener('click', togglePalette);
+    
+    // Toggle via Escape click on backdrop
+    commandPalette.addEventListener('click', (e) => {
+      if (e.target === commandPalette) togglePalette();
+    });
+
+    // Filter results
+    function filterPalette(query) {
+      const q = query.toLowerCase().trim();
+      if (!q) {
+        filteredItems = [...commandItems];
+      } else {
+        filteredItems = commandItems.filter(item => 
+          item.label.toLowerCase().includes(q) || 
+          item.section.toLowerCase().includes(q)
+        );
+      }
+      
+      selectedIndex = 0;
+      renderPaletteResults();
+    }
+
+    function renderPaletteResults() {
+      paletteResults.innerHTML = '';
+      if (filteredItems.length === 0) {
+        paletteResults.innerHTML = `
+          <div style="padding: 2rem 1rem; text-align: center; color: var(--text-dim); font-size: 0.85rem;">
+            No commands matched your query.
+          </div>
+        `;
+        return;
+      }
+
+      let currentSection = '';
+      let relativeIndex = 0;
+
+      filteredItems.forEach((item, idx) => {
+        if (item.section !== currentSection) {
+          currentSection = item.section;
+          const secTitle = document.createElement('div');
+          secTitle.className = 'command-section-title';
+          secTitle.textContent = currentSection;
+          paletteResults.appendChild(secTitle);
+        }
+
+        const el = document.createElement('div');
+        el.className = 'command-item' + (idx === selectedIndex ? ' selected' : '');
+        el.innerHTML = `
+          <div class="command-item-left">
+            <i class="ti ${item.icon}"></i>
+            <span>${item.label}</span>
+          </div>
+          <span class="command-item-shortcut">${item.shortcut}</span>
+        `;
+        
+        el.addEventListener('click', () => executeItem(item));
+        paletteResults.appendChild(el);
+      });
+      
+      // Auto-scroll selected item into view
+      const selected = paletteResults.querySelector('.command-item.selected');
+      if (selected) {
+        selected.scrollIntoView({ block: 'nearest' });
+      }
+    }
+
+    function executeItem(item) {
+      togglePalette();
+      if (item.path) {
+        window.location.href = item.path;
+      } else if (item.action) {
+        applyTheme(item.action);
+        showToast(`Theme updated to ${item.action.toUpperCase()}`);
+      }
+    }
+
+    paletteInput.addEventListener('input', (e) => {
+      filterPalette(e.target.value);
+    });
+
+    paletteInput.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        selectedIndex = (selectedIndex + 1) % filteredItems.length;
+        renderPaletteResults();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        selectedIndex = (selectedIndex - 1 + filteredItems.length) % filteredItems.length;
+        renderPaletteResults();
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (filteredItems[selectedIndex]) {
+          executeItem(filteredItems[selectedIndex]);
+        }
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        togglePalette();
+      }
+    });
+
+    // Global Hotkeys
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        togglePalette();
+      }
+    });
+
+    // ── Fetch SaaS Auth Session & Dynamic Perms ─────────
+    async function initUserSession() {
+      try {
+        const token = localStorage.getItem('eto_access');
+        const headers = {};
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        const response = await fetch('/api/auth/me', { headers });
+        if (response.status === 401) {
+          window.location.href = '/app/#/login';
+          return;
+        }
+
+        if (response.ok) {
+          const profile = await response.json();
+          const roles = profile.roles || [];
+          const isAdmin = roles.includes('ADMIN') || roles.includes('SUPER_ADMIN') || roles.includes('SUPPORT') || roles.includes('READ_ONLY_ADMIN');
+
+          // Bind details to elements
+          const profileNames = document.querySelectorAll('.profile-name');
+          const emailText = document.getElementById('profile-email-text');
+          
+          profileNames.forEach(el => el.textContent = `${profile.first_name} ${profile.last_name}`);
+          if (emailText) emailText.textContent = profile.email;
+
+          if (isAdmin) {
+            // Uncover switcher and admin links
+            const switcher = document.getElementById('dashboard-switcher');
+            const adminLink = document.getElementById('profile-admin-link');
+            const adminDiv = document.getElementById('profile-admin-divider');
+            
+            if (switcher) switcher.style.display = 'block';
+            if (adminLink) adminLink.style.display = 'flex';
+            if (adminDiv) adminDiv.style.display = 'block';
+          }
+        }
+      } catch (err) {
+        console.warn('FastAPI auth session check failed:', err);
+      }
+    }
+    initUserSession();
+
+    // ── Disconnect session logouts ─────────────────────
+    const disconnectBtn = document.getElementById('disconnect-btn');
+    if (disconnectBtn) {
+      disconnectBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        if (confirm("Disconnect active multi-agent session?")) {
+          try {
+            const token = localStorage.getItem('eto_access');
+            const headers = {};
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            await fetch('/api/auth/logout', { method: 'POST', headers });
+          } catch (err) {}
+          
+          localStorage.removeItem('eto_user');
+          localStorage.removeItem('eto_access');
+          localStorage.removeItem('eto_refresh');
+          localStorage.removeItem('eto_is_impersonating');
+          localStorage.removeItem('eto_admin_access');
+          localStorage.removeItem('eto_admin_user');
+          window.location.href = '/app/#/login';
+        }
+      });
+    }
+  </script>
+
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

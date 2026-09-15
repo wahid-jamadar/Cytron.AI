@@ -1,0 +1,581 @@
+{% extends "base.html" %}
+
+{% block title %}AI Requirement Analyzer - Cytron.AI{% endblock %}
+
+{% block content %}
+<div style="text-align: center; margin-bottom: 2rem;">
+  <div class="logo-badge" style="display: inline-flex; align-items: center; gap: 8px; background: rgba(124,58,237,0.15); border: 1px solid var(--border-glow); border-radius: 100px; padding: 6px 16px; font-size: 0.75rem; color: var(--accent-2); font-weight: 600; text-transform: uppercase; margin-bottom: 1rem;"><i class="ti ti-clipboard-list"></i> AI Requirement Analyzer</div>
+  <h1 style="font-size: 2.5rem; margin-bottom: 1rem;">AI Requirement Analyzer</h1>
+  <p style="color: var(--text-muted);">Input unstructured requirements and generate structured functional/technical requirements.</p>
+</div>
+
+<div class="input-card" style="padding: 2rem;">
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+    <div>
+      <label class="input-label" style="color: var(--accent-2);"><i class="ti ti-file-description"></i> Project Overview</label>
+      <textarea id="ra-overview" placeholder="Briefly describe the project, its purpose, and the problem it solves..." style="width: 100%; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none; resize: vertical; color: var(--text); font-family: var(--font); font-size: 0.95rem; line-height: 1.6; min-height: 120px; padding: 1rem; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+    </div>
+    <div>
+      <label class="input-label" style="color: var(--info);"><i class="ti ti-target"></i> Key Objectives</label>
+      <textarea id="ra-objectives" placeholder="What are the main goals or success criteria for this project?" style="width: 100%; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none; resize: vertical; color: var(--text); font-family: var(--font); font-size: 0.95rem; line-height: 1.6; min-height: 120px; padding: 1rem; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+    </div>
+    <div>
+      <label class="input-label" style="color: var(--success);"><i class="ti ti-list-check"></i> Functional Requirements</label>
+      <textarea id="ra-functional" placeholder="List the specific features and capabilities the system must have..." style="width: 100%; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none; resize: vertical; color: var(--text); font-family: var(--font); font-size: 0.95rem; line-height: 1.6; min-height: 120px; padding: 1rem; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+    </div>
+    <div>
+      <label class="input-label" style="color: var(--warning);"><i class="ti ti-alert-triangle"></i> Constraints & Preferences</label>
+      <textarea id="ra-constraints" placeholder="Any technical constraints, preferred tech stack, or performance requirements?" style="width: 100%; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none; resize: vertical; color: var(--text); font-family: var(--font); font-size: 0.95rem; line-height: 1.6; min-height: 120px; padding: 1rem; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+    </div>
+  </div>
+</div>
+
+{% block extra_css %}
+<style>
+  .actions-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 1.5rem;
+    width: 100%;
+    transition: gap 0.4s ease;
+  }
+  .actions-container.has-cta {
+    gap: 1rem;
+  }
+  .actions-container .run-btn {
+    flex: 0 1 auto;
+    width: auto;
+    padding: 1rem 2.5rem;
+    margin-bottom: 0;
+    transition: all 0.4s ease;
+  }
+  #build-cta-container {
+    flex: 0 1 auto;
+    max-width: 0;
+    opacity: 0;
+    transform: translateX(20px);
+    transition: max-width 0.4s ease, opacity 0.3s ease, transform 0.4s ease;
+    display: flex;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .actions-container.has-cta #build-cta-container {
+    max-width: 50%;
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+  }
+  .build-btn {
+    width: auto;
+    padding: 1rem 2.5rem;
+    background: linear-gradient(135deg, #2563eb, #7c3aed, #0891b2);
+    border: none;
+    border-radius: var(--radius-sm);
+    color: #fff;
+    font-family: var(--font);
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    transition: all 0.25s;
+    position: relative;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: 0 10px 20px -3px rgba(124, 58, 237, 0.4);
+  }
+  .build-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+    opacity: 0;
+    transition: opacity 0.25s;
+  }
+  .build-btn:hover::after {
+    opacity: 1;
+  }
+  .build-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 32px rgba(124, 58, 237, 0.5);
+  }
+  .build-btn:active {
+    transform: translateY(0);
+  }
+</style>
+{% endblock %}
+
+<div class="actions-container" id="actions-container">
+  <button class="run-btn" onclick="runService()">
+    <i class="ti ti-sparkles"></i> Run AI Requirement Analyzer
+  </button>
+  
+  <div id="build-cta-container">
+    <button class="build-btn" onclick="letsBuildThisProject()">
+      <i class="ti ti-rocket"></i> Let's Build This Project!
+    </button>
+  </div>
+</div>
+
+<div class="result-card" id="result-card" style="display: none; background: var(--surface); border: 1px solid var(--success); border-radius: var(--radius); padding: 1.75rem;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+    <div class="result-title" style="font-size: 1.1rem; font-weight: 700; color: var(--success); display: flex; align-items: center; gap: 8px;"><i class="ti ti-circle-check"></i> Result</div>
+    <div style="display: flex; gap: 10px; align-items: center;">
+      <button id="copy-btn" onclick="copyContent()" style="display: none; background: var(--surface-2); color: var(--text); border: 1px solid var(--border); padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s;"><i class="ti ti-copy"></i> Copy</button>
+      <div class="view-toggle" id="view-toggle-container" style="display: none; background: var(--surface-2); padding: 4px; border-radius: 8px; border: 1px solid var(--border); align-items: center; gap: 4px;">
+        <button id="btn-formatted-view" onclick="switchView('formatted')" style="background: var(--surface-3); color: var(--text); border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s;"><i class="ti ti-layout-navbar"></i> Formatted</button>
+        <button id="btn-text-view" onclick="switchView('text')" style="background: transparent; color: var(--text-muted); border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s;"><i class="ti ti-code"></i> Text</button>
+      </div>
+    </div>
+  </div>
+  <div class="result-grid" id="result-grid" style="transition: opacity 0.2s ease-in-out;"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  let currentSpec = null;
+  let currentView = 'formatted';
+  let currentTextContent = '';
+
+  function switchView(mode) {
+    if (currentView === mode) return;
+    currentView = mode;
+    
+    const grid = document.getElementById('result-grid');
+    grid.style.opacity = '0';
+    
+    setTimeout(() => {
+      renderView();
+      grid.style.opacity = '1';
+    }, 200);
+  }
+  
+  function copyContent() {
+    const btn = document.getElementById('copy-btn');
+    const originalText = '<i class="ti ti-copy"></i> Copy';
+    
+    const onSuccess = () => {
+      btn.innerHTML = '<i class="ti ti-check" style="color: var(--success);"></i> Copied!';
+      setTimeout(() => { btn.innerHTML = originalText; }, 2000);
+    };
+    
+    const onError = (err) => {
+      console.error('Failed to copy: ', err);
+      // Fallback
+      navigator.clipboard.writeText(currentTextContent).then(onSuccess);
+    };
+
+    if (currentView === 'formatted') {
+      const grid = document.getElementById('result-grid');
+      const htmlToCopy = grid.innerHTML;
+      const textToCopy = grid.innerText;
+      
+      try {
+        const clipboardItem = new ClipboardItem({
+          'text/html': new Blob([htmlToCopy], { type: 'text/html' }),
+          'text/plain': new Blob([textToCopy], { type: 'text/plain' })
+        });
+        navigator.clipboard.write([clipboardItem]).then(onSuccess, onError);
+      } catch(e) {
+        navigator.clipboard.writeText(textToCopy).then(onSuccess, onError);
+      }
+    } else {
+      navigator.clipboard.writeText(currentTextContent).then(onSuccess, onError);
+    }
+  }
+
+  function renderView() {
+    if (!currentSpec) return;
+    
+    const btnFormatted = document.getElementById('btn-formatted-view');
+    const btnText = document.getElementById('btn-text-view');
+    const spec = currentSpec;
+    
+    if (currentView === 'formatted') {
+      btnFormatted.style.background = 'var(--surface-3)';
+      btnFormatted.style.color = 'var(--text)';
+      btnText.style.background = 'transparent';
+      btnText.style.color = 'var(--text-muted)';
+      
+      let html = `
+        <div class="spec-document" style="color: var(--text); font-family: var(--font);">
+          <div style="border-bottom: 2px solid var(--border); padding-bottom: 1.25rem; margin-bottom: 1.5rem;">
+            <h2 style="font-size: 2.25rem; color: var(--text); margin: 0 0 0.75rem 0; display: flex; align-items: center; gap: 12px; font-weight: 700;">
+              <i class="ti ti-app-window" style="color: var(--accent);"></i> ${spec.app_name || 'Application Specification'}
+            </h2>
+            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+              <span style="background: rgba(124,58,237,0.15); color: var(--accent-2); padding: 4px 14px; border-radius: 100px; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; border: 1px solid rgba(124,58,237,0.3);">Type: ${spec.app_type || 'N/A'}</span>
+            </div>
+          </div>
+          
+          <div style="margin-bottom: 2rem;">
+            <h3 style="font-size: 1.35rem; color: var(--text); margin-bottom: 0.75rem; border-left: 4px solid var(--accent); padding-left: 12px; font-weight: 600;">Description</h3>
+            <p style="line-height: 1.7; color: var(--text-muted); font-size: 1.05rem; margin: 0; padding-left: 16px;">${spec.description || 'No description provided.'}</p>
+          </div>
+          
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-bottom: 2rem;">
+            <div style="background: var(--surface-3); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem;">
+              <h3 style="font-size: 1.25rem; color: var(--text); margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;"><i class="ti ti-list-check" style="color: var(--success); font-size: 1.5rem;"></i> Features</h3>
+              <ul style="list-style-type: none; padding-left: 0; margin: 0; line-height: 1.6;">
+                ${(spec.features || []).map(f => `<li style="margin-bottom: 10px; display: flex; align-items: start; gap: 10px;"><i class="ti ti-check" style="color: var(--success); margin-top: 4px;"></i> <span style="color: var(--text-muted);">${f}</span></li>`).join('')}
+              </ul>
+            </div>
+            
+            <div style="background: var(--surface-3); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem;">
+              <h3 style="font-size: 1.25rem; color: var(--text); margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;"><i class="ti ti-users" style="color: var(--info); font-size: 1.5rem;"></i> User Roles</h3>
+              <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                ${(spec.user_roles || []).map(r => `<span style="background: var(--surface-2); color: var(--text); padding: 6px 14px; border-radius: 6px; font-size: 0.95rem; border: 1px solid var(--border); display: inline-flex; align-items: center; gap: 6px; font-weight: 500;"><i class="ti ti-user" style="color: var(--info);"></i> ${r}</span>`).join('')}
+              </div>
+            </div>
+          </div>
+          
+          <div style="margin-bottom: 2rem;">
+            <h3 style="font-size: 1.35rem; color: var(--text); margin-bottom: 1rem; border-left: 4px solid var(--warning); padding-left: 12px; font-weight: 600;">Data Entities</h3>
+            <div style="display: flex; flex-wrap: wrap; gap: 10px; padding-left: 16px;">
+              ${(spec.data_entities || []).map(e => `<span style="background: rgba(245,158,11,0.1); color: var(--warning); padding: 8px 16px; border-radius: 8px; font-size: 0.95rem; border: 1px solid rgba(245,158,11,0.25); display: inline-flex; align-items: center; gap: 6px; font-weight: 500;"><i class="ti ti-database"></i> ${e}</span>`).join('')}
+            </div>
+          </div>
+          
+          <div style="margin-bottom: 2.5rem;">
+            <h3 style="font-size: 1.35rem; color: var(--text); margin-bottom: 1.25rem; border-left: 4px solid var(--error); padding-left: 12px; font-weight: 600;">Workflows</h3>
+            <div style="display: flex; flex-direction: column; gap: 1.25rem; padding-left: 16px;">
+              ${(spec.workflows || []).map(w => `
+                <div style="background: var(--surface-3); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem;">
+                  <h4 style="margin: 0 0 12px 0; font-size: 1.15rem; color: var(--text); display: flex; align-items: center; gap: 8px; font-weight: 600;"><i class="ti ti-git-merge" style="color: var(--error);"></i> ${w.name}</h4>
+                  <ol style="margin: 0; padding-left: 1.5rem; line-height: 1.7; color: var(--text-muted);">
+                    ${(w.steps || []).map(s => `<li style="padding-left: 8px; margin-bottom: 6px;">${s}</li>`).join('')}
+                  </ol>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+          
+          <div style="margin-bottom: 2rem;">
+            <h3 style="font-size: 1.35rem; color: var(--text); margin-bottom: 1.25rem; border-left: 4px solid var(--accent-2); padding-left: 12px; font-weight: 600;">Non-Functional Requirements</h3>
+            <div style="border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-left: 16px;">
+              <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                <tbody>
+                  ${Object.entries(spec.non_functional || {}).map(([key, val], index, arr) => `
+                    <tr style="${index !== arr.length - 1 ? 'border-bottom: 1px solid var(--border);' : ''}">
+                      <th style="padding: 14px 20px; color: var(--text); text-transform: capitalize; width: 30%; font-weight: 600; background: var(--surface-3); border-right: 1px solid var(--border);">${key}</th>
+                      <td style="padding: 14px 20px; color: var(--text-muted); line-height: 1.6;">${val || 'None specified'}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          
+          ${(spec.clarifying_questions && spec.clarifying_questions.length > 0) ? `
+            <div style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; padding: 1.5rem; margin-top: 2rem;">
+              <h3 style="font-size: 1.25rem; color: #ef4444; margin: 0 0 1rem 0; display: flex; align-items: center; gap: 8px; font-weight: 600;"><i class="ti ti-help-hexagon"></i> Clarifying Questions Needed</h3>
+              <ul style="margin: 0; padding-left: 1.5rem; line-height: 1.7; color: var(--text);">
+                ${spec.clarifying_questions.map(q => `<li style="margin-bottom: 8px;">${q}</li>`).join('')}
+              </ul>
+            </div>
+          ` : ''}
+        </div>
+      `;
+      document.getElementById('result-grid').innerHTML = `<div style="padding: 1.5rem; background: var(--surface); border-radius: var(--radius-md); overflow-x: auto;">${html}</div>`;
+      
+    } else {
+      btnText.style.background = 'var(--surface-3)';
+      btnText.style.color = 'var(--text)';
+      btnFormatted.style.background = 'transparent';
+      btnFormatted.style.color = 'var(--text-muted)';
+      
+      let textOutput = `# Application Specification: ${spec.app_name || 'Application'}\n**Type:** ${spec.app_type || 'N/A'}\n\n`;
+      
+      textOutput += `## Description\n${spec.description || 'No description provided.'}\n\n`;
+      
+      textOutput += `## Features\n${(spec.features || []).map(f => `- ${f}`).join('\n')}\n\n`;
+      
+      textOutput += `## User Roles\n${(spec.user_roles || []).map(r => `- ${r}`).join('\n')}\n\n`;
+      
+      textOutput += `## Data Entities\n${(spec.data_entities || []).map(e => `- ${e}`).join('\n')}\n\n`;
+      
+      textOutput += `## Workflows\n${(spec.workflows || []).map(w => `### ${w.name}\n${(w.steps || []).map((s, i) => `${i + 1}. ${s}`).join('\n')}`).join('\n\n')}\n\n`;
+      
+      textOutput += `## Non-Functional Requirements\n${Object.entries(spec.non_functional || {}).map(([key, val]) => `- **${key}**: ${val || 'None specified'}`).join('\n')}\n`;
+      
+      if (spec.clarifying_questions && spec.clarifying_questions.length > 0) {
+        textOutput += `\n## Clarifying Questions Needed\n${spec.clarifying_questions.map(q => `- ${q}`).join('\n')}\n`;
+      }
+      
+      currentTextContent = textOutput;
+      
+      document.getElementById('result-grid').innerHTML = `
+        <div style="padding: 1.5rem; background: var(--surface-2); border-radius: var(--radius-md); border: 1px solid var(--border);">
+          <pre style="white-space: pre-wrap; font-family: var(--mono); color: var(--text-muted); margin: 0; line-height: 1.6; font-size: 0.95rem;">${textOutput}</pre>
+        </div>
+      `;
+    }
+  }
+
+  function runService() {
+    const btn = document.querySelector('.run-btn');
+    const originalBtnText = btn.innerHTML;
+    
+    const overview = document.getElementById('ra-overview').value;
+    const objectives = document.getElementById('ra-objectives').value;
+    const functional = document.getElementById('ra-functional').value;
+    const constraints = document.getElementById('ra-constraints').value;
+    
+    const consolidatedInput = `Project Overview:\n${overview}\n\nKey Objectives:\n${objectives}\n\nFunctional Requirements:\n${functional}\n\nConstraints & Preferences:\n${constraints}`;
+    
+    document.getElementById('view-toggle-container').style.display = 'none';
+    document.getElementById('copy-btn').style.display = 'none';
+    
+    const actionContainer = document.getElementById('actions-container');
+    if (actionContainer) {
+      actionContainer.classList.remove('has-cta');
+    }
+    
+    if (typeof startProcessingProgress === 'function') {
+      startProcessingProgress([
+        "Analyzing project overview...",
+        "Evaluating key objectives...",
+        "Parsing functional requirements...",
+        "Identifying technical constraints...",
+        "Structuring functional specifications...",
+        "Generating system architecture recommendations..."
+      ]);
+    } else {
+      btn.innerHTML = '<i class="ti ti-loader ti-spin"></i> Processing...';
+    }
+    btn.disabled = true;
+    
+    fetch('/requirement-analyzer/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ requirements: consolidatedInput })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (typeof stopProcessingProgress === 'function') stopProcessingProgress();
+      btn.innerHTML = originalBtnText;
+      btn.disabled = false;
+      document.getElementById('result-card').style.display = 'block';
+      
+      if (data.status === 'success') {
+        currentSpec = data.data;
+        document.getElementById('view-toggle-container').style.display = 'flex';
+        document.getElementById('copy-btn').style.display = 'flex';
+        
+        const actionContainer = document.getElementById('actions-container');
+        if (actionContainer) {
+          actionContainer.classList.add('has-cta');
+        }
+        
+        // Ensure currentTextContent is pre-populated
+        let spec = currentSpec;
+        let textOutput = `# Application Specification: ${spec.app_name || 'Application'}\n**Type:** ${spec.app_type || 'N/A'}\n\n`;
+        textOutput += `## Description\n${spec.description || 'No description provided.'}\n\n`;
+        textOutput += `## Features\n${(spec.features || []).map(f => `- ${f}`).join('\n')}\n\n`;
+        textOutput += `## User Roles\n${(spec.user_roles || []).map(r => `- ${r}`).join('\n')}\n\n`;
+        textOutput += `## Data Entities\n${(spec.data_entities || []).map(e => `- ${e}`).join('\n')}\n\n`;
+        textOutput += `## Workflows\n${(spec.workflows || []).map(w => `### ${w.name}\n${(w.steps || []).map((s, i) => `${i + 1}. ${s}`).join('\n')}`).join('\n\n')}\n\n`;
+        textOutput += `## Non-Functional Requirements\n${Object.entries(spec.non_functional || {}).map(([key, val]) => `- **${key}**: ${val || 'None specified'}`).join('\n')}\n`;
+        if (spec.clarifying_questions && spec.clarifying_questions.length > 0) {
+          textOutput += `\n## Clarifying Questions Needed\n${spec.clarifying_questions.map(q => `- ${q}`).join('\n')}\n`;
+        }
+        currentTextContent = textOutput;
+        
+        renderView();
+      } else {
+        const errorText = data.errors ? data.errors.join('<br>') : 'Unknown error occurred.';
+        document.getElementById('result-grid').innerHTML = `<div style="padding: 1.5rem; background: var(--surface); border-radius: var(--radius-md); overflow-x: auto;"><div style="color: var(--error); padding: 1rem;"><i class="ti ti-alert-triangle"></i> ${errorText}</div></div>`;
+      }
+    })
+    .catch(err => {
+      if (typeof stopProcessingProgress === 'function') stopProcessingProgress();
+      btn.innerHTML = originalBtnText;
+      btn.disabled = false;
+      document.getElementById('result-card').style.display = 'block';
+      document.getElementById('result-grid').innerHTML = `<div style="color: var(--error); padding: 1rem;"><i class="ti ti-alert-triangle"></i> Error generating requirements: ${err.message || err}</div>`;
+    });
+  }
+
+  // ── Integration & Inference Logic ──
+
+  function letsBuildThisProject() {
+    if (!currentSpec) return;
+
+    const importData = {
+      source: "RequirementAnalyzer",
+      prompt: currentTextContent,
+      inferredConfig: {
+        frontend: inferFrontend(currentSpec),
+        backend: inferBackend(currentSpec),
+        architecture: inferArchitecture(currentSpec),
+        appName: currentSpec.app_name,
+        appType: currentSpec.app_type,
+        database: inferDatabase(currentSpec),
+        auth: inferAuth(currentSpec),
+        security: currentSpec.non_functional ? currentSpec.non_functional.security : null,
+        scalability: currentSpec.non_functional ? currentSpec.non_functional.scalability : null,
+        performance: currentSpec.non_functional ? currentSpec.non_functional.performance : null
+      },
+      originalInputs: {
+        overview: document.getElementById('ra-overview').value,
+        objectives: document.getElementById('ra-objectives').value,
+        functional: document.getElementById('ra-functional').value,
+        constraints: document.getElementById('ra-constraints').value
+      }
+    };
+
+    sessionStorage.setItem('antigravity_import_data', JSON.stringify(importData));
+    window.location.href = '/build-complete-project/';
+  }
+
+  function inferFrontend(spec) {
+    const text = JSON.stringify(spec).toLowerCase();
+    const constraints = document.getElementById('ra-constraints').value.toLowerCase();
+    const combined = text + " " + constraints;
+
+    if (combined.includes('next.js') || combined.includes('nextjs')) return 'Next.js';
+    if (combined.includes('nuxt.js') || combined.includes('nuxtjs')) return 'Nuxt.js';
+    if (combined.includes('vue.js') || combined.includes('vuejs') || combined.includes(' vue ')) return 'Vue.js';
+    if (combined.includes('sveltekit')) return 'SvelteKit';
+    if (combined.includes('svelte')) return 'Svelte';
+    if (combined.includes('angular')) return 'Angular';
+    if (combined.includes('solidjs') || combined.includes('solid js')) return 'SolidJS';
+    if (combined.includes('qwik')) return 'Qwik';
+    if (combined.includes('remix')) return 'Remix';
+    if (combined.includes('preact')) return 'Preact';
+    if (combined.includes('lit')) return 'Lit';
+    if (combined.includes('alpine.js') || combined.includes('alpinejs')) return 'Alpine.js';
+    if (combined.includes('htmx')) return 'HTMX';
+    if (combined.includes('react native') || combined.includes('reactnative')) return 'React Native';
+    if (combined.includes('flutter')) return 'Flutter Web';
+    if (combined.includes('vanilla javascript') || combined.includes('vanilla js')) return 'Vanilla JavaScript';
+    if (combined.includes('bootstrap')) return 'Bootstrap';
+    if (combined.includes('tailwind')) return 'Tailwind CSS';
+    if (combined.includes('material ui') || combined.includes('mui')) return 'Material UI';
+    if (combined.includes('chakra')) return 'Chakra UI';
+    if (combined.includes('ant design') || combined.includes('antd')) return 'Ant Design';
+    if (combined.includes('shadcn')) return 'Shadcn/UI';
+    if (combined.includes('ionic')) return 'Ionic';
+    if (combined.includes('basic html')) return 'Basic HTML/CSS/JS';
+    if (combined.includes('react')) return 'React';
+
+    return 'React';
+  }
+
+  function inferBackend(spec) {
+    const text = JSON.stringify(spec).toLowerCase();
+    const constraints = document.getElementById('ra-constraints').value.toLowerCase();
+    const combined = text + " " + constraints;
+
+    if (combined.includes('nestjs') || combined.includes('nest.js')) return 'NestJS';
+    if (combined.includes('django')) return 'Python (Django)';
+    if (combined.includes('flask')) return 'Python (Flask)';
+    if (combined.includes('tornado')) return 'Python (Tornado)';
+    if (combined.includes('fastapi')) return 'Python (FastAPI)';
+    if (combined.includes('spring boot') || combined.includes('springboot')) return 'Java (Spring Boot)';
+    if (combined.includes('quarkus')) return 'Java (Quarkus)';
+    if (combined.includes('micronaut')) return 'Java (Micronaut)';
+    if (combined.includes('fiber')) return 'Go (Fiber)';
+    if (combined.includes('echo')) return 'Go (Echo)';
+    if (combined.includes('chi')) return 'Go (Chi)';
+    if (combined.includes('gin') || combined.includes(' go ')) return 'Go (Gin)';
+    if (combined.includes('minimal api')) return 'ASP.NET Minimal API';
+    if (combined.includes('asp.net') || combined.includes('c#')) return 'ASP.NET Core';
+    if (combined.includes('laravel')) return 'PHP (Laravel)';
+    if (combined.includes('symfony')) return 'PHP (Symfony)';
+    if (combined.includes('codeigniter')) return 'PHP (CodeIgniter)';
+    if (combined.includes('phoenix') || combined.includes('elixir')) return 'Elixir (Phoenix)';
+    if (combined.includes('actix')) return 'Rust (Actix Web)';
+    if (combined.includes('axum')) return 'Rust (Axum)';
+    if (combined.includes('rocket') || combined.includes('rust')) return 'Rust (Rocket)';
+    if (combined.includes('ktor') || combined.includes('kotlin')) return 'Kotlin (Ktor)';
+    if (combined.includes('graphql')) return 'GraphQL Server';
+    if (combined.includes('grpc')) return 'gRPC Services';
+    if (combined.includes('express') || combined.includes('node')) return 'Node.js (Express)';
+
+    return 'Python (FastAPI)';
+  }
+
+  function inferArchitecture(spec) {
+    const text = JSON.stringify(spec).toLowerCase();
+    const constraints = document.getElementById('ra-constraints').value.toLowerCase();
+    const combined = text + " " + constraints;
+
+    if (combined.includes('modular monolith')) return 'Modular Monolith';
+    if (combined.includes('microservices') || combined.includes('microservice')) return 'Microservices';
+    if (combined.includes('event-driven') || combined.includes('event driven')) return 'Event-Driven Architecture';
+    if (combined.includes('service-oriented') || combined.includes('soa')) return 'Service-Oriented Architecture (SOA)';
+    if (combined.includes('serverless')) return 'Serverless';
+    if (combined.includes('hexagonal') || combined.includes('ports and adapters') || combined.includes('ports & adapters')) return 'Hexagonal Architecture (Ports & Adapters)';
+    if (combined.includes('clean architecture') || combined.includes('clean arch')) return 'Clean Architecture';
+    if (combined.includes('onion architecture') || combined.includes('onion')) return 'Onion Architecture';
+    if (combined.includes('layered') || combined.includes('n-tier') || combined.includes('n tier')) return 'Layered (N-Tier) Architecture';
+    if (combined.includes('domain-driven') || combined.includes('ddd')) return 'Domain-Driven Design (DDD)';
+    if (combined.includes('cqrs')) return 'CQRS';
+    if (combined.includes('event sourcing')) return 'Event Sourcing';
+    if (combined.includes('microkernel') || combined.includes('plugin')) return 'Microkernel (Plugin Architecture)';
+    if (combined.includes('pipe and filter')) return 'Pipe and Filter';
+    if (combined.includes('client-server')) return 'Client-Server';
+    if (combined.includes('backend for frontend') || combined.includes('bff')) return 'Backend for Frontend (BFF)';
+    if (combined.includes('mvc')) return 'MVC';
+    if (combined.includes('mvvm')) return 'MVVM';
+    if (combined.includes('jamstack')) return 'Jamstack';
+    if (combined.includes('headless')) return 'Headless Architecture';
+    if (combined.includes('hybrid')) return 'Hybrid Architecture';
+    if (combined.includes('peer-to-peer') || combined.includes('p2p')) return 'Peer-to-Peer (P2P)';
+
+    return 'Monolithic';
+  }
+
+  function inferDatabase(spec) {
+    const text = JSON.stringify(spec).toLowerCase();
+    const constraints = document.getElementById('ra-constraints').value.toLowerCase();
+    const combined = text + " " + constraints;
+
+    if (combined.includes('postgresql') || combined.includes('postgres')) return 'PostgreSQL';
+    if (combined.includes('mysql')) return 'MySQL';
+    if (combined.includes('mongodb') || combined.includes('mongo')) return 'MongoDB';
+    if (combined.includes('sqlite')) return 'SQLite';
+    if (combined.includes('redis')) return 'Redis';
+    if (combined.includes('dynamodb')) return 'DynamoDB';
+    
+    return 'SQLite';
+  }
+
+  function inferAuth(spec) {
+    const text = JSON.stringify(spec).toLowerCase();
+    const constraints = document.getElementById('ra-constraints').value.toLowerCase();
+    const combined = text + " " + constraints;
+
+    if (combined.includes('oauth') || combined.includes('oauth2')) return 'OAuth2 / OpenID Connect';
+    if (combined.includes('session')) return 'Session Cookie';
+    if (combined.includes('jwt')) return 'JWT Tokens';
+    if (combined.includes('api key') || combined.includes('apikey')) return 'API Keys';
+
+    return 'JWT Tokens';
+  }
+
+  // ── Restoration Hook on Page Load ──
+  window.addEventListener('DOMContentLoaded', () => {
+    const editDataStr = sessionStorage.getItem('antigravity_edit_data');
+    if (editDataStr) {
+      try {
+        const editData = JSON.parse(editDataStr);
+        if (editData.overview) document.getElementById('ra-overview').value = editData.overview;
+        if (editData.objectives) document.getElementById('ra-objectives').value = editData.objectives;
+        if (editData.functional) document.getElementById('ra-functional').value = editData.functional;
+        if (editData.constraints) document.getElementById('ra-constraints').value = editData.constraints;
+      } catch (e) {
+        console.error("Failed to restore edit requirements state:", e);
+      }
+      sessionStorage.removeItem('antigravity_edit_data');
+    }
+  });
+
+</script>
+{% endblock %}

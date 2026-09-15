@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}SQL Query Generator - Cytron.AI{% endblock %}
+
+{% block content %}
+<div style="text-align: center; margin-bottom: 2rem;">
+  <div class="logo-badge" style="display: inline-flex; align-items: center; gap: 8px; background: rgba(124,58,237,0.15); border: 1px solid var(--border-glow); border-radius: 100px; padding: 6px 16px; font-size: 0.75rem; color: var(--accent-2); font-weight: 600; text-transform: uppercase; margin-bottom: 1rem;"><i class="ti ti-terminal-2"></i> SQL Query Generator</div>
+  <h1 style="font-size: 2.5rem; margin-bottom: 1rem;">SQL Query Generator</h1>
+  <p style="color: var(--text-muted);">Convert natural language requirements into optimized SQL queries.</p>
+</div>
+
+<div class="input-card" style="padding: 2rem;">
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;">
+    <div>
+      <label class="input-label" style="color: var(--accent-2);"><i class="ti ti-database"></i> Database Dialect</label>
+      <select id="sql-dialect" style="width: 100%; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none; color: var(--text); font-family: var(--font); font-size: 0.95rem; padding: 0.75rem; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        <option value="PostgreSQL">PostgreSQL</option>
+        <option value="MySQL">MySQL</option>
+        <option value="SQL Server">T-SQL (SQL Server)</option>
+        <option value="Oracle">PL/SQL (Oracle)</option>
+        <option value="SQLite">SQLite</option>
+      </select>
+    </div>
+    <div>
+      <label class="input-label" style="color: var(--success);"><i class="ti ti-code"></i> Output Formatting</label>
+      <select id="sql-format" style="width: 100%; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none; color: var(--text); font-family: var(--font); font-size: 0.95rem; padding: 0.75rem; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        <option value="Formatted (Pretty Print)">Formatted (Pretty Print)</option>
+        <option value="Inline (Single Line)">Inline (Single Line)</option>
+        <option value="ORM Code (SQLAlchemy/Sequelize)">ORM Code (SQLAlchemy/Sequelize)</option>
+      </select>
+    </div>
+    <div>
+      <label class="input-label" style="color: var(--warning);"><i class="ti ti-settings"></i> Query Options</label>
+      <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem;">
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+          <input type="checkbox" id="sql-opt-comments" checked style="accent-color: var(--accent);"> <span style="font-size: 0.9rem; color: var(--text);">Include comments explaining logic</span>
+        </label>
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+          <input type="checkbox" id="sql-opt-optimize" checked style="accent-color: var(--accent);"> <span style="font-size: 0.9rem; color: var(--text);">Optimize for performance (indexes)</span>
+        </label>
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+          <input type="checkbox" id="sql-opt-ctes" style="accent-color: var(--accent);"> <span style="font-size: 0.9rem; color: var(--text);">Prefer CTEs over Subqueries</span>
+        </label>
+      </div>
+    </div>
+  </div>
+  
+  <div style="margin-bottom: 1.5rem;">
+    <label class="input-label" style="color: var(--info);"><i class="ti ti-table"></i> Database Schema (Optional)</label>
+    <div style="border: 1px dashed var(--border); border-radius: var(--radius-sm); padding: 1.5rem; text-align: center; background: var(--surface-2); color: var(--text-muted); cursor: pointer; transition: all 0.2s;" onclick="document.getElementById('sql-schema-upload').click()" onmouseover="this.style.borderColor='var(--accent)'; this.style.color='var(--accent-2)';" onmouseout="this.style.borderColor='var(--border)'; this.style.color='var(--text-muted)';">
+      <i class="ti ti-file-upload" style="font-size: 2rem; margin-bottom: 0.5rem;"></i>
+      <p style="font-size: 0.9rem;">Upload SQL dump, JSON schema, or Prisma schema</p>
+      <input type="file" id="sql-schema-upload" accept=".sql,.json,.prisma" style="display: none;">
+    </div>
+    <div style="margin-top: 0.75rem;">
+      <textarea id="sql-schema-text" placeholder="Or paste your table structures here (e.g., 'Table Users(id, name), Table Orders(id, user_id, amount)')..." style="width: 100%; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none; resize: vertical; color: var(--text); font-family: var(--mono); font-size: 0.85rem; line-height: 1.5; min-height: 80px; padding: 0.75rem; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+    </div>
+  </div>
+
+  <div>
+    <label class="input-label"><i class="ti ti-message-chatbot"></i> Natural Language Query</label>
+    <textarea id="sql-query" placeholder="What do you want to query? (e.g., 'Get the top 5 customers by total order amount this month, including their email addresses, but only for active accounts')..." style="width: 100%; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none; resize: vertical; color: var(--text); font-family: var(--font); font-size: 0.95rem; line-height: 1.6; min-height: 100px; padding: 1rem; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+  </div>
+</div>
+
+<button class="run-btn" onclick="runService()">
+  <i class="ti ti-sparkles"></i> Run SQL Query Generator
+</button>
+
+<div class="result-card" id="result-card" style="display: none; background: var(--surface); border: 1px solid var(--success); border-radius: var(--radius); padding: 1.75rem;">
+  <div class="result-title" style="font-size: 1.1rem; font-weight: 700; color: var(--success); margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px;"><i class="ti ti-circle-check"></i> Result</div>
+  <div class="result-grid" id="result-grid"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function runService() {
+    const btn = document.querySelector('.run-btn');
+    const originalBtnText = btn.innerHTML;
+    
+    const dialect = document.getElementById('sql-dialect').value;
+    const format = document.getElementById('sql-format').value;
+    const optComments = document.getElementById('sql-opt-comments').checked;
+    const optOptimize = document.getElementById('sql-opt-optimize').checked;
+    const optCtes = document.getElementById('sql-opt-ctes').checked;
+    const schema = document.getElementById('sql-schema-text').value;
+    const query = document.getElementById('sql-query').value;
+    
+    const consolidatedInput = `Dialect: ${dialect}\nFormat: ${format}\nComments: ${optComments}\nOptimize: ${optOptimize}\nCTEs: ${optCtes}\n\nSchema:\n${schema}\n\nQuery:\n${query}`;
+    
+    if (typeof startProcessingProgress === 'function') {
+      startProcessingProgress([
+        "Parsing natural language request...",
+        "Analyzing database schema...",
+        "Resolving table relationships and joins...",
+        "Applying database-specific syntax...",
+        "Optimizing query performance...",
+        "Formatting final SQL statement..."
+      ]);
+    } else {
+      btn.innerHTML = '<i class="ti ti-loader ti-spin"></i> Processing...';
+    }
+    btn.disabled = true;
+    
+    // Real processing via API
+    fetch('/sql-query-generator/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ requirements: consolidatedInput })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (typeof stopProcessingProgress === 'function') stopProcessingProgress();
+      btn.innerHTML = originalBtnText;
+      btn.disabled = false;
+      document.getElementById('result-card').style.display = 'block';
+      let outputHTML = '';
+      if (data.status === 'success') {
+        outputHTML = `<pre style="white-space: pre-wrap; font-family: var(--mono); color: var(--success);">${data.output.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>`;
+      } else {
+        outputHTML = `<div style="color: var(--error);">${data.error}</div>`;
+      }
+      document.getElementById('result-grid').innerHTML = `<div style="padding: 10px 14px; background: var(--surface-2); border-radius: var(--radius-sm); border: 1px solid var(--border);">${outputHTML}</div>`;
+    })
+    .catch(err => {
+      if (typeof stopProcessingProgress === 'function') stopProcessingProgress();
+      btn.innerHTML = originalBtnText;
+      btn.disabled = false;
+      document.getElementById('result-card').style.display = 'block';
+      document.getElementById('result-grid').innerHTML = `<div style="color: var(--error);">Error generating query.</div>`;
+    });
+  }
+</script>
+{% endblock %}

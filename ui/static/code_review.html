@@ -1,0 +1,785 @@
+{% extends "base.html" %}
+
+{% block title %}Code Review - Cytron.AI{% endblock %}
+
+{% block extra_css %}
+<!-- Font Awesome 6.4.2 -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+
+<style>
+  .workspace-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    align-items: start;
+    transition: all 0.5s ease;
+  }
+  
+  @media (min-width: 1024px) {
+    .workspace-container.generating {
+      grid-template-columns: 1fr 1.5fr;
+    }
+  }
+
+  .config-panel {
+    transition: opacity 0.3s ease;
+  }
+
+  /* Generation Panel Styles */
+  .generation-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 700px;
+    opacity: 0;
+    transform: translateX(20px);
+    transition: all 0.5s ease;
+    overflow: hidden;
+  }
+
+  .generation-panel.active {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .panel-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+  }
+
+  .stage-indicator {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--accent-2);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .panel-body {
+    padding: 1.5rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .skeleton-line {
+    height: 12px;
+    background: linear-gradient(90deg, #2d2d2d 25%, #3d3d3d 50%, #2d2d2d 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    border-radius: 4px;
+    margin-bottom: 12px;
+  }
+
+  .skeleton-line.short { width: 40%; }
+  .skeleton-line.medium { width: 70%; }
+  .skeleton-line.long { width: 90%; }
+  
+  @keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  .loading-skeletons {
+    padding: 1.5rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .report-viewer-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    gap: 1.5rem;
+  }
+  
+  .report-viewer-container.visible {
+    opacity: 1;
+  }
+
+  .score-card {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .score-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: bold;
+    color: #fff;
+  }
+
+  .score-circle.excellent { background: var(--success); }
+  .score-circle.good { background: var(--info); }
+  .score-circle.warning { background: var(--warning); color: #000; }
+  .score-circle.poor { background: var(--error); }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1rem;
+    flex: 1;
+  }
+  .stat-box {
+    background: var(--surface-3);
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
+    border: 1px solid var(--border);
+  }
+  .stat-val { font-size: 1.5rem; font-weight: bold; }
+  .stat-label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); }
+
+  .sev-critical { color: #ff4d4f; }
+  .sev-high { color: #fa8c16; }
+  .sev-medium { color: #fadb14; }
+  .sev-low { color: #1890ff; }
+  .sev-info { color: #52c41a; }
+
+  .findings-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    overflow-y: auto;
+  }
+
+  .finding-card {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--info);
+    border-radius: var(--radius-sm);
+    padding: 1.5rem;
+  }
+  
+  .finding-card.critical { border-left-color: #ff4d4f; }
+  .finding-card.high { border-left-color: #fa8c16; }
+  .finding-card.medium { border-left-color: #fadb14; }
+  .finding-card.low { border-left-color: #1890ff; }
+  .finding-card.info { border-left-color: #52c41a; }
+
+  .finding-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+  }
+
+  .finding-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    color: var(--text);
+  }
+
+  .finding-meta {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    display: flex;
+    gap: 10px;
+  }
+
+  .finding-badge {
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  
+  .finding-badge.critical { background: rgba(255, 77, 79, 0.2); color: #ff4d4f; }
+  .finding-badge.high { background: rgba(250, 140, 22, 0.2); color: #fa8c16; }
+  .finding-badge.medium { background: rgba(250, 219, 20, 0.2); color: #fadb14; }
+  .finding-badge.low { background: rgba(24, 144, 255, 0.2); color: #1890ff; }
+  .finding-badge.info { background: rgba(82, 196, 26, 0.2); color: #52c41a; }
+
+  .finding-body {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--text);
+    margin-bottom: 1rem;
+  }
+
+  .finding-code-block {
+    background: #1e1e1e;
+    border-radius: 6px;
+    padding: 1rem;
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    overflow-x: auto;
+    border: 1px solid #333;
+    margin-bottom: 1rem;
+  }
+
+  .finding-code-block .line-no {
+    color: #666;
+    user-select: none;
+    margin-right: 1rem;
+    display: inline-block;
+    width: 25px;
+    text-align: right;
+  }
+
+  .diff-add { color: #a6e22e; background: rgba(166,226,46,0.1); display: block; }
+  .diff-remove { color: #f92672; background: rgba(249,38,114,0.1); display: block; }
+
+  .apply-btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .apply-btn:hover { background: var(--accent-hover); }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="text-align: center; margin-bottom: 2rem;">
+  <div class="logo-badge" style="display: inline-flex; align-items: center; gap: 8px; background: rgba(124,58,237,0.15); border: 1px solid var(--border-glow); border-radius: 100px; padding: 6px 16px; font-size: 0.75rem; color: var(--accent-2); font-weight: 600; text-transform: uppercase; margin-bottom: 1rem;"><i class="ti ti-search"></i> Code Review</div>
+  <h1 style="font-size: 2.5rem; margin-bottom: 1rem;">Code Review</h1>
+  <p style="color: var(--text-muted);">Analyze source code for quality, security, and best-practice recommendations.</p>
+</div>
+
+<div class="workspace-container" id="workspace-container">
+  <!-- Left Panel: Configuration -->
+  <div class="config-panel">
+    <div class="input-card" style="padding: 2rem;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+        <div style="grid-column: span 2;">
+          <label class="input-label" style="color: var(--accent-2);"><i class="ti ti-code"></i> Source Code</label>
+          <div style="border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; display: flex; flex-direction: column;">
+            <div style="background: var(--surface-3); padding: 0.5rem 1rem; display: flex; gap: 1rem; align-items: center; border-bottom: 1px solid var(--border);">
+              <div style="display: flex; gap: 6px;">
+                <div style="width: 10px; height: 10px; border-radius: 50%; background: var(--error);"></div>
+                <div style="width: 10px; height: 10px; border-radius: 50%; background: var(--warning);"></div>
+                <div style="width: 10px; height: 10px; border-radius: 50%; background: var(--success);"></div>
+              </div>
+              <span style="font-size: 0.8rem; color: var(--text-muted); font-family: var(--mono);" id="current-filename">snippet.py</span>
+              <button style="margin-left: auto; background: transparent; border: 1px dashed var(--accent); color: var(--accent-2); padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; cursor: pointer;" onclick="document.getElementById('cr-upload').click()"><i class="ti ti-upload"></i> Upload File</button>
+              <input type="file" id="cr-upload" style="display: none;">
+            </div>
+            <textarea id="cr-code" placeholder="Paste your code here for review..." style="width: 100%; background: var(--surface-2); border: none; outline: none; resize: vertical; color: var(--text); font-family: var(--mono); font-size: 0.9rem; line-height: 1.6; min-height: 250px; padding: 1rem; transition: background 0.2s;" onfocus="this.style.background='var(--surface)'" onblur="this.style.background='var(--surface-2)'"></textarea>
+          </div>
+        </div>
+        
+        <div style="grid-column: span 2;">
+          <div style="background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1.5rem;">
+            <label class="input-label" style="color: var(--info);"><i class="ti ti-adjustments"></i> Review Options</label>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
+              <div>
+                <span style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">Review Depth</span>
+                <select id="cr-depth" style="width: 100%; background: var(--surface-3); border: 1px solid var(--border); border-radius: 6px; outline: none; color: var(--text); font-family: var(--font); font-size: 0.9rem; padding: 0.6rem;">
+                  <option value="Standard">Standard (Syntax & Logic)</option>
+                  <option value="Deep">Deep (Architecture & Optimization)</option>
+                  <option value="Light">Light (Quick Look)</option>
+                </select>
+              </div>
+              
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                  <input type="checkbox" id="cr-opt-security" checked style="accent-color: var(--error);"> <span style="font-size: 0.9rem; color: var(--text);">Security</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                  <input type="checkbox" id="cr-opt-perf" checked style="accent-color: var(--warning);"> <span style="font-size: 0.9rem; color: var(--text);">Performance</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                  <input type="checkbox" id="cr-opt-style" checked style="accent-color: var(--success);"> <span style="font-size: 0.9rem; color: var(--text);">Style</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                  <input type="checkbox" id="cr-opt-docs" style="accent-color: var(--info);"> <span style="font-size: 0.9rem; color: var(--text);">Documentation</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button id="proceed-btn" class="run-btn" onclick="startReview()">
+      <i class="ti ti-sparkles"></i> Run Code Review
+    </button>
+  </div>
+
+  <!-- Right Panel: Generation Workspace -->
+  <div class="generation-panel" id="generation-panel">
+    <div class="panel-header">
+      <div class="stage-indicator" id="stage-indicator">
+        <i class="fas fa-circle-notch fa-spin"></i> <span>Initializing AI engines...</span>
+      </div>
+    </div>
+    
+    <div class="panel-body">
+      <!-- Loading Skeletons -->
+      <div id="loading-skeletons" class="loading-skeletons">
+        <div class="skeleton-line medium"></div>
+        <div class="skeleton-line long"></div>
+        <div class="skeleton-line long"></div>
+        <br>
+        <div class="skeleton-line short"></div>
+        <div class="skeleton-line medium"></div>
+        <div class="skeleton-line long"></div>
+        <br>
+        <div class="skeleton-line short"></div>
+        <div class="skeleton-line long"></div>
+      </div>
+
+      <!-- Report Viewer -->
+      <div id="report-viewer" class="report-viewer-container">
+        <!-- Will be populated by JS -->
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const viewer = document.getElementById('report-viewer');
+  let currentReportFiles = {};
+  let currentReportData = null;
+
+  function getScoreClass(score) {
+    if (score >= 90) return 'excellent';
+    if (score >= 75) return 'good';
+    if (score >= 50) return 'warning';
+    return 'poor';
+  }
+
+  function getSevCounts(report) {
+    let c = {critical: 0, high: 0, medium: 0, low: 0, info: 0};
+    if (report.findings) {
+        report.findings.forEach(f => {
+            const sev = (f.severity || 'info').toLowerCase();
+            if (c[sev] !== undefined) c[sev]++;
+        });
+    }
+    return c;
+  }
+
+  function renderReport(report, isComparison = false, prevReport = null) {
+    currentReportData = report;
+    const sum = report.summary;
+    const meta = report.review_metadata || {};
+    const cov = meta.coverage || [];
+    
+    let comparisonHtml = '';
+    if (isComparison && prevReport) {
+        const pSum = prevReport.summary.overall_score;
+        const cSum = sum.overall_score;
+        const delta = cSum - pSum;
+        const deltaHtml = delta > 0 ? `<span style="color:var(--success)">+${delta}</span>` : (delta < 0 ? `<span style="color:var(--error)">${delta}</span>` : '0');
+        
+        const pCounts = getSevCounts(prevReport);
+        const cCounts = getSevCounts(report);
+        
+        comparisonHtml = `
+            <div style="background: var(--surface-3); padding: 1rem; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h3 style="margin: 0; color: var(--accent-2);">Re-Review Complete</h3>
+                    <p style="margin: 0.5rem 0 0 0; color: var(--text-muted); font-size: 0.9rem;">The fix has been applied and validated.</p>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 1.5rem; font-weight: bold;">Score: ${pSum} &rarr; ${cSum} (${deltaHtml})</div>
+                    <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem;">
+                        Critical: ${pCounts.critical} &rarr; ${cCounts.critical} | 
+                        High: ${pCounts.high} &rarr; ${cCounts.high}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    let coverageHtml = '';
+    if (cov.length > 0) {
+      coverageHtml = `
+        <div style="background: var(--surface-3); padding: 1rem; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 1.5rem;">
+          <h4 style="margin-top:0; margin-bottom:0.5rem; font-size:0.9rem; color:var(--text-muted);">Analysis Coverage</h4>
+          <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+            ${cov.map(c => `<span style="font-size:0.75rem; background: var(--surface-2); padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); color: ${c.startsWith('✓') ? 'var(--success)' : (c.startsWith('○') ? 'var(--text-muted)' : 'var(--warning)')}">${c}</span>`).join('')}
+          </div>
+          <div style="margin-top: 0.75rem; font-size: 0.75rem; color: var(--text-muted); display: flex; gap: 1rem;">
+            <span><i class="ti ti-code"></i> Language: ${meta.language || '?'}</span>
+            <span><i class="ti ti-clock"></i> Duration: ${meta.duration_seconds || '?'}s</span>
+            <span><i class="ti ti-file-code"></i> Lines: ${meta.lines_analyzed || '?'}</span>
+            <span><i class="ti ti-zoom-in"></i> Depth: ${meta.review_depth || '?'}</span>
+          </div>
+        </div>
+      `;
+    }
+    
+    let breakdownHtml = '';
+    if (sum.score_breakdown) {
+        breakdownHtml = `
+            <div style="margin-top: 1.5rem;">
+                <h4 style="margin-top:0; margin-bottom:0.5rem; font-size:0.9rem; color:var(--text-muted);">Score Breakdown</h4>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem;">
+                    ${Object.entries(sum.score_breakdown).map(([k, v]) => `
+                        <div style="background: var(--surface-2); padding: 0.5rem; border: 1px solid var(--border); border-radius: 4px; display: flex; justify-content: space-between; font-size: 0.8rem;">
+                            <span style="text-transform: capitalize; color: var(--text-muted);">${k}</span>
+                            <span style="font-weight: bold; color: ${v > 80 ? 'var(--success)' : (v > 50 ? 'var(--warning)' : 'var(--error)')}">${v}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+    
+    const counts = getSevCounts(report);
+
+    let html = `
+      ${comparisonHtml}
+      ${coverageHtml}
+      <div class="score-card" style="flex-direction: column; align-items: stretch;">
+        <div style="display: flex; align-items: center; gap: 1.5rem;">
+            <div class="score-circle ${getScoreClass(sum.overall_score)}">${sum.overall_score}</div>
+            <div class="stats-grid">
+              <div class="stat-box"><div class="stat-val sev-critical">${counts.critical}</div><div class="stat-label">Critical</div></div>
+              <div class="stat-box"><div class="stat-val sev-high">${counts.high}</div><div class="stat-label">High</div></div>
+              <div class="stat-box"><div class="stat-val sev-medium">${counts.medium}</div><div class="stat-label">Medium</div></div>
+              <div class="stat-box"><div class="stat-val sev-low">${counts.low}</div><div class="stat-label">Low</div></div>
+              <div class="stat-box"><div class="stat-val sev-info">${counts.info}</div><div class="stat-label">Info</div></div>
+            </div>
+        </div>
+        ${breakdownHtml}
+      </div>
+      <div class="findings-container">
+    `;
+
+    if (!report.findings || report.findings.length === 0) {
+      html += `<div class="finding-card info"><div class="finding-title">No issues found!</div><div class="finding-body">Excellent work. The analysis engines found zero issues in the submitted code.</div></div>`;
+    } else {
+      report.findings.forEach((f, idx) => {
+        const sevClass = (f.severity || 'info').toLowerCase();
+        
+        let codeHtml = '';
+        if (f.source_excerpt) {
+          const lines = f.source_excerpt.split('\n');
+          let startNo = parseInt(f.line_start) || 1;
+          const snippetHtml = lines.map(l => {
+              const esc = l.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+              return `<div><span class="line-no">${startNo++}</span>${esc}</div>`;
+          }).join('');
+          codeHtml = `<div class="finding-code-block">${snippetHtml}</div>`;
+        }
+        
+        let fixHtml = '';
+        if (f.patch && f.fix_validation && !f.fix_validation.includes('invalid')) {
+            const fixEscaped = f.patch.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            let formattedFix = fixEscaped.split('\n').map(line => {
+                if (line.startsWith('+') && !line.startsWith('+++')) return `<div class="diff-add">${line}</div>`;
+                if (line.startsWith('-') && !line.startsWith('---')) return `<div class="diff-remove">${line}</div>`;
+                return `<div>${line}</div>`;
+            }).join('');
+            
+            let valStatus = f.fix_validation;
+            let valColor = valStatus.includes('✓') ? 'var(--success)' : 'var(--warning)';
+            
+            fixHtml = `
+              <div style="margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                  <strong style="color:var(--success);">Suggested Fix:</strong>
+                  <span style="font-size:0.75rem; padding:2px 6px; border-radius:4px; border:1px solid ${valColor}; color:${valColor};">${valStatus}</span>
+                </div>
+                <div class="finding-code-block">${formattedFix}</div>
+                <div style="text-align: right;">
+                  <button class="apply-btn" onclick="applyFix(${idx})"><i class="ti ti-bolt"></i> Apply Fix</button>
+                </div>
+              </div>`;
+        } else if (f.suggested_fix && (!f.patch || f.fix_validation.includes('invalid'))) {
+            // Malformed patch or validation failed, just show it but disable apply
+            fixHtml = `
+              <div style="margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                  <strong style="color:var(--error);">Failed Validation:</strong>
+                  <span style="font-size:0.75rem; padding:2px 6px; border-radius:4px; border:1px solid var(--error); color:var(--error);">${f.fix_validation || 'Invalid Syntax'}</span>
+                </div>
+                <div class="finding-code-block">${f.suggested_fix.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+                <div style="color: var(--warning); font-size: 0.8rem;">Automatic application unavailable. Manual remediation recommended.</div>
+              </div>`;
+        }
+
+        html += `
+          <div class="finding-card ${sevClass}">
+            <div class="finding-header">
+              <div>
+                <div class="finding-title">${f.title || 'Finding'}</div>
+                <div class="finding-meta">
+                  <span style="color: var(--text-muted);"><i class="ti ti-file"></i> ${f.file || 'snippet.py'}:${f.line_start || '?'}</span>
+                  <span><i class="ti ti-category"></i> ${f.category || 'general'}</span>
+                </div>
+              </div>
+              <div class="finding-badge ${sevClass}">${f.severity || 'INFO'}</div>
+            </div>
+            
+            ${codeHtml}
+            
+            <div class="finding-body">
+              <strong>Description:</strong> ${f.description || ''}<br><br>
+              <strong>Impact:</strong> ${f.why_it_matters || ''}<br><br>
+              <strong>Recommendation:</strong> ${f.recommendation || ''}
+            </div>
+            ${fixHtml}
+          </div>
+        `;
+      });
+      
+      // Category summaries section
+      const cats = report.category_summaries || {};
+      html += `
+        <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+          <h3 style="margin-bottom: 1rem;">Category Summaries</h3>
+          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem;">
+            ${Object.entries(cats).map(([k, v]) => `
+              <div style="background: var(--surface-3); padding: 1rem; border-radius: 8px; font-size:0.85rem;">
+                <strong style="text-transform: capitalize; color: var(--accent-2); display:block; margin-bottom:0.5rem;">${k}</strong>
+                ${v}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    html += `</div>`;
+    viewer.innerHTML = html;
+  }
+
+  async function applyFix(findingIdx) {
+    if(!currentReportData || !currentReportData.findings[findingIdx]) return;
+    const finding = currentReportData.findings[findingIdx];
+    
+    // Apply the string replacement locally to send the new files payload
+    const filename = finding.file || "snippet.py";
+    let fileContent = currentReportFiles[filename];
+    if (finding.source_excerpt && finding.suggested_fix) {
+        fileContent = fileContent.replace(finding.source_excerpt, finding.suggested_fix);
+        currentReportFiles[filename] = fileContent;
+    }
+    
+    // Update the UI code box to match
+    if (document.getElementById('current-filename').innerText === filename) {
+        document.getElementById('cr-code').value = fileContent;
+    }
+    
+    setupWorkspace();
+    document.getElementById('stage-indicator').innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> <span>Re-analyzing fix application...</span>`;
+    
+    const depth = document.getElementById('cr-depth').value;
+
+    try {
+      const response = await fetch('/code-review/analyze/apply-fix', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          files: currentReportFiles,
+          finding_id: finding.id,
+          patch: finding.suggested_fix,
+          filename: filename,
+          depth: depth
+        })
+      });
+      
+      const data = await response.json();
+      if(data.job_id) {
+        const prevReport = currentReportData;
+        connectSSE(data.job_id, true, prevReport);
+      } else {
+        throw new Error('Failed to create re-review job');
+      }
+    } catch (err) {
+        console.error(err);
+        alert('Error applying fix.');
+    }
+  }
+
+  async function startReview() {
+    const btn = document.getElementById('proceed-btn');
+    
+    const code = document.getElementById('cr-code').value;
+    const depth = document.getElementById('cr-depth').value;
+    const optSec = document.getElementById('cr-opt-security').checked;
+    const optPerf = document.getElementById('cr-opt-perf').checked;
+    const optStyle = document.getElementById('cr-opt-style').checked;
+    const optDocs = document.getElementById('cr-opt-docs').checked;
+    const filename = document.getElementById('current-filename').innerText;
+    
+    if(!code.trim()) {
+      alert("Please provide source code to review.");
+      return;
+    }
+    
+    currentReportFiles = {};
+    currentReportFiles[filename] = code;
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ti ti-loader ti-spin"></i> Initializing Job...';
+
+    try {
+      const response = await fetch('/code-review/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          code: "",
+          files: currentReportFiles, 
+          depth, 
+          opt_sec: optSec, 
+          opt_perf: optPerf, 
+          opt_style: optStyle,
+          opt_docs: optDocs
+        })
+      });
+      
+      const data = await response.json();
+      if(data.job_id) {
+        setupWorkspace();
+        connectSSE(data.job_id, false, null);
+      } else {
+        throw new Error('Failed to create job');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error initializing code review.');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="ti ti-sparkles"></i> Run Code Review';
+    }
+  }
+
+  function setupWorkspace() {
+    document.getElementById('workspace-container').classList.add('generating');
+    
+    const panel = document.getElementById('generation-panel');
+    panel.style.display = 'flex';
+    setTimeout(() => {
+      panel.classList.add('active');
+    }, 50);
+
+    // Disable inputs
+    ['cr-code', 'cr-depth', 'cr-opt-security', 'cr-opt-perf', 'cr-opt-style', 'cr-opt-docs', 'cr-upload'].forEach(id => {
+      if(document.getElementById(id)) document.getElementById(id).disabled = true;
+    });
+
+    const btn = document.getElementById('proceed-btn');
+    btn.innerHTML = '<i class="fas fa-cog fa-spin"></i> Analysis in Progress';
+
+    // Reset viewer
+    document.getElementById('loading-skeletons').style.display = 'flex';
+    viewer.classList.remove('visible');
+    viewer.innerHTML = "";
+  }
+
+  function connectSSE(job_id, isComparison, prevReport) {
+    const eventSource = new EventSource(`/code-review/stream/${job_id}`);
+
+    eventSource.addEventListener('stage_change', (e) => {
+      const data = JSON.parse(e.data);
+      document.getElementById('stage-indicator').innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> <span>${data.stage}</span>`;
+    });
+    
+    eventSource.addEventListener('status', (e) => {
+      document.getElementById('stage-indicator').innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> <span>${e.data}</span>`;
+    });
+
+    eventSource.addEventListener('complete', (e) => {
+      const data = JSON.parse(e.data);
+      if (data.files) {
+          currentReportFiles = data.files;
+      }
+      
+      document.getElementById('stage-indicator').innerHTML = `<i class="fas fa-check-circle" style="color: var(--success);"></i> <span style="color: var(--success);">Analysis Complete</span>`;
+      
+      const proceedBtn = document.getElementById('proceed-btn');
+      proceedBtn.innerHTML = '<i class="fas fa-check"></i> Review Ready';
+      proceedBtn.style.background = 'var(--success)';
+      proceedBtn.disabled = false;
+      proceedBtn.onclick = () => {
+        document.getElementById('workspace-container').classList.remove('generating');
+        setTimeout(() => {
+          document.getElementById('generation-panel').classList.remove('active');
+          proceedBtn.innerHTML = '<i class="ti ti-sparkles"></i> Run Code Review';
+          proceedBtn.style.background = '';
+          ['cr-code', 'cr-depth', 'cr-opt-security', 'cr-opt-perf', 'cr-opt-style', 'cr-opt-docs', 'cr-upload'].forEach(id => {
+            if(document.getElementById(id)) document.getElementById(id).disabled = false;
+          });
+          proceedBtn.onclick = startReview;
+        }, 500);
+      };
+
+      document.getElementById('loading-skeletons').style.display = 'none';
+      
+      renderReport(data.report, isComparison, prevReport);
+      
+      viewer.classList.add('visible');
+
+      eventSource.close();
+    });
+
+    eventSource.addEventListener('error', (e) => {
+      console.error('SSE Error Event:', e);
+      let errorMsg = "Error During Analysis";
+      
+      if (!e.data) {
+        errorMsg = "Server Disconnected! Please check if python main.py is still running.";
+      } else {
+        try {
+          const parsed = JSON.parse(e.data);
+          if (parsed.message) errorMsg = parsed.message;
+        } catch (err) {}
+      }
+      
+      document.getElementById('stage-indicator').innerHTML = `<i class="fas fa-exclamation-triangle" style="color: var(--error);"></i> <span style="color: var(--error);">${errorMsg}</span>`;
+      
+      const btn = document.getElementById('proceed-btn');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="ti ti-sparkles"></i> Retry Review';
+      
+      eventSource.close();
+    });
+
+    eventSource.onerror = (err) => {
+      console.error("SSE Connection Error", err);
+    };
+  }
+
+  // Basic file upload handling
+  document.getElementById('cr-upload').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    document.getElementById('current-filename').innerText = file.name;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      document.getElementById('cr-code').value = e.target.result;
+    };
+    reader.readAsText(file);
+  });
+</script>
+{% endblock %}

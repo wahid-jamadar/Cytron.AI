@@ -1,0 +1,441 @@
+{% extends "base.html" %}
+
+{% block title %}Code Generation - Cytron.AI{% endblock %}
+
+{% block extra_css %}
+<!-- Font Awesome 6.4.2 -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+
+<style>
+  .workspace-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    align-items: start;
+    transition: all 0.5s ease;
+  }
+  
+  @media (min-width: 1024px) {
+    .workspace-container.generating {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .config-panel {
+    transition: opacity 0.3s ease;
+  }
+
+  /* Generation Panel Styles */
+  .generation-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 600px;
+    opacity: 0;
+    transform: translateX(20px);
+    transition: all 0.5s ease;
+    overflow: hidden;
+  }
+
+  .generation-panel.active {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .panel-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+  }
+
+  .stage-indicator {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--accent-2);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .panel-body {
+    padding: 1.5rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .code-viewer-container {
+    flex: 1;
+    background: #1e1e1e; /* VS Code dark background */
+    border-radius: var(--radius-sm);
+    border: 1px solid #333;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  
+  .code-viewer-container.visible {
+    opacity: 1;
+  }
+
+  .code-header {
+    background: #2d2d2d;
+    padding: 0.5rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #111;
+    font-family: var(--font);
+    font-size: 0.85rem;
+    color: #ccc;
+  }
+
+  .copy-btn {
+    background: transparent;
+    border: 1px solid #555;
+    color: #ccc;
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+  }
+  
+  .copy-btn:hover {
+    background: #444;
+    color: #fff;
+  }
+  
+  .copy-btn.copied {
+    background: var(--success);
+    border-color: var(--success);
+    color: #fff;
+  }
+
+  .code-content {
+    margin: 0;
+    padding: 1.25rem;
+    font-family: var(--mono);
+    font-size: 0.9rem;
+    color: #d4d4d4;
+    overflow-x: auto;
+    flex: 1;
+    line-height: 1.5;
+  }
+
+  .pulse-loader {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: var(--accent-2);
+    border-radius: 50%;
+    animation: pulse 1s infinite alternate;
+  }
+
+  @keyframes pulse {
+    0% { transform: scale(1); opacity: 0.5; }
+    100% { transform: scale(1.5); opacity: 1; }
+  }
+
+  .skeleton-line {
+    height: 12px;
+    background: linear-gradient(90deg, #2d2d2d 25%, #3d3d3d 50%, #2d2d2d 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    border-radius: 4px;
+    margin-bottom: 12px;
+  }
+
+  .skeleton-line.short { width: 40%; }
+  .skeleton-line.medium { width: 70%; }
+  .skeleton-line.long { width: 90%; }
+  .skeleton-line.indent-1 { margin-left: 2rem; }
+  .skeleton-line.indent-2 { margin-left: 4rem; }
+
+  @keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  .loading-skeletons {
+    padding: 1.5rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="text-align: center; margin-bottom: 2rem;">
+  <div class="logo-badge" style="display: inline-flex; align-items: center; gap: 8px; background: rgba(124,58,237,0.15); border: 1px solid var(--border-glow); border-radius: 100px; padding: 6px 16px; font-size: 0.75rem; color: var(--accent-2); font-weight: 600; text-transform: uppercase; margin-bottom: 1rem;"><i class="ti ti-code"></i> Code Generation</div>
+  <h1 style="font-size: 2.5rem; margin-bottom: 1rem;">Code Generation</h1>
+  <p style="color: var(--text-muted);">Generate production-ready code in multiple languages and frameworks.</p>
+</div>
+
+<div class="workspace-container" id="workspace-container">
+  <!-- Left Panel: Configuration -->
+  <div class="config-panel">
+    <div class="input-card" style="padding: 2rem;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;">
+        <div>
+          <label class="input-label" style="color: var(--accent-2);"><i class="ti ti-code"></i> Language / Framework</label>
+          <select id="cg-language" style="width: 100%; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none; color: var(--text); font-family: var(--font); font-size: 0.95rem; padding: 0.75rem; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+            <option value="Python">Python</option>
+            <option value="JavaScript/TypeScript">JavaScript/TypeScript</option>
+            <option value="Go">Go</option>
+            <option value="Java">Java</option>
+            <option value="C++">C++</option>
+            <option value="Rust">Rust</option>
+          </select>
+        </div>
+        <div>
+          <label class="input-label" style="color: var(--success);"><i class="ti ti-settings"></i> Generation Options</label>
+          <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem;">
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <input type="checkbox" id="cg-opt-comments" checked style="accent-color: var(--accent);"> <span style="font-size: 0.9rem; color: var(--text-muted);">Include detailed comments</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <input type="checkbox" id="cg-opt-tests" style="accent-color: var(--accent);"> <span style="font-size: 0.9rem; color: var(--text-muted);">Generate unit tests</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <input type="checkbox" id="cg-opt-typing" checked style="accent-color: var(--accent);"> <span style="font-size: 0.9rem; color: var(--text-muted);">Use strict static typing</span>
+            </label>
+          </div>
+        </div>
+      </div>
+      
+      <div style="margin-bottom: 1.5rem;">
+        <label class="input-label" style="color: var(--warning);"><i class="ti ti-upload"></i> Reference Files (Optional)</label>
+        <div style="border: 1px dashed var(--border); border-radius: var(--radius-sm); padding: 1.5rem; text-align: center; background: var(--surface-2); color: var(--text-muted); cursor: pointer; transition: all 0.2s;" onclick="document.getElementById('cg-files').click()" onmouseover="this.style.borderColor='var(--accent)'; this.style.color='var(--accent-2)';" onmouseout="this.style.borderColor='var(--border)'; this.style.color='var(--text-muted)';">
+          <i class="ti ti-cloud-upload" style="font-size: 2rem; margin-bottom: 0.5rem;"></i>
+          <p style="font-size: 0.9rem;">Click or drag files here to upload existing code</p>
+          <input type="file" id="cg-files" multiple style="display: none;">
+        </div>
+      </div>
+
+      <div>
+        <label class="input-label"><i class="ti ti-pencil"></i> Code Requirements</label>
+        <textarea id="cg-requirements" placeholder="Describe the function, class, or script you want to generate in detail..." style="width: 100%; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none; resize: vertical; color: var(--text); font-family: var(--font); font-size: 0.95rem; line-height: 1.6; min-height: 120px; padding: 1rem; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+      </div>
+    </div>
+
+    <button id="proceed-btn" class="run-btn" onclick="startGeneration()">
+      <i class="ti ti-sparkles"></i> Run Code Generation
+    </button>
+  </div>
+
+  <!-- Right Panel: Generation Workspace -->
+  <div class="generation-panel" id="generation-panel">
+    <div class="panel-header">
+      <div class="stage-indicator" id="stage-indicator">
+        <i class="fas fa-circle-notch fa-spin"></i> <span>Initializing AI engines...</span>
+      </div>
+    </div>
+    
+    <div class="panel-body">
+      <!-- Loading Skeletons -->
+      <div id="loading-skeletons" class="loading-skeletons">
+        <div class="skeleton-line medium"></div>
+        <div class="skeleton-line long"></div>
+        <br>
+        <div class="skeleton-line short"></div>
+        <div class="skeleton-line medium indent-1"></div>
+        <div class="skeleton-line long indent-2"></div>
+        <div class="skeleton-line medium indent-2"></div>
+        <div class="skeleton-line short indent-1"></div>
+        <br>
+        <div class="skeleton-line medium"></div>
+      </div>
+
+      <!-- Code Viewer -->
+      <div id="code-viewer" class="code-viewer-container">
+        <div class="code-header">
+          <span id="code-lang-label"><i class="fas fa-code"></i> Generated Code</span>
+          <button class="copy-btn" id="copy-btn" onclick="copyCode()">
+            <i class="ti ti-copy"></i> Copy
+          </button>
+        </div>
+        <pre class="code-content"><code id="code-block"></code></pre>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  let currentCode = "";
+
+  async function startGeneration() {
+    const btn = document.getElementById('proceed-btn');
+    
+    const language = document.getElementById('cg-language').value;
+    const requirements = document.getElementById('cg-requirements').value;
+    const incComments = document.getElementById('cg-opt-comments').checked;
+    const incTests = document.getElementById('cg-opt-tests').checked;
+    const strictTyping = document.getElementById('cg-opt-typing').checked;
+    
+    if(!requirements.trim()) {
+      alert("Please provide code requirements.");
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ti ti-loader ti-spin"></i> Initializing Job...';
+
+    try {
+      const response = await fetch('/code-generation/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          language, 
+          requirements, 
+          inc_comments: incComments, 
+          inc_tests: incTests, 
+          strict_typing: strictTyping 
+        })
+      });
+      
+      const data = await response.json();
+      if(data.job_id) {
+        setupWorkspace();
+        connectSSE(data.job_id);
+      } else {
+        throw new Error('Failed to create job');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error initializing code generation.');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="ti ti-sparkles"></i> Run Code Generation';
+    }
+  }
+
+  function setupWorkspace() {
+    document.getElementById('workspace-container').classList.add('generating');
+    
+    const panel = document.getElementById('generation-panel');
+    panel.style.display = 'flex';
+    setTimeout(() => {
+      panel.classList.add('active');
+    }, 50);
+
+    // Disable form inputs
+    ['cg-language', 'cg-requirements', 'cg-opt-comments', 'cg-opt-tests', 'cg-opt-typing', 'cg-files'].forEach(id => {
+      document.getElementById(id).disabled = true;
+    });
+
+    const btn = document.getElementById('proceed-btn');
+    btn.innerHTML = '<i class="fas fa-cog fa-spin"></i> Code Generation in Progress';
+
+    // Reset viewer
+    document.getElementById('loading-skeletons').style.display = 'flex';
+    document.getElementById('code-viewer').classList.remove('visible');
+    currentCode = "";
+  }
+
+  function connectSSE(job_id) {
+    const eventSource = new EventSource(`/code-generation/stream/${job_id}`);
+
+    eventSource.addEventListener('stage_change', (e) => {
+      const data = JSON.parse(e.data);
+      document.getElementById('stage-indicator').innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> <span>${data.stage}</span>`;
+    });
+
+    eventSource.addEventListener('complete', (e) => {
+      const data = JSON.parse(e.data);
+      
+      document.getElementById('stage-indicator').innerHTML = `<i class="fas fa-check-circle" style="color: var(--success);"></i> <span style="color: var(--success);">Generation Complete</span>`;
+      
+      const proceedBtn = document.getElementById('proceed-btn');
+      proceedBtn.innerHTML = '<i class="fas fa-check"></i> Code Ready';
+      proceedBtn.style.background = 'var(--success)';
+      proceedBtn.disabled = false;
+      proceedBtn.onclick = () => {
+        // Reset to initial state allowing new generation
+        document.getElementById('workspace-container').classList.remove('generating');
+        setTimeout(() => {
+          document.getElementById('generation-panel').classList.remove('active');
+          proceedBtn.innerHTML = '<i class="ti ti-sparkles"></i> Run Code Generation';
+          proceedBtn.style.background = '';
+          ['cg-language', 'cg-requirements', 'cg-opt-comments', 'cg-opt-tests', 'cg-opt-typing', 'cg-files'].forEach(id => {
+            document.getElementById(id).disabled = false;
+          });
+          proceedBtn.onclick = startGeneration;
+        }, 500);
+      };
+
+      // Hide skeletons, show code block
+      document.getElementById('loading-skeletons').style.display = 'none';
+      
+      const codeViewer = document.getElementById('code-viewer');
+      const codeBlock = document.getElementById('code-block');
+      
+      // Escape HTML characters before injecting to prevent XSS and formatting issues
+      currentCode = data.code;
+      codeBlock.innerHTML = data.code.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      
+      document.getElementById('code-lang-label').innerHTML = `<i class="fas fa-file-code"></i> ${data.language.toUpperCase()}`;
+      
+      codeViewer.classList.add('visible');
+
+      eventSource.close();
+    });
+
+    eventSource.addEventListener('error', (e) => {
+      console.error('SSE Error Event:', e);
+      let errorMsg = "Error During Generation";
+      
+      if (!e.data) {
+        errorMsg = "Server Disconnected! Please check if python main.py is still running.";
+      } else {
+        try {
+          const parsed = JSON.parse(e.data);
+          if (parsed.message) errorMsg = parsed.message;
+        } catch (err) {}
+      }
+      
+      document.getElementById('stage-indicator').innerHTML = `<i class="fas fa-exclamation-triangle" style="color: var(--error);"></i> <span style="color: var(--error);">${errorMsg}</span>`;
+      
+      const btn = document.getElementById('proceed-btn');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="ti ti-sparkles"></i> Retry Generation';
+      
+      eventSource.close();
+    });
+
+    eventSource.onerror = (err) => {
+      console.error("SSE Connection Error", err);
+    };
+  }
+
+  function copyCode() {
+    const btn = document.getElementById('copy-btn');
+    if(!currentCode) return;
+    
+    navigator.clipboard.writeText(currentCode).then(() => {
+      btn.classList.add('copied');
+      btn.innerHTML = '<i class="ti ti-check"></i> Copied!';
+      setTimeout(() => {
+        btn.classList.remove('copied');
+        btn.innerHTML = '<i class="ti ti-copy"></i> Copy';
+      }, 2000);
+    }).catch(err => {
+      console.error("Failed to copy", err);
+      alert("Failed to copy code to clipboard.");
+    });
+  }
+</script>
+{% endblock %}

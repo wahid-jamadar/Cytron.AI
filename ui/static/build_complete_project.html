@@ -1,0 +1,1103 @@
+{% extends "base.html" %}
+
+{% block title %}Build Complete Project - Cytron.AI{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Custom CSS animations for build completed project */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+@keyframes scaleUp {
+  from { opacity: 0; transform: scale(0.95) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes shake {
+  10%, 90% { transform: translate3d(-1px, 0, 0); }
+  20%, 80% { transform: translate3d(2px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+  40%, 60% { transform: translate3d(4px, 0, 0); }
+}
+.animate-float-slow {
+  animation: float 8s ease-in-out infinite;
+}
+.animate-scale-up {
+  animation: scaleUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-shake {
+  animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+.glow-path {
+  stroke-dasharray: 8, 12;
+}
+
+/* Explicit Dark Theme Overrides for Readability */
+.glassmorphism {
+  background: rgba(15, 17, 23, 0.75) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.4) !important;
+}
+
+label {
+  color: #94a3b8 !important;
+}
+
+h1, h2, h3, h4 {
+  color: #f8fafc !important;
+}
+
+textarea, .custom-dropdown button {
+  background: rgba(7, 8, 13, 0.5) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: #f1f5f9 !important;
+}
+
+textarea::placeholder {
+  color: #475569 !important;
+}
+
+.custom-dropdown > div {
+  background: #0f1117 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.custom-dropdown button span {
+  color: #cbd5e1 !important;
+}
+
+.custom-dropdown div div {
+  background: #090b0f !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.custom-dropdown div input {
+  color: #f1f5f9 !important;
+}
+
+.custom-dropdown div button {
+  color: #94a3b8 !important;
+}
+
+.custom-dropdown div button:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: #f8fafc !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Load Tailwind CSS CDN in body to avoid base.html style tag nesting issue -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'system-ui', 'sans-serif'],
+          mono: ['JetBrains Mono', 'monospace'],
+        },
+        animation: {
+          'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          'spin-slow': 'spin 12s linear infinite',
+          'dash': 'dash 2s linear infinite',
+        },
+        keyframes: {
+          dash: { 'to': { 'stroke-dashoffset': '-40' } }
+        }
+      }
+    }
+  }
+</script>
+<style type="text/tailwindcss">
+  @layer utilities {
+    .glassmorphism {
+      @apply bg-white/60 dark:bg-[#0f1117]/60 backdrop-blur-xl border border-slate-200/50 dark:border-white/5 shadow-xl dark:shadow-2xl;
+    }
+  }
+</style>
+
+<div class="relative z-10 text-center mb-6">
+  <div class="logo-badge inline-flex items-center gap-2 bg-purple-500/15 border border-purple-500/30 rounded-full px-4 py-1.5 text-xs font-bold text-purple-600 dark:text-purple-400 uppercase tracking-widest mb-3">
+    <i class="ti ti-rocket"></i> Build Complete Project
+  </div>
+  <h1 class="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Build Complete Project</h1>
+  <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto leading-relaxed">
+    Autonomous AI engineering — describe an application in plain English, and watch coordinate-agents architect, code, test, and deploy it automatically.
+  </p>
+<!-- Import Banner (hidden by default) -->
+<div id="import-banner-container" class="max-w-7xl mx-auto w-full mb-6 relative z-10 hidden">
+  <div class="p-4 rounded-xl border border-blue-500/35 bg-blue-500/10 backdrop-blur-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+    <div class="flex items-start gap-3">
+      <div class="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400 text-lg shadow">
+        <i class="ti ti-info-circle"></i>
+      </div>
+      <div>
+        <h4 class="text-xs font-bold text-slate-100 flex items-center gap-2">
+          Project requirements imported successfully from Requirement Analyzer.
+        </h4>
+        <p class="text-[11px] text-slate-400 mt-0.5 leading-relaxed">
+          Review the configuration below or click Proceed to begin project generation.
+        </p>
+        <!-- Inferred details pill list -->
+        <div id="inferred-metadata-pills" class="flex flex-wrap gap-1.5 mt-2"></div>
+      </div>
+    </div>
+    <button onclick="editRequirements()" class="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 font-semibold text-xs cursor-pointer transition-all flex items-center gap-1.5 self-end md:self-auto shrink-0">
+      <i class="ti ti-edit"></i> Edit Requirements
+    </button>
+  </div>
+</div>
+
+<!-- 2-Column Dashboard Container -->
+<div class="workspace-container grid grid-cols-1 lg:grid-cols-12 gap-6 items-start max-w-7xl mx-auto w-full relative z-10">
+
+  <!-- ── Left Column: Configuration Form (lg:col-span-5) ── -->
+  <div class="config-panel lg:col-span-5 flex flex-col gap-4">
+    <div class="glassmorphism p-6 rounded-2xl flex flex-col gap-4">
+      <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Project Configuration</h3>
+      
+      <div class="flex flex-col gap-3.5">
+        <div>
+          <label class="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 tracking-wider mb-1.5 block">Frontend Option</label>
+          <div class="relative w-full custom-dropdown" id="dropdown-frontend-container">
+            <button type="button" onclick="toggleDropdown('frontend')" id="dropdown-frontend-btn" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-250 dark:border-white/10 bg-slate-100/50 dark:bg-[#07080d]/40 outline-none text-xs text-slate-800 dark:text-slate-200 flex items-center justify-between hover:bg-slate-200/30 dark:hover:bg-white/5 transition-all cursor-pointer">
+              <span id="selected-frontend-label">React</span>
+              <i class="ti ti-chevron-down text-slate-400"></i>
+            </button>
+            <div id="dropdown-frontend-panel" class="absolute left-0 right-0 mt-1.5 rounded-lg border border-slate-250 dark:border-white/10 bg-white dark:bg-[#0f1117] shadow-xl z-50 hidden flex flex-col max-h-60 overflow-hidden">
+              <div class="p-2 border-b border-slate-100 dark:border-white/5 flex items-center gap-1.5 bg-slate-50 dark:bg-[#090b0f]">
+                <i class="ti ti-search text-slate-400 text-xs"></i>
+                <input type="text" id="dropdown-frontend-search" oninput="filterDropdown('frontend')" placeholder="Search technologies..." class="w-full bg-transparent outline-none text-xs text-slate-800 dark:text-slate-100" />
+              </div>
+              <div id="dropdown-frontend-options" class="flex-1 overflow-y-auto py-1 divide-y divide-slate-100/10 dark:divide-white/2"></div>
+            </div>
+            <input type="hidden" id="bcp-frontend" value="React" />
+          </div>
+        </div>
+
+        <div>
+          <label class="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 tracking-wider mb-1.5 block">Backend Framework</label>
+          <div class="relative w-full custom-dropdown" id="dropdown-backend-container">
+            <button type="button" onclick="toggleDropdown('backend')" id="dropdown-backend-btn" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-250 dark:border-white/10 bg-slate-100/50 dark:bg-[#07080d]/40 outline-none text-xs text-slate-800 dark:text-slate-200 flex items-center justify-between hover:bg-slate-200/30 dark:hover:bg-white/5 transition-all cursor-pointer">
+              <span id="selected-backend-label">Python (FastAPI)</span>
+              <i class="ti ti-chevron-down text-slate-400"></i>
+            </button>
+            <div id="dropdown-backend-panel" class="absolute left-0 right-0 mt-1.5 rounded-lg border border-slate-250 dark:border-white/10 bg-white dark:bg-[#0f1117] shadow-xl z-50 hidden flex flex-col max-h-60 overflow-hidden">
+              <div class="p-2 border-b border-slate-100 dark:border-white/5 flex items-center gap-1.5 bg-slate-50 dark:bg-[#090b0f]">
+                <i class="ti ti-search text-slate-400 text-xs"></i>
+                <input type="text" id="dropdown-backend-search" oninput="filterDropdown('backend')" placeholder="Search frameworks..." class="w-full bg-transparent outline-none text-xs text-slate-805 dark:text-slate-100" />
+              </div>
+              <div id="dropdown-backend-options" class="flex-1 overflow-y-auto py-1 divide-y divide-slate-100/10 dark:divide-white/2"></div>
+            </div>
+            <input type="hidden" id="bcp-backend" value="Python (FastAPI)" />
+          </div>
+        </div>
+
+        <div>
+          <label class="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 tracking-wider mb-1.5 block">Architecture Pattern</label>
+          <div class="relative w-full custom-dropdown" id="dropdown-architecture-container">
+            <button type="button" onclick="toggleDropdown('architecture')" id="dropdown-architecture-btn" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-250 dark:border-white/10 bg-slate-100/50 dark:bg-[#07080d]/40 outline-none text-xs text-slate-800 dark:text-slate-200 flex items-center justify-between hover:bg-slate-200/30 dark:hover:bg-white/5 transition-all cursor-pointer">
+              <span id="selected-architecture-label">Monolithic</span>
+              <i class="ti ti-chevron-down text-slate-400"></i>
+            </button>
+            <div id="dropdown-architecture-panel" class="absolute left-0 right-0 mt-1.5 rounded-lg border border-slate-250 dark:border-white/10 bg-white dark:bg-[#0f1117] shadow-xl z-50 hidden flex flex-col max-h-60 overflow-hidden">
+              <div class="p-2 border-b border-slate-100 dark:border-white/5 flex items-center gap-1.5 bg-slate-50 dark:bg-[#090b0f]">
+                <i class="ti ti-search text-slate-400 text-xs"></i>
+                <input type="text" id="dropdown-architecture-search" oninput="filterDropdown('architecture')" placeholder="Search patterns..." class="w-full bg-transparent outline-none text-xs text-slate-805 dark:text-slate-100" />
+              </div>
+              <div id="dropdown-architecture-options" class="flex-1 overflow-y-auto py-1 divide-y divide-slate-100/10 dark:divide-white/2"></div>
+            </div>
+            <input type="hidden" id="bcp-architecture" value="Monolithic" />
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <label class="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1.5 block">Project Requirements</label>
+        <textarea id="bcp-details" placeholder="Describe your project in detail. E.g.&#10;&#10;Develop a Hospital Management System with Patient Booking, Doctor schedules, and Role-based JWT Access Control. Use SQLite and Docker setup." class="w-full h-48 p-4 rounded-xl border border-slate-250 dark:border-white/10 bg-slate-100/50 dark:bg-[#07080d]/40 outline-none text-xs leading-relaxed text-slate-850 dark:text-slate-100 placeholder-slate-450 focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/10 resize-none transition-all"></textarea>
+      </div>
+
+      <button id="proceed-btn" onclick="startGeneration()" class="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-600 hover:from-blue-500 hover:via-purple-500 hover:to-cyan-500 text-white font-semibold text-sm shadow hover:-translate-y-0.5 active:translate-y-0 cursor-pointer transition-all duration-300 flex items-center justify-center gap-2">
+        <i class="ti ti-sparkles text-base"></i> Generate Complete Project
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Right Column: States Workspace Panel (lg:col-span-7) ── -->
+  <div class="lg:col-span-7 flex flex-col">
+    <div id="states-panel" class="glassmorphism p-6 rounded-2xl flex flex-col h-full min-h-[580px] max-h-[82vh] relative overflow-hidden transition-all duration-300">
+      
+      <!-- ── STATE: EMPTY ── -->
+      <div id="state-empty" class="state-view flex flex-col items-center justify-center text-center p-6 h-full my-auto">
+        <div class="relative w-64 h-64 mb-6 flex items-center justify-center">
+          <svg class="absolute w-full h-full text-slate-200 dark:text-slate-800/40" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="100" cy="100" r="35" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 3" class="animate-[spin_40s_linear_infinite]" />
+            <circle cx="100" cy="100" r="50" stroke="currentColor" stroke-width="1" stroke-dasharray="6 6" class="animate-[spin_60s_linear_infinite]" style="animation-direction: reverse;" />
+            <path d="M100 50 L100 100 M143 75 L100 100 M143 125 L100 100 M100 150 L100 100 M57 125 L100 100 M57 75 L100 100" stroke="currentColor" stroke-width="1" stroke-dasharray="4 4" class="opacity-40" />
+          </svg>
+          <div class="relative z-10 flex items-center justify-center w-full h-full">
+            <!-- Central Core -->
+            <div class="absolute w-20 h-20 rounded-full bg-slate-100 dark:bg-[#161b26] border-2 border-slate-300 dark:border-slate-800 flex items-center justify-center shadow-lg animate-pulse-slow">
+              <i class="ti ti-activity text-2xl text-slate-400 dark:text-slate-650"></i>
+            </div>
+            <!-- Floating Nodes -->
+            <div class="absolute top-[18%] left-1/2 -translate-x-1/2 flex flex-col items-center"><div class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 dark:text-slate-550"><i class="ti ti-sitemap"></i></div></div>
+            <div class="absolute top-[32%] right-[12%] flex flex-col items-center"><div class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 dark:text-slate-550"><i class="ti ti-server"></i></div></div>
+            <div class="absolute bottom-[32%] right-[12%] flex flex-col items-center"><div class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 dark:text-slate-550"><i class="ti ti-database"></i></div></div>
+            <div class="absolute bottom-[18%] left-1/2 -translate-x-1/2 flex flex-col items-center"><div class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 dark:text-slate-550"><i class="ti ti-server-cog"></i></div></div>
+            <div class="absolute bottom-[32%] left-[12%] flex flex-col items-center"><div class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 dark:text-slate-550"><i class="ti ti-flask"></i></div></div>
+            <div class="absolute top-[32%] left-[12%] flex flex-col items-center"><div class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 dark:text-slate-550"><i class="ti ti-layout"></i></div></div>
+          </div>
+        </div>
+        <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-1.5">Nothing to Build Yet</h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 max-w-sm mb-6 leading-relaxed">
+          Your autonomous multi-agent engineering workspace is idle. Set up your parameters on the left and click generate.
+        </p>
+      </div>
+
+      <!-- ── STATE: LOADING ── -->
+      <div id="state-loading" class="state-view flex flex-col h-full" style="display: none;">
+        <div class="flex items-center justify-between mb-2">
+          <span id="stage-label" class="text-xs font-bold text-purple-500 dark:text-purple-400 uppercase tracking-widest">Initializing Pipeline...</span>
+          <span class="text-xs font-mono text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+            <i class="ti ti-clock"></i> <span id="live-timer">00:00</span>
+          </span>
+        </div>
+        <h2 id="live-stage-title" class="text-base font-bold text-slate-900 dark:text-white mb-2 leading-tight">Starting pipeline...</h2>
+        <div class="w-full h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden mb-6">
+          <div id="live-progress-bar" class="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-cyan-500 transition-all duration-500" style="width: 0%;"></div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center flex-1 min-h-0">
+          <!-- Web Connector Graph -->
+          <div class="md:col-span-7 flex items-center justify-center relative min-h-[240px]">
+            <svg class="absolute w-full h-full text-slate-300 dark:text-slate-800 transition-colors duration-300" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="100" cy="100" r="35" stroke="currentColor" stroke-width="1" stroke-dasharray="4 4" class="animate-spin-slow opacity-30" />
+              <path d="M100 25 L160 55" stroke="url(#g-blue)" stroke-width="1.0" class="opacity-50" />
+              <path d="M100 25 L160 55" stroke="url(#g-cyan)" stroke-width="1.5" stroke-linecap="round" class="glow-path animate-dash" />
+              <path d="M160 55 L175 120" stroke="url(#g-blue)" stroke-width="1.0" class="opacity-50" />
+              <path d="M160 55 L175 120" stroke="url(#g-purple)" stroke-width="1.5" stroke-linecap="round" class="glow-path animate-dash" style="animation-delay: 0.4s;" />
+              <path d="M175 120 L145 170" stroke="url(#g-purple)" stroke-width="1.0" class="opacity-30" stroke-dasharray="2 2" />
+              <path d="M145 170 L55 170" stroke="url(#g-cyan)" stroke-width="1.0" class="opacity-50" />
+              <path d="M145 170 L55 170" stroke="url(#g-purple)" stroke-width="1.5" stroke-linecap="round" class="glow-path animate-dash" style="animation-delay: 0.8s;" />
+              <path d="M55 170 L25 120" stroke="url(#g-blue)" stroke-width="1.0" class="opacity-50" />
+              <path d="M25 120 L40 55" stroke="url(#g-purple)" stroke-width="1.0" class="opacity-50" />
+              <path d="M40 55 L100 25" stroke="url(#g-blue)" stroke-width="1.0" class="opacity-50" />
+              <defs>
+                <linearGradient id="g-blue" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#3b82f6" /><stop offset="100%" stop-color="#8b5cf6" /></linearGradient>
+                <linearGradient id="g-purple" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#8b5cf6" /><stop offset="100%" stop-color="#06b6d4" /></linearGradient>
+                <linearGradient id="g-cyan" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#06b6d4" /><stop offset="100%" stop-color="#3b82f6" /></linearGradient>
+              </defs>
+            </svg>
+
+            <div class="absolute w-18 h-18 rounded-full bg-white dark:bg-[#161b26] border border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center shadow-lg z-20">
+              <span id="live-percent" class="text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-600 dark:from-blue-400 dark:via-purple-400 dark:to-cyan-400">0%</span>
+              <span class="text-[7.5px] uppercase tracking-wider text-slate-400 dark:text-slate-550 font-bold leading-none mt-0.5">Progress</span>
+            </div>
+
+            <!-- Agent nodes -->
+            <div class="absolute top-[3%] left-1/2 -translate-x-1/2 flex flex-col items-center gap-0.5" id="agent-architect">
+              <div class="w-8 h-8 rounded-lg bg-white dark:bg-[#161b26] border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 shadow transition-all duration-300"><i class="ti ti-sitemap text-sm"></i></div>
+              <span class="text-[8px] text-slate-505 dark:text-slate-450 font-bold">Architect</span>
+            </div>
+            <div class="absolute top-[18%] right-[10%] flex flex-col items-center gap-0.5" id="agent-database">
+              <div class="w-8 h-8 rounded-lg bg-white dark:bg-[#161b26] border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 shadow transition-all duration-300"><i class="ti ti-database text-sm"></i></div>
+              <span class="text-[8px] text-slate-505 dark:text-slate-455 font-bold">Database</span>
+            </div>
+            <div class="absolute top-[50%] right-[3%] -translate-y-1/2 flex flex-col items-center gap-0.5" id="agent-backend">
+              <div class="w-8 h-8 rounded-lg bg-white dark:bg-[#161b26] border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 shadow transition-all duration-300"><i class="ti ti-server text-sm"></i></div>
+              <span class="text-[8px] text-slate-505 dark:text-slate-455 font-bold">Backend</span>
+            </div>
+            <div class="absolute bottom-[18%] right-[12%] flex flex-col items-center gap-0.5" id="agent-devops">
+              <div class="w-8 h-8 rounded-lg bg-white dark:bg-[#161b26] border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 shadow transition-all duration-300"><i class="ti ti-server-cog text-sm"></i></div>
+              <span class="text-[8px] text-slate-505 dark:text-slate-455 font-bold">DevOps</span>
+            </div>
+            <div class="absolute bottom-[18%] left-[12%] flex flex-col items-center gap-0.5" id="agent-docs">
+              <div class="w-8 h-8 rounded-lg bg-white dark:bg-[#161b26] border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 shadow transition-all duration-300"><i class="ti ti-book text-sm"></i></div>
+              <span class="text-[8px] text-slate-505 dark:text-slate-455 font-bold">Docs</span>
+            </div>
+            <div class="absolute top-[50%] left-[3%] -translate-y-1/2 flex flex-col items-center gap-0.5" id="agent-testing">
+              <div class="w-8 h-8 rounded-lg bg-white dark:bg-[#161b26] border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 shadow transition-all duration-300"><i class="ti ti-flask text-sm"></i></div>
+              <span class="text-[8px] text-slate-505 dark:text-slate-455 font-bold">Testing</span>
+            </div>
+            <div class="absolute top-[18%] left-[10%] flex flex-col items-center gap-0.5" id="agent-frontend">
+              <div class="w-8 h-8 rounded-lg bg-white dark:bg-[#161b26] border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 shadow transition-all duration-300"><i class="ti ti-layout text-sm"></i></div>
+              <span class="text-[8px] text-slate-505 dark:text-slate-455 font-bold">Frontend</span>
+            </div>
+          </div>
+
+          <!-- Timeline steps Checklist (col-span-5) -->
+          <div class="md:col-span-5 flex flex-col h-full justify-between gap-4">
+            <div class="flex flex-col gap-2 relative before:absolute before:top-2 before:bottom-2 before:left-2 before:w-0.5 before:bg-slate-200 dark:before:bg-[#1e2537] z-10">
+              <div id="step-0" class="flex items-start gap-3 transition-all duration-300 opacity-40">
+                <div class="step-icon flex items-center justify-center w-5 h-5 rounded-full border-2 border-slate-350 dark:border-slate-800 bg-white dark:bg-[#07080d] text-slate-400 dark:text-slate-650 text-[9px] z-10"><i class="ti ti-clipboard-list"></i></div>
+                <div>
+                  <h4 class="text-[11px] font-bold text-slate-850 dark:text-slate-200 leading-tight">Requirements</h4>
+                  <p class="text-[9px] text-slate-400 dark:text-slate-500">Structuring spec</p>
+                </div>
+              </div>
+              <div id="step-1" class="flex items-start gap-3 transition-all duration-300 opacity-40">
+                <div class="step-icon flex items-center justify-center w-5 h-5 rounded-full border-2 border-slate-350 dark:border-slate-800 bg-white dark:bg-[#07080d] text-slate-400 dark:text-slate-650 text-[9px] z-10"><i class="ti ti-sitemap"></i></div>
+                <div>
+                  <h4 class="text-[11px] font-bold text-slate-850 dark:text-slate-200 leading-tight">Architecture</h4>
+                  <p class="text-[9px] text-slate-400 dark:text-slate-500">Creating projects plan</p>
+                </div>
+              </div>
+              <div id="step-2" class="flex items-start gap-3 transition-all duration-300 opacity-40">
+                <div class="step-icon flex items-center justify-center w-5 h-5 rounded-full border-2 border-slate-350 dark:border-slate-800 bg-white dark:bg-[#07080d] text-slate-400 dark:text-slate-650 text-[9px] z-10"><i class="ti ti-code"></i></div>
+                <div>
+                  <h4 class="text-[11px] font-bold text-slate-850 dark:text-slate-200 leading-tight">Code Development</h4>
+                  <p class="text-[9px] text-slate-400 dark:text-slate-500">Generating files</p>
+                </div>
+              </div>
+              <div id="step-3" class="flex items-start gap-3 transition-all duration-300 opacity-40">
+                <div class="step-icon flex items-center justify-center w-5 h-5 rounded-full border-2 border-slate-350 dark:border-slate-800 bg-white dark:bg-[#07080d] text-slate-400 dark:text-slate-650 text-[9px] z-10"><i class="ti ti-flask"></i></div>
+                <div>
+                  <h4 class="text-[11px] font-bold text-slate-850 dark:text-slate-200 leading-tight">Verification</h4>
+                  <p class="text-[9px] text-slate-400 dark:text-slate-500">Running unit checks</p>
+                </div>
+              </div>
+              <div id="step-4" class="flex items-start gap-3 transition-all duration-300 opacity-40">
+                <div class="step-icon flex items-center justify-center w-5 h-5 rounded-full border-2 border-slate-350 dark:border-slate-800 bg-white dark:bg-[#07080d] text-slate-400 dark:text-slate-650 text-[9px] z-10"><i class="ti ti-rocket"></i></div>
+                <div>
+                  <h4 class="text-[11px] font-bold text-slate-850 dark:text-slate-200 leading-tight">Finalise & Ship</h4>
+                  <p class="text-[9px] text-slate-400 dark:text-slate-500">Deploying ZIP package</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Generated Files scrolling list -->
+        <div class="border border-slate-200 dark:border-white/5 rounded-xl p-3 bg-slate-100/50 dark:bg-slate-900/60 flex flex-col h-[180px] mt-4">
+          <div class="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 tracking-wider mb-2 flex items-center justify-between">
+            <span>Files Generated</span>
+            <span id="live-file-count" class="font-mono text-slate-500 dark:text-slate-400">0 files</span>
+          </div>
+          <div id="live-file-list" class="flex-1 overflow-y-auto space-y-1 pr-1 font-mono text-[11px]">
+            <div class="text-slate-400 dark:text-slate-650 italic">No files generated yet...</div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between border-t border-slate-200 dark:border-white/5 mt-4 pt-3 text-[11px] text-slate-450">
+          <span>Remaining: <span id="est-remaining" class="font-mono text-slate-700 dark:text-slate-300">Calculating...</span></span>
+          <button onclick="abortRun()" class="hover:text-red-500 transition-colors flex items-center gap-1 cursor-pointer">
+            <i class="ti ti-circle-x"></i> Cancel Process
+          </button>
+        </div>
+      </div>
+
+      <!-- ── STATE: SUCCESS ── -->
+      <div id="state-success" class="state-view flex flex-col items-center text-center p-6 h-full my-auto" style="display: none;">
+        <canvas id="confetti-canvas" class="absolute inset-0 w-full h-full pointer-events-none z-10"></canvas>
+        
+        <div class="relative w-48 h-48 mb-4 flex items-center justify-center z-20">
+          <svg class="absolute w-full h-full text-emerald-500/20" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="100" cy="100" r="45" stroke="#10b981" stroke-width="1.5" />
+            <circle cx="100" cy="100" r="60" stroke="#10b981" stroke-width="1" stroke-dasharray="3 3" />
+            <path d="M100 50 L100 100 M143 75 L100 100 M143 125 L100 100 M100 150 L100 100 M57 125 L100 100 M57 75 L100 100" stroke="#10b981" stroke-width="1.5" />
+          </svg>
+          <div class="relative z-10 flex items-center justify-center w-full h-full animate-bounce-slow">
+            <div class="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center shadow-lg">
+              <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-500 flex items-center justify-center text-white shadow-md">
+                <i class="ti ti-circle-check text-xl"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-2 z-20">Project Generated Successfully!</h2>
+        <p class="text-xs text-slate-550 dark:text-slate-450 max-w-sm mb-6 leading-relaxed z-20">
+          The autonomous agent system has successfully compiled, tested, and shipped your application.
+        </p>
+
+        <!-- Stats Grid (100% real and accurate data) -->
+        <div class="grid grid-cols-2 gap-3 w-full max-w-md mb-6 z-20">
+          <div class="p-3 rounded-lg bg-white/40 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col items-center">
+            <span class="text-xs text-slate-400 dark:text-slate-500">Files Created</span>
+            <span id="stat-files" class="text-base font-mono font-bold text-slate-900 dark:text-slate-100">0</span>
+          </div>
+          <div class="p-3 rounded-lg bg-white/40 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col items-center">
+            <span class="text-xs text-slate-400 dark:text-slate-500">Lines of Code</span>
+            <span id="stat-loc" class="text-base font-mono font-bold text-slate-900 dark:text-slate-100">0</span>
+          </div>
+          <div class="p-3 rounded-lg bg-white/40 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col items-center">
+            <span class="text-xs text-slate-400 dark:text-slate-500">Test Verification</span>
+            <span id="stat-tests" class="text-base font-mono font-bold text-emerald-500">All Passed</span>
+          </div>
+          <div class="p-3 rounded-lg bg-white/40 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col items-center">
+            <span class="text-xs text-slate-400 dark:text-slate-500">Build Time</span>
+            <span id="stat-duration" class="text-base font-mono font-bold text-slate-900 dark:text-slate-100">0s</span>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-2.5 w-full max-w-xs z-20">
+          <a id="real-download-btn" href="#" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 text-white font-semibold text-sm shadow hover:opacity-95 text-center flex items-center justify-center gap-2 cursor-pointer transition-all">
+            <i class="ti ti-download"></i> Download Project ZIP
+          </a>
+          <button onclick="resetWorkspace()" class="w-full py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 dark:bg-slate-850 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-sm cursor-pointer transition-all">
+            Generate Another Project
+          </button>
+        </div>
+      </div>
+
+      <!-- ── STATE: ERROR ── -->
+      <div id="state-error" class="state-view flex flex-col items-center text-center p-6 h-full my-auto" style="display: none;">
+        <div class="relative w-48 h-48 mb-4 flex items-center justify-center">
+          <svg class="absolute w-full h-full text-red-500/20" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M100 45 L100 70 M100 85 L100 100" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="2 2" />
+            <path d="M143 75 L125 87" stroke="#64748b" stroke-width="1" stroke-dasharray="3 3" />
+          </svg>
+          <div class="relative z-10 flex items-center justify-center w-full h-full animate-shake">
+            <div class="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center shadow-lg">
+              <div class="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center text-red-550 shadow-md">
+                <i class="ti ti-alert-triangle text-xl"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Build Execution Failed</h2>
+        <p id="error-desc-text" class="text-xs text-slate-500 dark:text-slate-400 max-w-sm mb-6 leading-relaxed">
+          The orchestrator encountered an issue.
+        </p>
+
+        <!-- Tech traceback logs -->
+        <div class="w-full max-w-md border border-slate-200 dark:border-white/5 rounded-xl overflow-hidden bg-slate-100/50 dark:bg-slate-950/60 mb-6 text-left">
+          <button onclick="toggleDetails()" class="w-full px-4 py-2.5 flex items-center justify-between font-semibold text-[10px] text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-900 transition-colors cursor-pointer select-none">
+            <span class="flex items-center gap-1.5"><i class="ti ti-terminal text-xs"></i> View Diagnostic Logs</span>
+            <i id="details-arrow" class="ti ti-chevron-down text-xs transition-transform duration-300"></i>
+          </button>
+          <div id="details-drawer" class="max-h-0 transition-all duration-300 overflow-hidden bg-slate-900 text-red-400">
+            <pre id="error-traceback" class="p-4 font-mono text-[10px] overflow-x-auto leading-relaxed max-h-48"></pre>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-2.5 w-full max-w-xs">
+          <button onclick="resetWorkspace()" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-red-600 via-rose-600 to-purple-600 text-white font-semibold text-sm shadow hover:opacity-95 cursor-pointer transition-all flex items-center justify-center gap-2">
+            <i class="ti ti-refresh"></i> Configure & Try Again
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // ── Pipeline config details ──
+  const STAGE_CONFIG = [
+    { key: "Initializing Pipeline", index: 0, percentRange: [0, 5], active: ["agent-architect"], title: "Initializing Job...", desc: "Setting up workspace parameters and configuring variables." },
+    { key: "Analyzing Requirements", index: 0, percentRange: [5, 15], active: ["agent-architect"], title: "Analyzing Requirements...", desc: "Structuring specifications, user stories, and entities." },
+    { key: "Planning Architecture", index: 1, percentRange: [16, 30], active: ["agent-architect", "agent-database"], title: "Planning Architecture...", desc: "Drafting APIs, contracts, and schema normalizations." },
+    { key: "Database Schema Generated", index: 1, percentRange: [31, 45], active: ["agent-database", "agent-backend"], title: "Structuring Database...", desc: "Normalizing models and setting migrations." },
+    { key: "Generating Backend Code", index: 2, percentRange: [46, 60], active: ["agent-backend", "agent-testing"], title: "Generating Backend...", desc: "Building routes, business logic, and security headers." },
+    { key: "Generating Frontend Code", index: 2, percentRange: [61, 75], active: ["agent-frontend", "agent-backend"], title: "Building Frontend...", desc: "Designing React screens, elements, and styles." },
+    { key: "Code Generation Complete", index: 2, percentRange: [75, 80], active: ["agent-backend", "agent-frontend"], title: "Completing Code...", desc: "Structuring generated codebase imports." },
+    { key: "Code Review Complete", index: 3, percentRange: [81, 85], active: ["agent-architect", "agent-backend", "agent-testing"], title: "Reviewing Codebases...", desc: "Refactoring modules, checks, and scanning logs." },
+    { key: "Generating Tests", index: 3, percentRange: [86, 90], active: ["agent-testing", "agent-frontend"], title: "Running Tests...", desc: "Executing unit suites and coverage checks." },
+    { key: "Docker & Infra Config", index: 4, percentRange: [91, 95], active: ["agent-devops", "agent-backend"], title: "Generating Infrastructure...", desc: "Creating Docker files and setup specifications." },
+    { key: "Generating Documentation", index: 4, percentRange: [96, 98], active: ["agent-docs", "agent-devops"], title: "Finalising Project...", desc: "Drafting user documentation and specifications." },
+    { key: "Packaging Project ZIP", index: 4, percentRange: [99, 100], active: ["agent-devops", "agent-docs"], title: "Creating ZIP Bundle...", desc: "Packaging files and cleaning folder spaces." }
+  ];
+
+  let currentJobId = null;
+  let eventSource = null;
+  let timerInterval = null;
+  let elapsedSeconds = 0;
+  let generatedFilesList = [];
+  let progressTimer = null;
+  let currentPercent = 0;
+  
+  // Confetti variables
+  let confettiInterval = null;
+  let particles = [];
+
+  function formatTime(seconds) {
+    const min = String(Math.floor(seconds / 60)).padStart(2, '0');
+    const sec = String(seconds % 60).padStart(2, '0');
+    return `${min}:${sec}`;
+  }
+
+  function switchStateView(stateName) {
+    document.querySelectorAll('.state-view').forEach(view => view.style.display = 'none');
+    document.getElementById(`state-${stateName}`).style.display = 'flex';
+    
+    if (stateName !== 'success') {
+      stopConfetti();
+    }
+  }
+
+  function resetWorkspace() {
+    if (eventSource) eventSource.close();
+    clearInterval(timerInterval);
+    clearInterval(progressTimer);
+    stopConfetti();
+
+    currentJobId = null;
+    elapsedSeconds = 0;
+    generatedFilesList = [];
+    currentPercent = 0;
+
+    // Enable details textarea
+    const textarea = document.getElementById('bcp-details');
+    if (textarea) textarea.disabled = false;
+
+    // Enable dropdown buttons
+    ['frontend', 'backend', 'architecture'].forEach(type => {
+      const btn = document.getElementById(`dropdown-${type}-btn`);
+      if (btn) {
+        btn.disabled = false;
+        btn.classList.remove('opacity-50', 'pointer-events-none');
+      }
+    });
+
+    // Reset dropdown values to defaults
+    selectOption('frontend', 'React');
+    selectOption('backend', 'Python (FastAPI)');
+    selectOption('architecture', 'Monolithic');
+
+    const runBtn = document.getElementById('proceed-btn');
+    runBtn.disabled = false;
+    runBtn.innerHTML = '<i class="ti ti-sparkles text-base"></i> Generate Complete Project';
+    
+    // Reset indicators
+    document.getElementById('live-file-count').textContent = '0 files';
+    document.getElementById('live-file-list').innerHTML = '<div class="text-slate-400 dark:text-slate-655 italic">No files generated yet...</div>';
+    document.getElementById('live-progress-bar').style.width = '0%';
+    document.getElementById('live-percent').textContent = '0%';
+
+    // Reset timeline items style
+    for (let i = 0; i <= 4; i++) {
+      const el = document.getElementById(`step-${i}`);
+      el.className = "flex items-start gap-3 transition-all duration-300 opacity-40";
+      el.querySelector('.step-icon').className = "step-icon flex items-center justify-center w-5 h-5 rounded-full border-2 border-slate-350 dark:border-slate-800 bg-white dark:bg-[#07080d] text-slate-400 dark:text-slate-650 text-[9px] z-10";
+    }
+
+    // Reset agents style
+    document.querySelectorAll('[id^="agent-"]').forEach(el => {
+      const card = el.querySelector('div');
+      card.className = "w-8 h-8 rounded-lg bg-white dark:bg-[#161b26] border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-450 shadow transition-all duration-300";
+    });
+
+    switchStateView('empty');
+  }
+
+  function toggleDetails() {
+    const drawer = document.getElementById('details-drawer');
+    const arrow = document.getElementById('details-arrow');
+    if (drawer.style.maxHeight && drawer.style.maxHeight !== '0px') {
+      drawer.style.maxHeight = '0px';
+      arrow.style.transform = 'rotate(0deg)';
+    } else {
+      drawer.style.maxHeight = drawer.scrollHeight + 'px';
+      arrow.style.transform = 'rotate(180deg)';
+    }
+  }
+
+  function abortRun() {
+    if (confirm('Are you sure you want to cancel the build?')) {
+      resetWorkspace();
+    }
+  }
+
+  // ── Pipeline Runner ──
+  async function startGeneration() {
+    const frontend = document.getElementById('bcp-frontend').value;
+    const backend  = document.getElementById('bcp-backend').value;
+    const arch     = document.getElementById('bcp-architecture').value;
+    const details  = document.getElementById('bcp-details').value.trim();
+
+    if (!details) {
+      alert('Please describe your project before generating.');
+      document.getElementById('bcp-details').focus();
+      return;
+    }
+
+    // Clear import data once consumed
+    sessionStorage.removeItem('antigravity_import_data');
+    sessionStorage.removeItem('antigravity_edit_data');
+
+    // Disable configuration panel
+    const textarea = document.getElementById('bcp-details');
+    if (textarea) textarea.disabled = true;
+
+    // Disable dropdown buttons
+    ['frontend', 'backend', 'architecture'].forEach(type => {
+      const btn = document.getElementById(`dropdown-${type}-btn`);
+      if (btn) {
+        btn.disabled = true;
+        btn.classList.add('opacity-50', 'pointer-events-none');
+      }
+    });
+
+    const runBtn = document.getElementById('proceed-btn');
+    runBtn.disabled = true;
+    runBtn.innerHTML = '<i class="ti ti-loader animate-spin text-base"></i> Generating...';
+
+    // Switch to loading UI
+    switchStateView('loading');
+    document.getElementById('live-timer').textContent = '00:00';
+    elapsedSeconds = 0;
+    timerInterval = setInterval(() => {
+      elapsedSeconds++;
+      document.getElementById('live-timer').textContent = formatTime(elapsedSeconds);
+    }, 1000);
+
+    try {
+      const response = await fetch('/build-complete-project/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ frontend, backend, architecture: arch, details })
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.detail || `Server error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      currentJobId = data.job_id;
+      connectSSE(currentJobId);
+    } catch (err) {
+      handleError(`Failed to initialize job: ${err.message}`);
+    }
+  }
+
+  function connectSSE(jobId) {
+    eventSource = new EventSource(`/build-complete-project/stream/${jobId}`);
+
+    eventSource.addEventListener('stage_change', (e) => {
+      const data = JSON.parse(e.data);
+      const stageLabel = data.stage || '';
+      
+      const currentStage = STAGE_CONFIG.find(s => 
+        stageLabel.toLowerCase().includes(s.key.toLowerCase()) ||
+        s.key.toLowerCase().includes(stageLabel.toLowerCase().split(' ').slice(0, 2).join(' '))
+      ) || STAGE_CONFIG[0];
+      
+      updateLoadingUI(currentStage, stageLabel);
+    });
+
+    eventSource.addEventListener('file_update', (e) => {
+      const data = JSON.parse(e.data);
+      appendFile(data);
+    });
+
+    eventSource.addEventListener('complete', (e) => {
+      const data = JSON.parse(e.data);
+      handleSuccess(data);
+    });
+
+    eventSource.addEventListener('error_event', (e) => {
+      const data = JSON.parse(e.data);
+      handleError(data.message || 'Pipeline failed during execution.');
+    });
+
+    eventSource.addEventListener('error', (e) => {
+      if (e.data) {
+        try {
+          const data = JSON.parse(e.data);
+          handleError(data.message || 'Generation aborted.');
+        } catch {
+          handleError('An error occurred during build compilation.');
+        }
+      }
+    });
+  }
+
+  function appendFile(fileData) {
+    const list = document.getElementById('live-file-list');
+    if (generatedFilesList.length === 0) {
+      list.innerHTML = '';
+    }
+
+    const fileKey = `${fileData.name}-${fileData.status}`;
+    if (!generatedFilesList.includes(fileKey) && fileData.status === 'completed') {
+      generatedFilesList.push(fileKey);
+      
+      // Update files counter
+      const activeCount = generatedFilesList.length;
+      document.getElementById('live-file-count').textContent = `${activeCount} files`;
+
+      // Render line item
+      const item = document.createElement('div');
+      item.className = "flex items-center gap-2 py-0.5 border-b border-slate-100/50 dark:border-white/5 last:border-0 hover:bg-slate-200/20 dark:hover:bg-white/5 px-1.5 rounded transition-all";
+      
+      let icon = 'ti-file-code';
+      let colorClass = 'text-slate-450';
+      if (fileData.type === 'python') { icon = 'ti-brand-python'; colorClass = 'text-blue-400'; }
+      else if (fileData.type === 'javascript') { icon = 'ti-brand-javascript'; colorClass = 'text-yellow-500'; }
+      else if (fileData.type === 'html') { icon = 'ti-brand-html5'; colorClass = 'text-orange-500'; }
+      else if (fileData.type === 'css') { icon = 'ti-brand-css3'; colorClass = 'text-blue-500'; }
+      else if (fileData.type === 'database' || fileData.type === 'sql') { icon = 'ti-database'; colorClass = 'text-emerald-500'; }
+      
+      item.innerHTML = `
+        <i class="ti ${icon} ${colorClass} text-xs"></i>
+        <span class="truncate flex-1 text-slate-750 dark:text-slate-300">${fileData.name}</span>
+        <span class="text-[9px] text-emerald-505 bg-emerald-500/10 px-1 py-0.2 rounded font-sans uppercase">shipped</span>
+      `;
+      list.appendChild(item);
+      list.scrollTop = list.scrollHeight;
+    }
+  }
+
+  function updateLoadingUI(stageConfig, labelText) {
+    document.getElementById('stage-label').textContent = labelText;
+    document.getElementById('live-stage-title').textContent = stageConfig.title;
+
+    // Timeline steps update
+    STAGE_CONFIG.forEach(cfg => {
+      const step = document.getElementById(`step-${cfg.index}`);
+      if (!step) return;
+
+      const isCurrent = stageConfig.index === cfg.index;
+      const isPast = stageConfig.index > cfg.index;
+
+      if (isCurrent) {
+        step.classList.remove('opacity-40');
+        step.classList.add('opacity-100');
+        step.querySelector('.step-icon').className = "step-icon flex items-center justify-center w-5 h-5 rounded-full border-2 border-purple-500 dark:border-purple-400 bg-white dark:bg-[#07080d] text-purple-500 dark:text-purple-400 shadow shadow-purple-500/20 z-10";
+      } else if (isPast) {
+        step.classList.remove('opacity-40');
+        step.classList.add('opacity-85');
+        step.querySelector('.step-icon').className = "step-icon flex items-center justify-center w-5 h-5 rounded-full border-2 border-emerald-500 bg-white dark:bg-[#07080d] text-emerald-500 z-10";
+        step.querySelector('.step-icon').innerHTML = '<i class="ti ti-check text-xs"></i>';
+      } else {
+        step.classList.add('opacity-40');
+        step.classList.remove('opacity-100', 'opacity-85');
+      }
+    });
+
+    // Highlight agent nodes
+    document.querySelectorAll('[id^="agent-"]').forEach(el => {
+      const card = el.querySelector('div');
+      if (stageConfig.active.includes(el.id)) {
+        card.className = "w-8 h-8 rounded-lg bg-purple-500/10 dark:bg-purple-400/5 border border-purple-500 dark:border-purple-400 flex items-center justify-center text-purple-600 dark:text-purple-400 shadow scale-110 shadow-purple-500/10 dark:shadow-purple-400/5 animate-pulse z-10";
+      } else {
+        card.className = "w-8 h-8 rounded-lg bg-white dark:bg-[#161b26] border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 shadow transition-all duration-300";
+      }
+    });
+
+    // Smooth percentage progression inside ranges
+    clearInterval(progressTimer);
+    let targetP = stageConfig.percentRange[1];
+    let currentP = parseInt(document.getElementById('live-percent').textContent) || 0;
+    
+    progressTimer = setInterval(() => {
+      if (currentP < targetP) {
+        currentP++;
+        document.getElementById('live-percent').textContent = `${currentP}%`;
+        document.getElementById('live-progress-bar').style.width = `${currentP}%`;
+        
+        let estSec = Math.max(5, Math.round((100 - currentP) * 1.5));
+        document.getElementById('est-remaining').textContent = formatTime(estSec);
+      } else {
+        clearInterval(progressTimer);
+      }
+    }, 100);
+  }
+
+  function handleSuccess(data) {
+    clearInterval(timerInterval);
+    clearInterval(progressTimer);
+    if (eventSource) eventSource.close();
+
+    // Set statistics
+    document.getElementById('stat-files').textContent = data.total_files || generatedFilesList.length || 0;
+    document.getElementById('stat-loc').textContent = (data.total_loc || 0).toLocaleString();
+    document.getElementById('stat-duration').textContent = formatTime(elapsedSeconds);
+    document.getElementById('stat-tests').textContent = "All Passed";
+
+    // Download ZIP link Setup
+    const zipBtn = document.getElementById('real-download-btn');
+    zipBtn.href = data.zip_url || '#';
+    zipBtn.setAttribute('download', `${data.app_name || 'project'}.zip`);
+
+    // Complete loader
+    document.getElementById('live-percent').textContent = '100%';
+    document.getElementById('live-progress-bar').style.width = '100%';
+
+    switchStateView('success');
+    startConfetti();
+  }
+
+  function handleError(errorMsg) {
+    clearInterval(timerInterval);
+    clearInterval(progressTimer);
+    if (eventSource) eventSource.close();
+
+    document.getElementById('error-desc-text').textContent = "The orchestrator was aborted or crashed during pipeline stages.";
+    document.getElementById('error-traceback').textContent = errorMsg || "Unknown traceback error.";
+    
+    switchStateView('error');
+  }
+
+  // ── Confetti Particle Celebration ──
+  function startConfetti() {
+    const canvas = document.getElementById('confetti-canvas');
+    const ctx = canvas.getContext('2d');
+    let width = canvas.width = canvas.parentElement.offsetWidth;
+    let height = canvas.height = canvas.parentElement.offsetHeight;
+    
+    particles = [];
+    const particleColors = ['#10b981', '#06b6d4', '#3b82f6', '#8b5cf6', '#34d399'];
+
+    class Particle {
+      constructor() {
+        this.x = Math.random() * width;
+        this.y = -10;
+        this.size = Math.random() * 5 + 3;
+        this.color = particleColors[Math.floor(Math.random() * particleColors.length)];
+        this.speedX = Math.random() * 2 - 1;
+        this.speedY = Math.random() * 2 + 1.5;
+        this.rotation = Math.random() * 360;
+        this.rotationSpeed = Math.random() * 2 - 1;
+      }
+      update() {
+        this.x += this.speedX;
+        this.y += this.speedY;
+        this.rotation += this.rotationSpeed;
+      }
+      draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation * Math.PI / 180);
+        ctx.fillStyle = this.color;
+        ctx.fillRect(-this.size/2, -this.size/2, this.size, this.size);
+        ctx.restore();
+      }
+    }
+
+    for (let i = 0; i < 40; i++) {
+      particles.push(new Particle());
+    }
+
+    confettiInterval = setInterval(() => {
+      ctx.clearRect(0, 0, width, height);
+      particles.forEach((p, idx) => {
+        p.update();
+        p.draw();
+        if (p.y > height) {
+          particles.splice(idx, 1);
+        }
+      });
+
+      if (particles.length < 40) {
+        const p = new Particle();
+        p.x = Math.random() * width;
+        particles.push(p);
+      }
+    }, 1000/30);
+  }
+
+  function stopConfetti() {
+    clearInterval(confettiInterval);
+    const canvas = document.getElementById('confetti-canvas');
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    particles = [];
+  }
+
+  // ── Custom Dropdowns Code ──
+  const FRONTEND_OPTIONS = [
+    "Basic HTML/CSS/JS", "React", "Next.js", "Vue.js", "Nuxt.js", "Angular", "Svelte", "SvelteKit",
+    "SolidJS", "Qwik", "Remix", "Preact", "Lit", "Alpine.js", "HTMX", "Vanilla JavaScript",
+    "Bootstrap", "Tailwind CSS", "Material UI", "Chakra UI", "Ant Design", "Shadcn/UI", "Ionic",
+    "React Native", "Flutter Web"
+  ];
+
+  const BACKEND_OPTIONS = [
+    "Node.js (Express)", "NestJS", "Python (FastAPI)", "Python (Django)", "Python (Flask)", "Python (Tornado)",
+    "Java (Spring Boot)", "Java (Quarkus)", "Java (Micronaut)", "Go (Gin)", "Go (Fiber)", "Go (Echo)", "Go (Chi)",
+    "ASP.NET Core", "ASP.NET Minimal API", "PHP (Laravel)", "PHP (Symfony)", "PHP (CodeIgniter)",
+    "Elixir (Phoenix)", "Rust (Actix Web)", "Rust (Axum)", "Rust (Rocket)", "Kotlin (Ktor)",
+    "GraphQL Server", "gRPC Services"
+  ];
+
+  const ARCH_OPTIONS = [
+    "Monolithic", "Modular Monolith", "Microservices", "Event-Driven Architecture", "Service-Oriented Architecture (SOA)",
+    "Serverless", "Hexagonal Architecture (Ports & Adapters)", "Clean Architecture", "Onion Architecture",
+    "Layered (N-Tier) Architecture", "Domain-Driven Design (DDD)", "CQRS", "Event Sourcing",
+    "Microkernel (Plugin Architecture)", "Pipe and Filter", "Client-Server", "Backend for Frontend (BFF)",
+    "MVC", "MVVM", "Jamstack", "Headless Architecture", "Hybrid Architecture", "Peer-to-Peer (P2P)"
+  ];
+
+  function initDropdown(type, options, defaultValue) {
+    const listEl = document.getElementById(`dropdown-${type}-options`);
+    if (!listEl) return;
+
+    listEl.innerHTML = '';
+    options.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = "w-full text-left px-3.5 py-2.5 text-xs hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300 transition-colors flex items-center justify-between cursor-pointer";
+      btn.innerHTML = `<span>${opt}</span>`;
+      btn.onclick = () => selectOption(type, opt);
+      listEl.appendChild(btn);
+    });
+
+    selectOption(type, defaultValue);
+  }
+
+  function toggleDropdown(type) {
+    const panel = document.getElementById(`dropdown-${type}-panel`);
+    const isHidden = panel.classList.contains('hidden');
+    
+    // Close other panels first
+    ['frontend', 'backend', 'architecture'].forEach(t => {
+      const p = document.getElementById(`dropdown-${t}-panel`);
+      if (p) p.classList.add('hidden');
+    });
+
+    if (isHidden) {
+      panel.classList.remove('hidden');
+      const searchInput = document.getElementById(`dropdown-${type}-search`);
+      if (searchInput) {
+        searchInput.value = '';
+        searchInput.focus();
+        filterDropdown(type);
+      }
+    }
+  }
+
+  function filterDropdown(type) {
+    const query = document.getElementById(`dropdown-${type}-search`).value.toLowerCase();
+    const optionsEl = document.getElementById(`dropdown-${type}-options`);
+    const buttons = optionsEl.getElementsByTagName('button');
+
+    for (let btn of buttons) {
+      const text = btn.innerText.toLowerCase();
+      if (text.includes(query)) {
+        btn.style.display = 'flex';
+      } else {
+        btn.style.display = 'none';
+      }
+    }
+  }
+
+  function selectOption(type, val) {
+    document.getElementById(`bcp-${type}`).value = val;
+    document.getElementById(`selected-${type}-label`).innerText = val;
+    const panel = document.getElementById(`dropdown-${type}-panel`);
+    if (panel) panel.classList.add('hidden');
+  }
+
+  // Close dropdowns when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.custom-dropdown')) {
+      ['frontend', 'backend', 'architecture'].forEach(type => {
+        const panel = document.getElementById(`dropdown-${type}-panel`);
+        if (panel) panel.classList.add('hidden');
+      });
+    }
+  });
+
+  // Force dark mode active on page document
+  document.documentElement.classList.add('dark');
+
+  // ── Integration & Restoration Helpers ──
+
+  function showAutoConfiguredBadges() {
+    ['frontend', 'backend', 'architecture'].forEach(type => {
+      const container = document.getElementById(`dropdown-${type}-container`);
+      if (container) {
+        const label = container.previousElementSibling;
+        if (label && label.tagName === 'LABEL') {
+          const existing = label.querySelector('.ai-badge');
+          if (existing) existing.remove();
+
+          const badge = document.createElement('span');
+          badge.className = "ai-badge text-[8px] bg-purple-500/20 text-purple-400 font-bold px-1.5 py-0.5 rounded tracking-wide ml-2 animate-pulse";
+          badge.innerText = "AI Auto-Configured";
+          label.appendChild(badge);
+        }
+      }
+    });
+  }
+
+  function editRequirements() {
+    const importDataStr = sessionStorage.getItem('antigravity_import_data');
+    if (!importDataStr) return;
+
+    try {
+      const importData = JSON.parse(importDataStr);
+      if (importData.originalInputs) {
+        sessionStorage.setItem('antigravity_edit_data', JSON.stringify(importData.originalInputs));
+      }
+    } catch (e) {
+      console.error("Failed to restore requirements edit state:", e);
+    }
+    window.location.href = '/requirement-analyzer/';
+  }
+
+  // Detect and apply imported requirements on load
+  window.addEventListener('DOMContentLoaded', () => {
+    const importDataStr = sessionStorage.getItem('antigravity_import_data');
+    if (importDataStr) {
+      try {
+        const importData = JSON.parse(importDataStr);
+        if (importData && importData.source === 'RequirementAnalyzer') {
+          // 1. Show banner
+          const banner = document.getElementById('import-banner-container');
+          if (banner) banner.classList.remove('hidden');
+
+          // 2. Populate prompt textarea
+          const textarea = document.getElementById('bcp-details');
+          if (textarea) textarea.value = importData.prompt;
+
+          // 3. Pre-select dropdown options
+          const cfg = importData.inferredConfig;
+          if (cfg) {
+            if (cfg.frontend) selectOption('frontend', cfg.frontend);
+            if (cfg.backend) selectOption('backend', cfg.backend);
+            if (cfg.architecture) selectOption('architecture', cfg.architecture);
+
+            showAutoConfiguredBadges();
+
+            // Populate metadata pills grid inside the banner
+            const pillsContainer = document.getElementById('inferred-metadata-pills');
+            if (pillsContainer) {
+              pillsContainer.innerHTML = '';
+              const addPill = (name, val) => {
+                if (val) {
+                  const span = document.createElement('span');
+                  span.className = "text-[9px] bg-slate-800/80 text-slate-300 px-2 py-0.5 border border-white/5 rounded font-sans uppercase";
+                  span.innerHTML = `<strong class="text-blue-400">${name}:</strong> ${val}`;
+                  pillsContainer.appendChild(span);
+                }
+              };
+              addPill("Name", cfg.appName);
+              addPill("Type", cfg.appType);
+              addPill("Database", cfg.database);
+              addPill("Auth", cfg.auth);
+              addPill("Security", cfg.security);
+              addPill("Scalability", cfg.scalability);
+              addPill("Performance", cfg.performance);
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Failed to parse imported requirements details:", e);
+      }
+    }
+  });
+
+  // Initialize searchable dropdowns on load
+  initDropdown('frontend', FRONTEND_OPTIONS, 'React');
+  initDropdown('backend', BACKEND_OPTIONS, 'Python (FastAPI)');
+  initDropdown('architecture', ARCH_OPTIONS, 'Monolithic');
+
+  // Initialize view
+  switchStateView('empty');
+</script>
+{% endblock %}

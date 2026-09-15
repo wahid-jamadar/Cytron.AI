@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Building Your Project... — Cytron.AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          animation: {
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'spin-slow': 'spin 12s linear infinite',
+            'dash': 'dash 2s linear infinite',
+            'terminal-flow': 'terminal-scroll 20s linear infinite',
+          },
+          keyframes: {
+            dash: {
+              'to': { 'stroke-dashoffset': '-40' }
+            },
+            'terminal-scroll': {
+              '0%': { transform: 'translateY(0)' },
+              '100%': { transform: 'translateY(-50%)' }
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .bg-grid-pattern {
+        background-size: 30px 30px;
+        background-image: 
+          linear-gradient(to right, rgba(124, 58, 237, 0.04) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(124, 58, 237, 0.04) 1px, transparent 1px);
+      }
+      .dark .bg-grid-pattern {
+        background-image: 
+          linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      }
+      .glassmorphism {
+        @apply bg-white/60 dark:bg-[#0f1117]/60 backdrop-blur-xl border border-slate-200/50 dark:border-white/5 shadow-xl dark:shadow-2xl;
+      }
+      .glow-path {
+        stroke-dasharray: 8, 12;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 dark:bg-[#07080d] text-slate-800 dark:text-[#e8eaf0] min-h-screen font-sans transition-colors duration-300 overflow-x-hidden relative flex flex-col justify-between">
+
+  <!-- Background decorative gradients -->
+  <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+    <div class="absolute -top-[40%] -left-[20%] w-[80vw] h-[80vw] rounded-full bg-blue-500/10 dark:bg-blue-600/5 blur-[120px] animate-pulse-slow"></div>
+    <div class="absolute -bottom-[30%] -right-[10%] w-[60vw] h-[60vw] rounded-full bg-purple-500/10 dark:bg-purple-600/5 blur-[120px] animate-pulse-slow" style="animation-delay: 1.5s;"></div>
+    <div class="absolute top-[20%] right-[10%] w-[40vw] h-[40vw] rounded-full bg-cyan-500/5 dark:bg-cyan-600/5 blur-[100px] animate-pulse-slow" style="animation-delay: 3s;"></div>
+    <div class="absolute inset-0 bg-grid-pattern opacity-100"></div>
+  </div>
+
+  <!-- Top Utilities Bar -->
+  <header class="relative z-10 flex items-center justify-between px-6 py-4 border-b border-slate-200/50 dark:border-white/5 bg-slate-50/50 dark:bg-[#07080d]/50 backdrop-blur-md">
+    <div class="flex items-center gap-2.5">
+      <img src="/static/Cytron.AI-Logo.png" alt="Cytron.AI" style="height: 28px; width: auto;" class="object-contain" />
+      <div>
+        <span class="text-xs block text-slate-400 dark:text-slate-500">Autonomous Orchestration v1.0</span>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <!-- Simulated Control Panel (For Demo) -->
+      <div class="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-lg border border-slate-200 dark:border-white/10 bg-white/40 dark:bg-white/5 text-xs text-slate-500 dark:text-slate-400">
+        <span>Speed Mode:</span>
+        <button onclick="changeSimulationSpeed('slow')" id="speed-slow" class="px-1.5 py-0.5 rounded hover:bg-slate-200 dark:hover:bg-white/10 font-semibold text-purple-500">Slow</button>
+        <button onclick="changeSimulationSpeed('medium')" id="speed-medium" class="px-1.5 py-0.5 rounded hover:bg-slate-200 dark:hover:bg-white/10 font-semibold">Normal</button>
+        <button onclick="changeSimulationSpeed('fast')" id="speed-fast" class="px-1.5 py-0.5 rounded hover:bg-slate-200 dark:hover:bg-white/10 font-semibold">Fast</button>
+      </div>
+
+      <button onclick="toggleTheme()" class="flex items-center justify-center w-9 h-9 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 transition-all text-slate-600 dark:text-slate-400" title="Toggle Theme">
+        <i id="theme-icon" class="ti ti-sun text-lg dark:hidden"></i>
+        <i id="theme-icon-dark" class="ti ti-moon text-lg hidden dark:block"></i>
+      </button>
+      <a href="/hub" class="text-xs font-semibold px-3.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 transition-all text-slate-600 dark:text-slate-400 flex items-center gap-1">
+        <i class="ti ti-chevron-left"></i> Back to services
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="relative z-10 flex-1 flex flex-col items-center justify-center px-4 py-8 max-w-5xl mx-auto w-full">
+    
+    <div class="glassmorphism w-full rounded-2xl p-6 md:p-10 flex flex-col items-center text-center relative overflow-hidden transition-all duration-300">
+      
+      <!-- Central Grid Layout -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 w-full items-center">
+        
+        <!-- Left Column: Multi-Agent Workflow SVG Animation (lg:col-span-7) -->
+        <div class="lg:col-span-7 flex flex-col items-center justify-center relative min-h-[340px] md:min-h-[400px]">
+          
+          <!-- Code Generation backdrop scrolling text -->
+          <div class="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] overflow-hidden rounded-xl font-mono text-[10px] text-left select-none pointer-events-none">
+            <div class="animate-terminal-flow flex flex-col gap-1.5 leading-none">
+              <span>// Autonomous Agent Generation Stack</span>
+              <span>import { ArchitectAgent } from '@cytron-ai/architect';</span>
+              <span>import { DatabaseSchema } from '@cytron-ai/db';</span>
+              <span>import { ReactGenerator } from '@cytron-ai/react-gen';</span>
+              <span>const config = { architecture: 'microservices', auth: 'jwt' };</span>
+              <span>async function compilePipeline(req) {</span>
+              <span>  const schema = await DatabaseSchema.analyze(req);</span>
+              <span>  const routes = await ArchitectAgent.createRoutes(schema);</span>
+              <span>  const components = await ReactGenerator.buildUI(routes);</span>
+              <span>  return { schema, routes, components };</span>
+              <span>}</span>
+              <span>class TestRunner extends UnitSuite {</span>
+              <span>  async checkHealth(api) {</span>
+              <span>    const result = await api.get('/health');</span>
+              <span>    assert.equal(result.status, 200);</span>
+              <span>  }</span>
+              <span>}</span>
+              <span>// Re-running scroll items...</span>
+              <span>import { ArchitectAgent } from '@cytron-ai/architect';</span>
+              <span>import { DatabaseSchema } from '@cytron-ai/db';</span>
+              <span>import { ReactGenerator } from '@cytron-ai/react-gen';</span>
+              <span>const config = { architecture: 'microservices', auth: 'jwt' };</span>
+              <span>async function compilePipeline(req) {</span>
+              <span>  const schema = await DatabaseSchema.analyze(req);</span>
+              <span>  const routes = await ArchitectAgent.createRoutes(schema);</span>
+              <span>  const components = await ReactGenerator.buildUI(routes);</span>
+              <span>  return { schema, routes, components };</span>
+              <span>}</span>
+            </div>
+          </div>
+
+          <!-- Dynamic SVG Multi-agent Connector Web -->
+          <svg class="absolute w-full h-full text-slate-300 dark:text-slate-800 transition-colors duration-300" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Node circles helper coordinates (CX, CY)
+                 Architect: 200, 50
+                 Database: 320, 110
+                 Backend: 350, 240
+                 DevOps: 290, 340
+                 Documentation: 110, 340
+                 Testing: 50, 240
+                 Frontend: 80, 110
+            -->
+
+            <!-- Main Central Platform Ring -->
+            <circle cx="200" cy="200" r="70" stroke="currentColor" stroke-width="1" stroke-dasharray="4 4" class="animate-spin-slow opacity-30" />
+            
+            <!-- Connection Lines -->
+            <!-- Arch -> DB -->
+            <path d="M200 50 L320 110" stroke="url(#gradient-blue)" stroke-width="1.5" class="opacity-60" />
+            <path d="M200 50 L320 110" stroke="url(#gradient-cyan)" stroke-width="2" stroke-linecap="round" class="glow-path animate-dash" />
+            
+            <!-- DB -> Backend -->
+            <path d="M320 110 L350 240" stroke="url(#gradient-blue)" stroke-width="1.5" class="opacity-60" />
+            <path d="M320 110 L350 240" stroke="url(#gradient-purple)" stroke-width="2" stroke-linecap="round" class="glow-path animate-dash" style="animation-delay: 0.5s;" />
+
+            <!-- Backend -> Frontend -->
+            <path d="M350 240 L80 110" stroke="url(#gradient-purple)" stroke-width="1" class="opacity-30" stroke-dasharray="2 2" />
+
+            <!-- Frontend -> Testing -->
+            <path d="M80 110 L50 240" stroke="url(#gradient-cyan)" stroke-width="1.5" class="opacity-60" />
+            <path d="M80 110 L50 240" stroke="url(#gradient-purple)" stroke-width="2" stroke-linecap="round" class="glow-path animate-dash" style="animation-delay: 0.8s;" />
+
+            <!-- Testing -> DevOps -->
+            <path d="M50 240 L290 340" stroke="url(#gradient-blue)" stroke-width="1.5" class="opacity-60" />
+            <path d="M50 240 L290 340" stroke="url(#gradient-cyan)" stroke-width="2" stroke-linecap="round" class="glow-path animate-dash" style="animation-delay: 1.2s;" />
+
+            <!-- DevOps -> Doc -->
+            <path d="M290 340 L110 340" stroke="url(#gradient-purple)" stroke-width="1.5" class="opacity-60" />
+            <path d="M290 340 L110 340" stroke="url(#gradient-blue)" stroke-width="2" stroke-linecap="round" class="glow-path animate-dash" style="animation-delay: 1.5s;" />
+
+            <!-- Doc -> Arch -->
+            <path d="M110 340 L200 50" stroke="url(#gradient-blue)" stroke-width="1.5" class="opacity-60" />
+            <path d="M110 340 L200 50" stroke="url(#gradient-cyan)" stroke-width="2" stroke-linecap="round" class="glow-path animate-dash" style="animation-delay: 1.8s;" />
+
+            <!-- Gradients Declarations -->
+            <defs>
+              <linearGradient id="gradient-blue" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#3b82f6" />
+                <stop offset="100%" stop-color="#8b5cf6" />
+              </linearGradient>
+              <linearGradient id="gradient-purple" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#8b5cf6" />
+                <stop offset="100%" stop-color="#06b6d4" />
+              </linearGradient>
+              <linearGradient id="gradient-cyan" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#06b6d4" />
+                <stop offset="100%" stop-color="#3b82f6" />
+              </linearGradient>
+            </defs>
+          </svg>
+
+          <!-- Floating React HTML nodes with custom agent details -->
+          <!-- Central active core with percentage -->
+          <div class="absolute w-24 h-24 rounded-full bg-slate-100/90 dark:bg-[#161b26]/90 border border-slate-300 dark:border-white/10 flex flex-col items-center justify-center shadow-xl backdrop-blur-md z-20">
+            <!-- Glow effect -->
+            <div class="absolute inset-0 rounded-full bg-gradient-to-tr from-blue-500 via-purple-500 to-cyan-500 opacity-20 blur-md animate-pulse"></div>
+            <span id="live-percent" class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-600 dark:from-blue-400 dark:via-purple-400 dark:to-cyan-400 leading-none">0%</span>
+            <span class="text-[9px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-semibold mt-1">Generating</span>
+          </div>
+
+          <!-- Architect (Top-Center) -->
+          <div class="absolute top-[3%] left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 z-10" id="agent-architect">
+            <div class="w-11 h-11 rounded-xl bg-white dark:bg-[#161b26] border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 shadow-md transition-all duration-300">
+              <i class="ti ti-sitemap text-xl"></i>
+            </div>
+            <span class="text-[9px] font-bold text-slate-500 dark:text-slate-400 px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-900 border border-slate-200/50 dark:border-white/5">Architect</span>
+          </div>
+
+          <!-- Database Agent (Top-Right) -->
+          <div class="absolute top-[20%] right-[12%] flex flex-col items-center gap-1 z-10" id="agent-database">
+            <div class="w-11 h-11 rounded-xl bg-white dark:bg-[#161b26] border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 shadow-md transition-all duration-300">
+              <i class="ti ti-database text-xl"></i>
+            </div>
+            <span class="text-[9px] font-bold text-slate-500 dark:text-slate-400 px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-900 border border-slate-200/50 dark:border-white/5">Database</span>
+          </div>
+
+          <!-- Backend Agent (Middle-Right) -->
+          <div class="absolute top-[50%] right-[3%] -translate-y-1/2 flex flex-col items-center gap-1 z-10" id="agent-backend">
+            <div class="w-11 h-11 rounded-xl bg-white dark:bg-[#161b26] border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 shadow-md transition-all duration-300">
+              <i class="ti ti-server text-xl"></i>
+            </div>
+            <span class="text-[9px] font-bold text-slate-500 dark:text-slate-400 px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-900 border border-slate-200/50 dark:border-white/5">Backend</span>
+          </div>
+
+          <!-- DevOps Agent (Bottom-Right) -->
+          <div class="absolute bottom-[20%] right-[17%] flex flex-col items-center gap-1 z-10" id="agent-devops">
+            <div class="w-11 h-11 rounded-xl bg-white dark:bg-[#161b26] border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 shadow-md transition-all duration-300">
+              <i class="ti ti-server-cog text-xl"></i>
+            </div>
+            <span class="text-[9px] font-bold text-slate-500 dark:text-slate-400 px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-900 border border-slate-200/50 dark:border-white/5">DevOps</span>
+          </div>
+
+          <!-- Documentation Agent (Bottom-Left) -->
+          <div class="absolute bottom-[20%] left-[17%] flex flex-col items-center gap-1 z-10" id="agent-docs">
+            <div class="w-11 h-11 rounded-xl bg-white dark:bg-[#161b26] border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 shadow-md transition-all duration-300">
+              <i class="ti ti-book text-xl"></i>
+            </div>
+            <span class="text-[9px] font-bold text-slate-500 dark:text-slate-400 px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-900 border border-slate-200/50 dark:border-white/5">Docs</span>
+          </div>
+
+          <!-- Testing Agent (Middle-Left) -->
+          <div class="absolute top-[50%] left-[3%] -translate-y-1/2 flex flex-col items-center gap-1 z-10" id="agent-testing">
+            <div class="w-11 h-11 rounded-xl bg-white dark:bg-[#161b26] border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 shadow-md transition-all duration-300">
+              <i class="ti ti-flask text-xl"></i>
+            </div>
+            <span class="text-[9px] font-bold text-slate-500 dark:text-slate-400 px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-900 border border-slate-200/50 dark:border-white/5">Testing</span>
+          </div>
+
+          <!-- Frontend Agent (Top-Left) -->
+          <div class="absolute top-[20%] left-[12%] flex flex-col items-center gap-1 z-10" id="agent-frontend">
+            <div class="w-11 h-11 rounded-xl bg-white dark:bg-[#161b26] border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 shadow-md transition-all duration-300">
+              <i class="ti ti-layout text-xl"></i>
+            </div>
+            <span class="text-[9px] font-bold text-slate-500 dark:text-slate-400 px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-900 border border-slate-200/50 dark:border-white/5">Frontend</span>
+          </div>
+
+        </div>
+
+        <!-- Right Column: Timeline & Progress Tracking (lg:col-span-5) -->
+        <div class="lg:col-span-5 flex flex-col text-left h-full justify-between">
+          <div class="mb-5">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs uppercase font-extrabold tracking-wider text-slate-400 dark:text-slate-500">Pipeline Execution</span>
+              <span class="text-xs font-mono text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
+                <i class="ti ti-clock"></i> <span id="elapsed-time">00:00</span>
+              </span>
+            </div>
+            <h2 id="current-title" class="text-xl md:text-2xl font-extrabold text-slate-950 dark:text-white mb-2 leading-tight">
+              Analysing Requirements...
+            </h2>
+            <p id="current-desc" class="text-xs md:text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-4">
+              Gathering user prompts and mapping functional domain architectures.
+            </p>
+
+            <!-- Global Progress Bar -->
+            <div class="w-full h-2 rounded-full bg-slate-200 dark:bg-[#161b26] overflow-hidden mb-6 relative">
+              <div id="timeline-progress-bar" class="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-cyan-500 transition-all duration-500 w-[0%]"></div>
+            </div>
+          </div>
+
+          <!-- Dynamic Vertical Steps Timeline -->
+          <div class="flex flex-col gap-3 relative before:absolute before:top-2 before:bottom-2 before:left-3.5 before:w-0.5 before:bg-slate-200 dark:before:bg-[#161b26] z-10 flex-1">
+            
+            <!-- Step 1: Requirements -->
+            <div id="step-0" class="flex items-start gap-4 transition-all duration-300 opacity-40">
+              <div class="step-icon flex items-center justify-center w-7.5 h-7.5 rounded-full border-2 border-slate-300 dark:border-slate-800 bg-white dark:bg-[#07080d] text-slate-400 z-10">
+                <i class="ti ti-clipboard-list text-sm"></i>
+              </div>
+              <div>
+                <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200">Requirements Analysis</h4>
+                <p class="text-[10px] text-slate-400 dark:text-slate-500">Structuring core specifications</p>
+              </div>
+            </div>
+
+            <!-- Step 2: Architecture -->
+            <div id="step-1" class="flex items-start gap-4 transition-all duration-300 opacity-40">
+              <div class="step-icon flex items-center justify-center w-7.5 h-7.5 rounded-full border-2 border-slate-300 dark:border-slate-800 bg-white dark:bg-[#07080d] text-slate-400 z-10">
+                <i class="ti ti-sitemap text-sm"></i>
+              </div>
+              <div>
+                <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200">System Architecture</h4>
+                <p class="text-[10px] text-slate-400 dark:text-slate-500">Defining API paths and schemas</p>
+              </div>
+            </div>
+
+            <!-- Step 3: Coding -->
+            <div id="step-2" class="flex items-start gap-4 transition-all duration-300 opacity-40">
+              <div class="step-icon flex items-center justify-center w-7.5 h-7.5 rounded-full border-2 border-slate-300 dark:border-slate-800 bg-white dark:bg-[#07080d] text-slate-400 z-10">
+                <i class="ti ti-code text-sm"></i>
+              </div>
+              <div>
+                <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200">Code Development</h4>
+                <p class="text-[10px] text-slate-400 dark:text-slate-500">Generating frontend & backend codebase</p>
+              </div>
+            </div>
+
+            <!-- Step 4: Verification -->
+            <div id="step-3" class="flex items-start gap-4 transition-all duration-300 opacity-40">
+              <div class="step-icon flex items-center justify-center w-7.5 h-7.5 rounded-full border-2 border-slate-300 dark:border-slate-800 bg-white dark:bg-[#07080d] text-slate-400 z-10">
+                <i class="ti ti-flask text-sm"></i>
+              </div>
+              <div>
+                <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200">Verification & Test Suite</h4>
+                <p class="text-[10px] text-slate-400 dark:text-slate-500">Executing unit tests and fixing bugs</p>
+              </div>
+            </div>
+
+            <!-- Step 5: Ship -->
+            <div id="step-4" class="flex items-start gap-4 transition-all duration-300 opacity-40">
+              <div class="step-icon flex items-center justify-center w-7.5 h-7.5 rounded-full border-2 border-slate-300 dark:border-slate-800 bg-white dark:bg-[#07080d] text-slate-400 z-10">
+                <i class="ti ti-rocket text-sm"></i>
+              </div>
+              <div>
+                <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200">Final Documentation & Deploy</h4>
+                <p class="text-[10px] text-slate-400 dark:text-slate-500">Creating docs, compiling ZIP bundle</p>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Bottom Status Info -->
+          <div class="mt-6 flex items-center justify-between border-t border-slate-200 dark:border-white/5 pt-4 text-[11px] text-slate-400 dark:text-slate-500 font-medium">
+            <span>Estimated Remaining: <span id="remaining-time" class="font-mono text-slate-700 dark:text-slate-300">01:45</span></span>
+            <button onclick="abortRun()" class="hover:text-red-500 transition-colors flex items-center gap-1 select-none">
+              <i class="ti ti-circle-x"></i> Cancel Process
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="relative z-10 text-center py-8 text-xs text-slate-400 dark:text-slate-600 border-t border-slate-200/50 dark:border-white/5 bg-slate-50/50 dark:bg-[#07080d]/50 backdrop-blur-md">
+    <div class="max-w-4xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <span>Cytron.AI Platform — Design States Showcase</span>
+      <div class="flex gap-4">
+        <a href="/hub" class="hover:text-slate-600 dark:hover:text-slate-400 transition-colors">Hub</a>
+        <span>·</span>
+        <a href="/docs" target="_blank" class="hover:text-slate-600 dark:hover:text-slate-400 transition-colors">API Docs</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Config details
+    const stages = [
+      {
+        title: "Analysing Requirements...",
+        desc: "Gathering user prompts and mapping functional domain architectures.",
+        percentRange: [0, 15],
+        stepIndex: 0,
+        activeAgents: ["agent-architect"],
+        timeEstimate: 105
+      },
+      {
+        title: "Designing Architecture...",
+        desc: "Synthesizing system designs, components dependencies, and data structures.",
+        percentRange: [16, 30],
+        stepIndex: 1,
+        activeAgents: ["agent-architect", "agent-database"],
+        timeEstimate: 90
+      },
+      {
+        title: "Planning Database...",
+        desc: "Normalizing entities, establishing constraints, and drafting migration schema scripts.",
+        percentRange: [31, 45],
+        stepIndex: 1,
+        activeAgents: ["agent-database", "agent-backend"],
+        timeEstimate: 75
+      },
+      {
+        title: "Writing Backend...",
+        desc: "Structuring APIs, implementing logic middleware, and building database handlers.",
+        percentRange: [46, 60],
+        stepIndex: 2,
+        activeAgents: ["agent-backend", "agent-testing"],
+        timeEstimate: 60
+      },
+      {
+        title: "Building Frontend...",
+        desc: "Designing modular interfaces, styling screens, and tying API routes into React components.",
+        percentRange: [61, 75],
+        stepIndex: 2,
+        activeAgents: ["agent-frontend", "agent-backend"],
+        timeEstimate: 45
+      },
+      {
+        title: "Running Tests...",
+        desc: "Generating and executing unit assertion libraries and verifying security headers.",
+        percentRange: [76, 85],
+        stepIndex: 3,
+        activeAgents: ["agent-testing", "agent-frontend"],
+        timeEstimate: 25
+      },
+      {
+        title: "Reviewing Code...",
+        desc: "Refactoring structures, removing redundancies, and optimizing file imports.",
+        percentRange: [86, 92],
+        stepIndex: 3,
+        activeAgents: ["agent-architect", "agent-backend", "agent-testing"],
+        timeEstimate: 15
+      },
+      {
+        title: "Finalising Project...",
+        desc: "Compiling system documentation, configuring deployment, and compressing repository bundle.",
+        percentRange: [93, 100],
+        stepIndex: 4,
+        activeAgents: ["agent-docs", "agent-devops"],
+        timeEstimate: 5
+      }
+    ];
+
+    let currentPercent = 0;
+    let elapsedSeconds = 0;
+    let timerInterval;
+    let simulationSpeed = 'medium'; // slow, medium, fast
+    let simulationTimer;
+
+    function getSpeedInterval() {
+      if (simulationSpeed === 'slow') return 1200;
+      if (simulationSpeed === 'fast') return 200;
+      return 500; // medium
+    }
+
+    function changeSimulationSpeed(speed) {
+      simulationSpeed = speed;
+      document.querySelectorAll('[id^="speed-"]').forEach(btn => btn.classList.remove('text-purple-500'));
+      document.getElementById(`speed-${speed}`).classList.add('text-purple-500');
+      
+      clearInterval(simulationTimer);
+      runSimulation();
+    }
+
+    function formatTime(seconds) {
+      const min = String(Math.floor(seconds / 60)).padStart(2, '0');
+      const sec = String(seconds % 60).padStart(2, '0');
+      return `${min}:${sec}`;
+    }
+
+    function updateTimer() {
+      elapsedSeconds++;
+      document.getElementById('elapsed-time').textContent = formatTime(elapsedSeconds);
+    }
+
+    function runSimulation() {
+      simulationTimer = setInterval(() => {
+        if (currentPercent < 100) {
+          currentPercent++;
+          document.getElementById('live-percent').textContent = `${currentPercent}%`;
+          document.getElementById('timeline-progress-bar').style.width = `${currentPercent}%`;
+
+          // Find current stage
+          const currentStage = stages.find(s => currentPercent >= s.percentRange[0] && currentPercent <= s.percentRange[1]) || stages[stages.length - 1];
+          
+          // Update texts
+          document.getElementById('current-title').textContent = currentStage.title;
+          document.getElementById('current-desc').textContent = currentStage.desc;
+          
+          // Calculate remaining time
+          const remainingSeconds = Math.max(0, currentStage.timeEstimate - Math.floor((currentPercent - currentStage.percentRange[0]) * 0.8));
+          document.getElementById('remaining-time').textContent = formatTime(remainingSeconds);
+
+          // Update timeline list opacity and icons
+          stages.forEach((stg, i) => {
+            const stepEl = document.getElementById(`step-${stg.stepIndex}`);
+            if (!stepEl) return;
+            
+            const isCurrent = currentStage.stepIndex === stg.stepIndex;
+            const isPast = currentStage.stepIndex > stg.stepIndex;
+
+            if (isCurrent) {
+              stepEl.classList.remove('opacity-40');
+              stepEl.classList.add('opacity-100');
+              const iconEl = stepEl.querySelector('.step-icon');
+              iconEl.className = "step-icon flex items-center justify-center w-7.5 h-7.5 rounded-full border-2 border-purple-500 dark:border-purple-400 bg-white dark:bg-[#07080d] text-purple-500 dark:text-purple-400 shadow-md shadow-purple-500/20 z-10";
+            } else if (isPast) {
+              stepEl.classList.remove('opacity-40');
+              stepEl.classList.add('opacity-80');
+              const iconEl = stepEl.querySelector('.step-icon');
+              iconEl.innerHTML = '<i class="ti ti-circle-check text-sm"></i>';
+              iconEl.className = "step-icon flex items-center justify-center w-7.5 h-7.5 rounded-full border-2 border-emerald-500 bg-white dark:bg-[#07080d] text-emerald-500 z-10";
+            } else {
+              stepEl.classList.add('opacity-40');
+              stepEl.classList.remove('opacity-100', 'opacity-80');
+            }
+          });
+
+          // Animate Active Agent Nodes (Scale and border glows)
+          document.querySelectorAll('[id^="agent-"]').forEach(el => {
+            const agentId = el.id;
+            const cardEl = el.querySelector('div');
+            if (currentStage.activeAgents.includes(agentId)) {
+              cardEl.classList.remove('border-slate-200', 'dark:border-slate-800', 'text-slate-600', 'dark:text-slate-400');
+              cardEl.classList.add('border-purple-500', 'dark:border-purple-400', 'text-purple-600', 'dark:text-purple-400', 'scale-110', 'shadow-purple-500/10', 'dark:shadow-purple-400/5', 'animate-pulse');
+            } else {
+              cardEl.classList.add('border-slate-200', 'dark:border-slate-800', 'text-slate-600', 'dark:text-slate-400');
+              cardEl.classList.remove('border-purple-500', 'dark:border-purple-400', 'text-purple-600', 'dark:text-purple-400', 'scale-110', 'shadow-purple-500/10', 'dark:shadow-purple-400/5', 'animate-pulse');
+            }
+          });
+
+        } else {
+          // Finished loading
+          clearInterval(simulationTimer);
+          clearInterval(timerInterval);
+          setTimeout(() => {
+            alert('Loading finished! Redirecting to success state mockup...');
+            location.href = 'success.html';
+          }, 800);
+        }
+      }, getSpeedInterval());
+    }
+
+    function abortRun() {
+      if (confirm('Are you sure you want to cancel the build?')) {
+        clearInterval(simulationTimer);
+        clearInterval(timerInterval);
+        alert('Build Aborted.');
+        location.href = 'empty.html';
+      }
+    }
+
+    // Theme switching logic
+    function toggleTheme() {
+      const html = document.documentElement;
+      const isDark = html.classList.contains('dark');
+      if (isDark) {
+        html.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+      } else {
+        html.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+      }
+    }
+
+    // Set theme on load
+    if (localStorage.getItem('theme') === 'light' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: light)').matches)) {
+      document.documentElement.classList.remove('dark');
+    } else {
+      document.documentElement.classList.add('dark');
+    }
+
+    // Initialize Simulation
+    changeSimulationSpeed('medium');
+    timerInterval = setInterval(updateTimer, 1000);
+  </script>
+</body>
+</html>

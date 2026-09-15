@@ -1,0 +1,3 @@
+[
+  "import React, { useState, useEffect } from 'react';\nimport { useNavigate } from 'react-router-dom';\nimport api from '../lib/api';\n\nconst StaffDashboard = () => {\n  const [patients, setPatients] = useState([]);\n  const navigate = useNavigate();\n\n  useEffect(() => {\n    const fetchPatients = async () => {\n      try {\n        const response = await api.get('/api/v1/patient');\n        setPatients(response.data);\n      } catch (error) {\n        console.error(error);\n      }\n    };\n    fetchPatients();\n  }, []);\n\n  return (\n    <div>\n      <h1>Staff Dashboard</h1>\n      <ul>\n        {patients.map((patient) => (\n          <li key={patient.id}>{patient.name}</li>\n        ))}\n      </ul>\n    </div>\n  );\n};\n\nexport default StaffDashboard;"
+]

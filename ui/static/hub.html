@@ -1,0 +1,776 @@
+{% extends "base.html" %}
+
+{% block title %}AI Service Hub - Cytron.AI{% endblock %}
+
+{% block nav_links %}{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ── Page Layout & Overrides ────────────────────────── */
+  .hero-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 3rem;
+    padding: 2rem 0 3rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2.5rem;
+    position: relative;
+  }
+  
+  .hero-left {
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    position: relative;
+    z-index: 2;
+  }
+  
+  .hero-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    line-height: 1.15;
+    color: var(--text);
+    letter-spacing: -0.02em;
+  }
+  
+  .hero-desc {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  .badge-tag {
+    align-self: flex-start;
+    background: rgba(139, 92, 246, 0.08);
+    border: 1px solid var(--border-glow);
+    border-radius: 100px;
+    padding: 4px 12px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .category-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 0.5rem;
+  }
+  
+  .category-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-family: var(--font);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+  
+  .category-pill:hover {
+    background: var(--surface-3);
+    color: var(--text);
+  }
+  
+  .category-pill.active {
+    background: var(--accent-glow);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* Orbit Node Graphics */
+  .hero-right {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+  }
+  
+  .ai-core-wrapper {
+    position: relative;
+    width: 480px;
+    height: 320px;
+  }
+  
+  .ai-core-svg {
+    width: 100%;
+    height: 100%;
+  }
+  
+  .orbit-nodes-container {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .orbit-nodes-container.has-hovered-node .orbit-node:not(.is-hovered) {
+    pointer-events: none;
+  }
+  
+  .orbit-node {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 1.5px solid var(--node-color, var(--accent));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text);
+    font-size: 0.95rem;
+    transform: translate3d(calc(var(--x-px, 240px) - 16px), calc(var(--y-px, 160px) - 16px), 0);
+    scale: var(--scale, 1);
+    pointer-events: auto;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(23, 23, 28, 0.05);
+    transition: scale var(--transition-fast), box-shadow var(--transition-fast);
+    z-index: 10;
+  }
+  
+  .orbit-node:hover, .orbit-node.is-hovered {
+    --scale: 1.15;
+    box-shadow: 0 0 10px var(--node-color);
+    z-index: 50;
+  }
+
+  #orbit-rings-group ellipse {
+    stroke: var(--text);
+    opacity: 0.15;
+    transition: opacity var(--transition-normal);
+  }
+  
+  /* Tooltip overlay */
+  .orbit-tooltip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%) translateY(5px);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    box-shadow: 0 5px 15px rgba(23, 23, 28, 0.06);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 130px;
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: all var(--transition-fast);
+    z-index: 100;
+  }
+  
+  .orbit-node:hover .orbit-tooltip {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  
+  .orbit-tooltip strong {
+    font-size: 0.72rem;
+    color: var(--text);
+    display: block;
+  }
+  
+  .orbit-tooltip span {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    display: block;
+    margin-top: 1px;
+  }
+
+  /* Services Grid Section */
+  .services-section {
+    padding-bottom: 2rem;
+  }
+  
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+
+  /* Service Card styling */
+  .service-card {
+    background: var(--surface);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    cursor: pointer;
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+    transition: all var(--transition-fast);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  }
+  
+  .service-card:hover {
+    border-color: var(--card-theme-color);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(23, 23, 28, 0.03);
+  }
+  
+  .card-tag {
+    position: absolute;
+    top: 1.25rem;
+    right: 1.25rem;
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    padding: 2px 8px;
+    border-radius: 100px;
+    background: var(--surface-3);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+  .card-tag.recommended { background: rgba(169, 230, 195, 0.12); color: var(--success); border-color: rgba(169, 230, 195, 0.25); }
+  .card-tag.popular { background: rgba(158, 197, 255, 0.12); color: var(--info); border-color: rgba(158, 197, 255, 0.25); }
+  .card-tag.new { background: rgba(185, 167, 255, 0.12); color: var(--accent); border-color: rgba(185, 167, 255, 0.25); }
+  .card-tag.enterprise { background: rgba(244, 217, 139, 0.12); color: #b45309; border-color: rgba(244, 217, 139, 0.25); }
+  .card-tag.experimental { background: rgba(244, 182, 168, 0.12); color: var(--error); border-color: rgba(244, 182, 168, 0.25); }
+
+  .card-icon-container {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-sm);
+    background: var(--surface-3);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--card-theme-color);
+    font-size: 1.25rem;
+    transition: all var(--transition-fast);
+  }
+  .service-card:hover .card-icon-container {
+    background: var(--card-theme-color);
+    color: #fff;
+    border-color: var(--card-theme-color);
+  }
+  
+  .card-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+  
+  .card-desc {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+    flex-grow: 1;
+  }
+  
+  .card-action {
+    display: flex;
+    align-items: center;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--card-theme-color);
+    margin-top: 0.5rem;
+  }
+  .launch-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: transform var(--transition-fast);
+  }
+  .service-card:hover .launch-btn {
+    transform: translateX(4px);
+  }
+
+  /* Card Color Themes mapping */
+  .purple-theme { --card-theme-color: #8b5cf6; }
+  .blue-theme { --card-theme-color: #3b82f6; }
+  .magenta-theme { --card-theme-color: #ec4899; }
+  .teal-theme { --card-theme-color: #06b6d4; }
+  .orange-theme { --card-theme-color: #f59e0b; }
+  .green-theme { --card-theme-color: #10b981; }
+  .violet-theme { --card-theme-color: #6366f1; }
+  .yellow-theme { --card-theme-color: #b45309; }
+  .indigo-theme { --card-theme-color: #4f46e5; }
+  .fuchsia-theme { --card-theme-color: #d946ef; }
+
+  /* Empty Search State */
+  .empty-search-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 4rem 2rem;
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    gap: 12px;
+  }
+  .empty-icon {
+    font-size: 2.25rem;
+    color: var(--text-dim);
+  }
+  .empty-search-state h3 {
+    font-size: 1.15rem;
+    color: var(--text);
+  }
+  .empty-search-state p {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    max-width: 320px;
+    margin-bottom: 0.5rem;
+  }
+  .clear-search-btn {
+    padding: 0.45rem 1rem;
+    background: var(--surface-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+  .clear-search-btn:hover {
+    background: var(--surface);
+    border-color: var(--text-dim);
+  }
+
+  .hidden {
+    display: none !important;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Showcase Section -->
+<section class="hero-section">
+  <div class="hero-left">
+    <div class="badge-tag">AI-Powered Development Platform</div>
+    <h1 class="hero-title">What do you want<br>to build today?</h1>
+    <p class="hero-desc">Choose an AI-powered service to build intelligent software using autonomous agents.</p>
+    <div class="category-pills">
+      <button class="category-pill active" data-category="all"><i class="ti ti-layout-grid-add"></i> All Services</button>
+      <button class="category-pill" data-category="development"><i class="ti ti-code-square"></i> Development</button>
+      <button class="category-pill" data-category="database"><i class="ti ti-database"></i> Database</button>
+      <button class="category-pill" data-category="testing"><i class="ti ti-flask"></i> Testing</button>
+      <button class="category-pill" data-category="documentation"><i class="ti ti-book"></i> Documentation</button>
+      <button class="category-pill" data-category="analysis"><i class="ti ti-chart-bar"></i> Analysis</button>
+    </div>
+  </div>
+
+  <div class="hero-right">
+    <div class="ai-core-wrapper">
+      <svg class="ai-core-svg" viewBox="0 0 600 400" id="ai-core-svg">
+        <defs>
+          <filter id="core-glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="8" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+          
+          <radialGradient id="hex-grad" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="rgba(139, 92, 246, 0.25)" />
+            <stop offset="65%" stop-color="rgba(79, 139, 255, 0.08)" />
+            <stop offset="100%" stop-color="rgba(9, 11, 21, 0)" />
+          </radialGradient>
+        </defs>
+
+        <!-- Orbit Elliptical Paths -->
+        <g id="orbit-rings-group">
+          <ellipse cx="300" cy="200" rx="135" ry="48" fill="none" stroke="var(--border)" stroke-width="1.2" stroke-dasharray="4 8" transform="rotate(-12, 300, 200)" />
+          <ellipse cx="300" cy="200" rx="185" ry="68" fill="none" stroke="var(--border)" stroke-width="1.5" stroke-dasharray="6 12" transform="rotate(8, 300, 200)" />
+          <ellipse cx="300" cy="200" rx="235" ry="88" fill="none" stroke="var(--border)" stroke-width="1.8" stroke-dasharray="4 10" transform="rotate(-5, 300, 200)" />
+          <ellipse cx="300" cy="200" rx="285" ry="108" fill="none" stroke="var(--border)" stroke-width="2.2" stroke-dasharray="8 16" transform="rotate(15, 300, 200)" />
+        </g>
+
+        <!-- Dynamic connections group -->
+        <g id="energy-lines-group"></g>
+
+        <!-- Center Nucleus Hexagon -->
+        <g transform="translate(300, 200)" id="central-nucleus">
+          <circle cx="0" cy="0" r="65" fill="url(#hex-grad)" opacity="0.3" filter="url(#core-glow)" />
+          <image href="/static/Cytron.AI-Logo.png" x="-50" y="-50" width="100" height="100" />
+        </g>
+      </svg>
+
+      <!-- Absolute Orbit Node overlays (positioned dynamically in JS) -->
+      <div class="orbit-nodes-container" id="orbit-nodes-container">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Services Cards Grid Section -->
+<section class="services-section">
+  <div class="services-grid" id="services-grid">
+    <!-- AI Requirement Analyzer -->
+    <a href="/requirement-analyzer" class="service-card purple-theme" data-category="analysis">
+      <span class="card-tag">AI Powered</span>
+      <div class="card-icon-container">
+        <i class="ti ti-clipboard-list"></i>
+      </div>
+      <h3 class="card-title">AI Requirement Analyzer</h3>
+      <p class="card-desc">Input unstructured requirements and generate structured functional/technical requirements.</p>
+      <div class="card-action">
+        <span class="launch-btn">Launch <i class="ti ti-arrow-right"></i></span>
+      </div>
+    </a>
+
+    <!-- Build Complete Project -->
+    <a href="/build-complete-project" class="service-card blue-theme" data-category="development">
+      <span class="card-tag recommended">Recommended</span>
+      <div class="card-icon-container">
+        <i class="ti ti-rocket"></i>
+      </div>
+      <h3 class="card-title">Build Complete Project</h3>
+      <p class="card-desc">Describe an application and generate a complete project structure and code.</p>
+      <div class="card-action">
+        <span class="launch-btn">Launch <i class="ti ti-arrow-right"></i></span>
+      </div>
+    </a>
+
+    <!-- Code Generation -->
+    <a href="/code-generation" class="service-card magenta-theme" data-category="development">
+      <span class="card-tag popular">Popular</span>
+      <div class="card-icon-container">
+        <i class="ti ti-code"></i>
+      </div>
+      <h3 class="card-title">Code Generation</h3>
+      <p class="card-desc">Generate production-ready code in multiple languages and frameworks.</p>
+      <div class="card-action">
+        <span class="launch-btn">Launch <i class="ti ti-arrow-right"></i></span>
+      </div>
+    </a>
+
+    <!-- Code Review -->
+    <a href="/code-review" class="service-card teal-theme" data-category="development">
+      <span class="card-tag new">New</span>
+      <div class="card-icon-container">
+        <i class="ti ti-search"></i>
+      </div>
+      <h3 class="card-title">Code Review</h3>
+      <p class="card-desc">Analyze source code for quality, security, and best-practice recommendations.</p>
+      <div class="card-action">
+        <span class="launch-btn">Launch <i class="ti ti-arrow-right"></i></span>
+      </div>
+    </a>
+
+    <!-- Database Schema Creation -->
+    <a href="/database-schema" class="service-card orange-theme" data-category="database">
+      <span class="card-tag">AI Powered</span>
+      <div class="card-icon-container">
+        <i class="ti ti-database"></i>
+      </div>
+      <h3 class="card-title">Database Schema Creation</h3>
+      <p class="card-desc">Generate ER diagrams, SQL scripts, and normalization suggestions.</p>
+      <div class="card-action">
+        <span class="launch-btn">Launch <i class="ti ti-arrow-right"></i></span>
+      </div>
+    </a>
+
+    <!-- System Design Generator -->
+    <a href="/system-design" class="service-card green-theme" data-category="analysis">
+      <span class="card-tag enterprise">Enterprise</span>
+      <div class="card-icon-container">
+        <i class="ti ti-sitemap"></i>
+      </div>
+      <h3 class="card-title">System Design Generator</h3>
+      <p class="card-desc">Produce architecture diagrams, APIs, and infrastructure recommendations.</p>
+      <div class="card-action">
+        <span class="launch-btn">Launch <i class="ti ti-arrow-right"></i></span>
+      </div>
+    </a>
+
+    <!-- Test Case Generator -->
+    <a href="/test-case-generator" class="service-card violet-theme" data-category="testing">
+      <span class="card-tag new">New</span>
+      <div class="card-icon-container">
+        <i class="ti ti-flask"></i>
+      </div>
+      <h3 class="card-title">Test Case Generator</h3>
+      <p class="card-desc">Generate manual and automated test cases based on requirements or code.</p>
+      <div class="card-action">
+        <span class="launch-btn">Launch <i class="ti ti-arrow-right"></i></span>
+      </div>
+    </a>
+
+    <!-- Documentation Generator -->
+    <a href="/documentation-generator" class="service-card yellow-theme" data-category="documentation">
+      <span class="card-tag">AI Powered</span>
+      <div class="card-icon-container">
+        <i class="ti ti-book"></i>
+      </div>
+      <h3 class="card-title">Documentation Generator</h3>
+      <p class="card-desc">Create professional technical documentation and API specifications.</p>
+      <div class="card-action">
+        <span class="launch-btn">Launch <i class="ti ti-arrow-right"></i></span>
+      </div>
+    </a>
+
+    <!-- SQL Query Generator -->
+    <a href="/sql-query-generator" class="service-card indigo-theme" data-category="database">
+      <span class="card-tag popular">Popular</span>
+      <div class="card-icon-container">
+        <i class="ti ti-terminal-2"></i>
+      </div>
+      <h3 class="card-title">SQL Query Generator</h3>
+      <p class="card-desc">Convert natural language requirements into optimized SQL queries.</p>
+      <div class="card-action">
+        <span class="launch-btn">Launch <i class="ti ti-arrow-right"></i></span>
+      </div>
+    </a>
+
+    <!-- Application States -->
+    <a href="/states" class="service-card fuchsia-theme" data-category="analysis">
+      <span class="card-tag experimental">Experimental</span>
+      <div class="card-icon-container">
+        <i class="ti ti-app-window"></i>
+      </div>
+      <h3 class="card-title">Application States</h3>
+      <p class="card-desc">Explore premium AI platform states including Empty, Loading, Error, Offline, and Success.</p>
+      <div class="card-action">
+        <span class="launch-btn">Launch <i class="ti ti-arrow-right"></i></span>
+      </div>
+    </a>
+  </div>
+
+  <!-- Search results empty state -->
+  <div class="empty-search-state" id="empty-search-state" style="display: none;">
+    <div class="empty-icon"><i class="ti ti-search-off"></i></div>
+    <h3>No Agent Capabilities Found</h3>
+    <p>We couldn't find any services matching "<span id="empty-query-text"></span>". Try another query or select a category above.</p>
+    <button class="clear-search-btn" id="clear-search-btn">Reset Search</button>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // ── Orbit Nodes rendering & update loop ───────────────
+  const orbitNodes = [
+    { name: 'Requirements', icon: 'ti-clipboard-list', orbit: 0, angle: 0, speed: 0.0065, color: '#8b5cf6', desc: 'AI Requirement Analyzer', path: '/requirement-analyzer' },
+    { name: 'Launch Pipeline', icon: 'ti-rocket', orbit: 1, angle: Math.PI / 4, speed: -0.0052, color: '#3b82f6', desc: 'Build Complete Project', path: '/build-complete-project' },
+    { name: 'Code Generator', icon: 'ti-code', orbit: 1, angle: 5 * Math.PI / 4, speed: -0.0052, color: '#ec4899', desc: 'Code Generation', path: '/code-generation' },
+    { name: 'Code Review', icon: 'ti-search', orbit: 2, angle: Math.PI / 2, speed: 0.0039, color: '#06b6d4', desc: 'Smart Review', path: '/code-review' },
+    { name: 'DB Schema', icon: 'ti-database', orbit: 2, angle: 3 * Math.PI / 2, speed: 0.0039, color: '#f59e0b', desc: 'Database Schema Creation', path: '/database-schema' },
+    { name: 'System Design', icon: 'ti-sitemap', orbit: 0, angle: Math.PI, speed: 0.0065, color: '#10b981', desc: 'System Design Generator', path: '/system-design' },
+    { name: 'Test Cases', icon: 'ti-flask', orbit: 3, angle: Math.PI / 6, speed: -0.0026, color: '#6366f1', desc: 'Test Case Generator', path: '/test-case-generator' },
+    { name: 'Documentation', icon: 'ti-book', orbit: 3, angle: 5 * Math.PI / 6, speed: -0.0026, color: '#b45309', desc: 'Documentation Generator', path: '/documentation-generator' },
+    { name: 'SQL Generator', icon: 'ti-terminal-2', orbit: 2, angle: 7 * Math.PI / 6, speed: 0.0039, color: '#4f46e5', desc: 'SQL Query Generator', path: '/sql-query-generator' },
+    { name: 'App States', icon: 'ti-app-window', orbit: 3, angle: 3 * Math.PI / 2, speed: -0.0026, color: '#d946ef', desc: 'Application States', path: '/states' }
+  ];
+
+  const orbitContainer = document.getElementById('orbit-nodes-container');
+  const energyGroup = document.getElementById('energy-lines-group');
+  const rxVals = [135, 185, 235, 285];
+  const ryVals = [48, 68, 88, 108];
+  const rotationVals = [-12, 8, -5, 15];
+  const cx = 300;
+  const cy = 200;
+
+  orbitNodes.forEach((node, i) => {
+    // Create HTML overlays
+    const el = document.createElement('div');
+    el.className = 'orbit-node';
+    el.style.setProperty('--node-color', node.color);
+    el.innerHTML = `
+      <i class="ti ${node.icon}"></i>
+      <div class="orbit-tooltip">
+        <strong>${node.name}</strong>
+        <span>${node.desc}</span>
+      </div>
+    `;
+    
+    el.addEventListener('click', () => {
+      window.location.href = node.path;
+    });
+
+    orbitContainer.appendChild(el);
+    node.element = el;
+    
+    // Listeners for pausing orbits and highlighting links
+    el.addEventListener('mouseenter', () => {
+      node.isHovered = true;
+      el.classList.add('is-hovered');
+      orbitContainer.classList.add('has-hovered-node');
+      const line = document.getElementById(`energy-line-${i}`);
+      if (line) {
+        line.setAttribute('stroke-width', '2.5');
+        line.setAttribute('opacity', '0.75');
+      }
+    });
+
+    el.addEventListener('mouseleave', () => {
+      node.isHovered = false;
+      el.classList.remove('is-hovered');
+      orbitContainer.classList.remove('has-hovered-node');
+      const line = document.getElementById(`energy-line-${i}`);
+      if (line) {
+        line.setAttribute('stroke-width', '1');
+        line.setAttribute('opacity', '0.22');
+      }
+    });
+
+    // Create SVG energy flow lines
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('id', `energy-line-${i}`);
+    line.setAttribute('x1', cx.toString());
+    line.setAttribute('y1', cy.toString());
+    line.setAttribute('x2', cx.toString());
+    line.setAttribute('y2', cy.toString());
+    line.setAttribute('stroke', `url(#energy-grad-${i})`);
+    line.setAttribute('stroke-width', '1');
+    line.setAttribute('stroke-dasharray', '5 8');
+    line.setAttribute('opacity', '0.22');
+    line.style.animation = `energy-flow ${1.2 + Math.random() * 1.5}s linear infinite`;
+    energyGroup.appendChild(line);
+
+    // Defs gradients for energy lines
+    const defs = document.querySelector('.ai-core-svg defs');
+    const grad = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
+    grad.setAttribute('id', `energy-grad-${i}`);
+    grad.setAttribute('x1', '0%'); grad.setAttribute('y1', '0%');
+    grad.setAttribute('x2', '100%'); grad.setAttribute('y2', '100%');
+    grad.innerHTML = `
+      <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.05" />
+      <stop offset="100%" stop-color="${node.color}" stop-opacity="0.6" />
+    `;
+    defs.appendChild(grad);
+  });
+
+  function updateOrbits() {
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      orbitNodes.forEach((node, i) => {
+        if (!node.isHovered) {
+          node.angle += node.speed;
+          
+          const rx = rxVals[node.orbit];
+          const ry = ryVals[node.orbit];
+          const rotDeg = rotationVals[node.orbit];
+          const rotRad = rotDeg * Math.PI / 180;
+          
+          // Elliptical coordinate math
+          const xLocal = rx * Math.cos(node.angle);
+          const yLocal = ry * Math.sin(node.angle);
+          
+          // Tilt matrix rotation
+          const xRot = xLocal * Math.cos(rotRad) - yLocal * Math.sin(rotRad);
+          const yRot = xLocal * Math.sin(rotRad) + yLocal * Math.cos(rotRad);
+          
+          const xSvg = cx + xRot;
+          const ySvg = cy + yRot;
+          
+          // Scale SVG coordinates to DOM wrapper coordinates (factor 0.8)
+          const xDom = xSvg * 0.8;
+          const yDom = ySvg * 0.8;
+          
+          if (node.element) {
+            node.element.style.setProperty('--x-px', `${xDom}px`);
+            node.element.style.setProperty('--y-px', `${yDom}px`);
+          }
+          
+          const line = document.getElementById(`energy-line-${i}`);
+          if (line) {
+            line.setAttribute('x2', xSvg.toString());
+            line.setAttribute('y2', ySvg.toString());
+          }
+        }
+      });
+    }
+    requestAnimationFrame(updateOrbits);
+  }
+  requestAnimationFrame(updateOrbits);
+
+  // ── Live Filtering Logic ──────────────────────────────
+  const categoryPills = document.querySelectorAll('.category-pill');
+  const serviceCards = document.querySelectorAll('.services-grid .service-card');
+  const emptyState = document.getElementById('empty-search-state');
+  const emptyQueryText = document.getElementById('empty-query-text');
+  const clearSearchBtn = document.getElementById('clear-search-btn');
+  const globalSearchInput = document.querySelector('.search-wrapper input'); // Linked from topbar
+  
+  let currentCategory = 'all';
+  let searchQuery = '';
+
+  function filterCards() {
+    let visibleCount = 0;
+    serviceCards.forEach(card => {
+      const category = card.getAttribute('data-category');
+      const title = card.querySelector('.card-title').textContent.toLowerCase();
+      const desc = card.querySelector('.card-desc').textContent.toLowerCase();
+      
+      const matchesCategory = currentCategory === 'all' || category === currentCategory;
+      const matchesSearch = title.includes(searchQuery) || desc.includes(searchQuery);
+      
+      if (matchesCategory && matchesSearch) {
+        card.classList.remove('hidden');
+        card.style.display = 'flex';
+        visibleCount++;
+      } else {
+        card.classList.add('hidden');
+        card.style.display = 'none';
+      }
+    });
+
+    if (visibleCount === 0) {
+      emptyState.style.display = 'flex';
+      emptyQueryText.textContent = searchQuery;
+    } else {
+      emptyState.style.display = 'none';
+    }
+  }
+
+  // Handle keyboard inputs inside base.html command search if they exist
+  const baseSearchInput = document.getElementById('command-palette-input');
+  if (baseSearchInput) {
+    baseSearchInput.addEventListener('input', (e) => {
+      // If user typing is not command, filter cards
+      const val = e.target.value;
+      if (!val.startsWith('>')) {
+        searchQuery = val.toLowerCase().trim();
+        filterCards();
+      }
+    });
+  }
+
+  categoryPills.forEach(pill => {
+    pill.addEventListener('click', () => {
+      categoryPills.forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      currentCategory = pill.getAttribute('data-category');
+      filterCards();
+    });
+  });
+
+  if (clearSearchBtn) {
+    clearSearchBtn.addEventListener('click', () => {
+      searchQuery = '';
+      currentCategory = 'all';
+      categoryPills.forEach(p => p.classList.remove('active'));
+      document.querySelector('[data-category="all"]').classList.add('active');
+      filterCards();
+    });
+  }
+</script>
+{% endblock %}

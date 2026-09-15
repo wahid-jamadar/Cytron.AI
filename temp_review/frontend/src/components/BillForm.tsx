@@ -1,0 +1,3 @@
+[
+  "import React from 'react';\n\ninterface Props {\n  onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;\n  bill: any;\n}\n\nconst BillForm: React.FC<Props> = ({ onSubmit, bill }) => {\n  return (\n    <form onSubmit={onSubmit}>\n      <label>Bill ID:</label>\n      <input type=\"text\" value={bill.billId} readOnly />\n      <label>Amount:</label>\n      <input type=\"number\" value={bill.amount} readOnly />\n      <label>Payment Status:</label>\n      <input type=\"text\" value={bill.paymentStatus} readOnly />\n      <button type=\"submit\">Pay</button>\n    </form>\n  );\n};\n\nexport default BillForm;"
+]

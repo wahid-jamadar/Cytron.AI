@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Application States Showcase — Cytron.AI</title>
+  <script>
+    (function() {
+      const theme = localStorage.getItem('ui_theme') || 'light';
+      if (theme === 'dark' || theme === 'oled') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          animation: {
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          }
+        }
+      }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .bg-grid-pattern {
+        background-size: 30px 30px;
+        background-image: 
+          linear-gradient(to right, rgba(124, 58, 237, 0.04) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(124, 58, 237, 0.04) 1px, transparent 1px);
+      }
+      .dark .bg-grid-pattern {
+        background-image: 
+          linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      }
+      .glassmorphism {
+        @apply bg-white/65 dark:bg-[#0f1117]/65 backdrop-blur-xl border border-slate-200/50 dark:border-white/5 shadow-xl dark:shadow-2xl;
+      }
+      .glassmorphism-card {
+        @apply bg-white/80 dark:bg-[#161b26]/75 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-lg;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 dark:bg-[#07080d] text-slate-800 dark:text-[#e8eaf0] min-h-screen font-sans transition-colors duration-300 overflow-x-hidden relative flex flex-col justify-between">
+
+  <!-- Background decorative gradients -->
+  <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+    <div class="absolute -top-[45%] -left-[15%] w-[70vw] h-[70vw] rounded-full bg-blue-500/10 dark:bg-blue-600/5 blur-[125px] animate-pulse-slow"></div>
+    <div class="absolute -bottom-[35%] -right-[10%] w-[65vw] h-[65vw] rounded-full bg-purple-500/10 dark:bg-purple-600/5 blur-[125px] animate-pulse-slow" style="animation-delay: 1.5s;"></div>
+    <div class="absolute inset-0 bg-grid-pattern opacity-100"></div>
+  </div>
+
+  <!-- Top Navigation Bar -->
+  <header class="relative z-10 flex items-center justify-between px-6 py-4 border-b border-slate-200/50 dark:border-white/5 bg-slate-50/50 dark:bg-[#07080d]/50 backdrop-blur-md">
+    <div class="flex items-center gap-2.5">
+      <img src="/static/Cytron.AI-Logo.png" alt="Cytron.AI" style="height: 28px; width: auto;" class="object-contain" />
+      <div>
+        <span class="text-xs block text-slate-400 dark:text-slate-500">UX State Toolkit v1.0</span>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <!-- Dark/Light Mode Toggle -->
+      <button onclick="toggleTheme()" class="flex items-center justify-center w-9 h-9 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 transition-all text-slate-600 dark:text-slate-400" title="Toggle Theme" aria-label="Toggle light or dark theme">
+        <i id="theme-icon" class="ti ti-sun text-lg dark:hidden"></i>
+        <i id="theme-icon-dark" class="ti ti-moon text-lg hidden dark:block"></i>
+      </button>
+      <a href="/hub" class="text-xs font-semibold px-3.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 transition-all text-slate-600 dark:text-slate-400 flex items-center gap-1">
+        <i class="ti ti-chevron-left"></i> Back to services
+      </a>
+    </div>
+  </header>
+
+  <!-- Dashboard Shell -->
+  <main class="relative z-10 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 p-4 md:p-6 max-w-7xl mx-auto w-full">
+    
+    <!-- Left Navigation Sidebar (lg:col-span-3) -->
+    <div class="lg:col-span-3 flex flex-col gap-4">
+      <div class="glassmorphism p-4 rounded-2xl flex flex-col gap-3 h-full">
+        <div class="mb-2">
+          <h2 class="text-sm font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">Platform States</h2>
+          <p class="text-[10px] text-slate-400 leading-normal mt-0.5">Toggle and view interactive mock states.</p>
+        </div>
+
+        <!-- Sidebar Navigation Buttons -->
+        <nav class="flex flex-col gap-1.5 flex-1" id="sidebar-nav">
+          <button onclick="selectState('empty')" id="nav-empty" class="w-full text-left px-3.5 py-3 rounded-xl border border-transparent hover:bg-slate-200/50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300 font-semibold text-xs flex items-center justify-between transition-all group">
+            <span class="flex items-center gap-2"><i class="ti ti-clipboard text-slate-400 group-hover:text-blue-500 text-sm"></i> 1. Empty State</span>
+            <i class="ti ti-chevron-right text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+          </button>
+          
+          <button onclick="selectState('loading')" id="nav-loading" class="w-full text-left px-3.5 py-3 rounded-xl border border-transparent hover:bg-slate-200/50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300 font-semibold text-xs flex items-center justify-between transition-all group">
+            <span class="flex items-center gap-2"><i class="ti ti-loader-2 animate-spin text-slate-400 group-hover:text-purple-500 text-sm"></i> 2. Loading State</span>
+            <i class="ti ti-chevron-right text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+          </button>
+          
+          <button onclick="selectState('error')" id="nav-error" class="w-full text-left px-3.5 py-3 rounded-xl border border-transparent hover:bg-slate-200/50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300 font-semibold text-xs flex items-center justify-between transition-all group">
+            <span class="flex items-center gap-2"><i class="ti ti-alert-triangle text-slate-400 group-hover:text-red-500 text-sm"></i> 3. Error State</span>
+            <i class="ti ti-chevron-right text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+          </button>
+
+          <button onclick="selectState('no_internet')" id="nav-no_internet" class="w-full text-left px-3.5 py-3 rounded-xl border border-transparent hover:bg-slate-200/50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300 font-semibold text-xs flex items-center justify-between transition-all group">
+            <span class="flex items-center gap-2"><i class="ti ti-wifi-off text-slate-400 group-hover:text-slate-500 text-sm"></i> 4. Offline State</span>
+            <i class="ti ti-chevron-right text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+          </button>
+
+          <button onclick="selectState('slow_network')" id="nav-slow_network" class="w-full text-left px-3.5 py-3 rounded-xl border border-transparent hover:bg-slate-200/50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300 font-semibold text-xs flex items-center justify-between transition-all group">
+            <span class="flex items-center gap-2"><i class="ti ti-network text-slate-400 group-hover:text-amber-500 text-sm"></i> 5. Slow Network</span>
+            <i class="ti ti-chevron-right text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+          </button>
+
+          <button onclick="selectState('no_results')" id="nav-no_results" class="w-full text-left px-3.5 py-3 rounded-xl border border-transparent hover:bg-slate-200/50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300 font-semibold text-xs flex items-center justify-between transition-all group">
+            <span class="flex items-center gap-2"><i class="ti ti-zoom-question text-slate-400 group-hover:text-blue-400 text-sm"></i> 6. No Search Results</span>
+            <i class="ti ti-chevron-right text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+          </button>
+
+          <button onclick="selectState('success')" id="nav-success" class="w-full text-left px-3.5 py-3 rounded-xl border border-transparent hover:bg-slate-200/50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300 font-semibold text-xs flex items-center justify-between transition-all group">
+            <span class="flex items-center gap-2"><i class="ti ti-circle-check text-slate-400 group-hover:text-emerald-500 text-sm"></i> 7. Success State</span>
+            <i class="ti ti-chevron-right text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+          </button>
+        </nav>
+
+        <!-- Help Info Box -->
+        <div class="mt-auto p-3 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 text-[11px] text-slate-500 leading-relaxed">
+          <i class="ti ti-info-circle text-blue-500 mb-1 block"></i>
+          Clicking on any state loads its responsive, self-contained template. You can toggle the local theme or inspect copy-pasteable React code below.
+        </div>
+      </div>
+    </div>
+
+    <!-- Center Sandbox & Code Inspector (lg:col-span-9) -->
+    <div class="lg:col-span-9 flex flex-col gap-6">
+      
+      <!-- Live Rendering Container -->
+      <div class="glassmorphism rounded-2xl overflow-hidden flex flex-col h-[520px] shadow-2xl relative">
+        <!-- Sandbox Tab Header -->
+        <div class="px-5 py-3 border-b border-slate-200 dark:border-white/15 bg-slate-50/80 dark:bg-[#0f1117]/80 backdrop-blur-md flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-red-400/80"></span>
+            <span class="w-3 h-3 rounded-full bg-yellow-400/80"></span>
+            <span class="w-3 h-3 rounded-full bg-green-400/80"></span>
+            <span class="text-xs font-semibold text-slate-400 dark:text-slate-500 font-mono ml-2 border-l border-slate-300 dark:border-white/10 pl-3 flex items-center gap-1.5">
+              <i class="ti ti-app-window text-sm"></i> viewport_sandbox.bin
+            </span>
+          </div>
+
+          <!-- Quick Open Standalone -->
+          <a id="standalone-link" href="#" target="_blank" class="text-xs font-semibold text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 flex items-center gap-1 transition-colors">
+            Open Standalone Template <i class="ti ti-external-link"></i>
+          </a>
+        </div>
+
+        <!-- IFrame Sandbox Wrapper -->
+        <div class="flex-1 bg-slate-100 dark:bg-[#07080d]/40 relative">
+          <iframe id="sandbox-iframe" class="w-full h-full border-none" src=""></iframe>
+        </div>
+      </div>
+
+      <!-- React Code Exporter Panel -->
+      <div class="glassmorphism rounded-2xl overflow-hidden flex flex-col border border-slate-200 dark:border-white/5 shadow-xl">
+        <!-- Header -->
+        <div class="px-5 py-3 bg-slate-100 dark:bg-[#161b26]/50 border-b border-slate-200 dark:border-white/5 flex items-center justify-between">
+          <span class="text-xs uppercase font-extrabold tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+            <i class="ti ti-brand-react text-blue-500 text-sm"></i> React + Tailwind CSS Component
+          </span>
+          <button onclick="copyCode()" id="copy-btn" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-200 dark:hover:bg-white/5 text-[11px] font-semibold transition-all flex items-center gap-1 cursor-pointer">
+            <i class="ti ti-copy text-xs"></i> Copy Code
+          </button>
+        </div>
+        <!-- Code Window -->
+        <div class="bg-[#0b0d12] text-slate-300 p-5 font-mono text-xs overflow-x-auto leading-relaxed relative max-h-[400px]">
+          <pre><code id="code-snippet-element" class="text-slate-300 block select-all">Loading state code...</code></pre>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="relative z-10 text-center py-8 text-xs text-slate-400 dark:text-slate-600 border-t border-slate-200/50 dark:border-white/5 bg-slate-50/50 dark:bg-[#07080d]/50 backdrop-blur-md mt-6">
+    <div class="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <span>Cytron.AI Platform — Design States Showcase</span>
+      <div class="flex gap-4">
+        <a href="/hub" class="hover:text-slate-600 dark:hover:text-slate-400 transition-colors">Hub</a>
+        <span>·</span>
+        <a href="/docs" target="_blank" class="hover:text-slate-600 dark:hover:text-slate-400 transition-colors">API Docs</a>
+      </div>
+    </div>
+  </footer>
+
+  {% raw %}
+  <script>
+    // State Code Snippets database (React + Tailwind equivalents)
+    const codeSnippets = {
+      empty: `import React from 'react';
+import { Cpu, Plus, GitPullRequest, ClipboardList, Activity, CheckCircle } from 'lucide-react';
+
+export default function EmptyState() {
+  return (
+    <div className="relative min-h-screen bg-slate-50 dark:bg-[#07080d] text-slate-800 dark:text-[#e8eaf0] flex flex-col justify-between font-sans transition-colors duration-300 overflow-hidden">
+      {/* Background Gradients */}
+      <div className="absolute inset-0 pointer-events-none z-0">
+        <div className="absolute -top-[40%] -left-[20%] w-[80vw] h-[80vw] rounded-full bg-blue-500/10 dark:bg-blue-600/5 blur-[120px]" />
+        <div className="absolute -bottom-[30%] -right-[10%] w-[60vw] h-[60vw] rounded-full bg-purple-500/10 dark:bg-purple-600/5 blur-[120px]" />
+      </div>
+
+      {/* Main card */}
+      <main className="relative z-10 flex-1 flex flex-col items-center justify-center max-w-4xl mx-auto w-full px-4 py-12">
+        <div className="w-full bg-white/60 dark:bg-[#0f1117]/60 backdrop-blur-xl border border-slate-200/50 dark:border-white/5 rounded-2xl p-8 md:p-12 flex flex-col items-center text-center shadow-2xl relative">
+          
+          {/* Animated Particles */}
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute top-[20%] left-[15%] w-3 h-3 rounded-full bg-blue-400/30 blur-[1px] animate-bounce" />
+            <div className="absolute top-[60%] right-[15%] w-4 h-4 rounded-full bg-cyan-400/30 blur-[2px] animate-pulse" />
+          </div>
+
+          {/* Premium Illustration */}
+          <div className="relative w-64 h-64 mb-8 flex items-center justify-center">
+            <svg className="absolute w-full h-full text-slate-200 dark:text-slate-800/40" viewBox="0 0 200 200" fill="none">
+              <circle cx="100" cy="100" r="35" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 3" className="animate-[spin_40s_linear_infinite]" />
+              <circle cx="100" cy="100" r="50" stroke="currentColor" strokeWidth="1" strokeDasharray="6 6" className="animate-[spin_60s_linear_infinite]" />
+              <path d="M100 50 L100 100 M143 75 L100 100 M143 125 L100 100 M100 150 L100 100 M57 125 L100 100 M57 75 L100 100" stroke="currentColor" strokeWidth="1" strokeDasharray="4 4" className="opacity-60" />
+            </svg>
+            <div className="relative z-10 flex items-center justify-center w-full h-full">
+              <div className="w-20 h-20 rounded-full bg-slate-100 dark:bg-[#161b26] border-2 border-slate-300 dark:border-slate-800 flex items-center justify-center shadow-lg animate-pulse">
+                <Activity className="w-8 h-8 text-slate-400 dark:text-slate-600" />
+              </div>
+            </div>
+          </div>
+
+          {/* Header */}
+          <h2 className="text-2xl md:text-3xl font-extrabold mb-3 tracking-tight text-slate-900 dark:text-white">Nothing to Build Yet</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mb-8 leading-relaxed">
+            Your autonomous multi-agent engineering workspace is idle. Start by creating a new project or importing an existing repository.
+          </p>
+
+          {/* Actions */}
+          <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+            <button className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-600 hover:opacity-90 text-white font-semibold text-sm shadow-md flex items-center justify-center gap-2 transition-all">
+              <Plus className="w-4 h-4" /> Create Project
+            </button>
+            <button className="w-full sm:w-auto px-6 py-3 rounded-xl bg-white dark:bg-[#161b26] hover:bg-slate-100 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 font-semibold text-sm shadow-sm flex items-center justify-center gap-2 transition-all">
+              <GitPullRequest className="w-4 h-4 text-slate-400" /> Import Repository
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}`,
+      loading: `import React, { useState, useEffect } from 'react';
+import { Loader2, Sitemap, Server, Database, ServerCog, FlaskConical, Layout, Clock, XCircle } from 'lucide-react';
+
+export default function LoadingState() {
+  const [percent, setPercent] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setPercent(prev => (prev < 100 ? prev + 1 : 100));
+    }, 400);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="relative min-h-screen bg-slate-50 dark:bg-[#07080d] text-slate-800 dark:text-[#e8eaf0] flex flex-col justify-between transition-colors duration-300 overflow-hidden">
+      <main className="relative z-10 flex-1 flex flex-col items-center justify-center max-w-5xl mx-auto w-full px-4 py-8">
+        <div className="w-full bg-white/60 dark:bg-[#0f1117]/60 backdrop-blur-xl border border-slate-200/50 dark:border-white/5 rounded-2xl p-6 md:p-10 shadow-2xl">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            
+            {/* Left: Agent Graph Illustration */}
+            <div className="lg:col-span-7 flex flex-col items-center justify-center relative min-h-[350px]">
+              <svg className="absolute w-full h-full text-slate-300 dark:text-slate-800" viewBox="0 0 400 400" fill="none">
+                <circle cx="200" cy="200" r="70" stroke="currentColor" strokeWidth="1" strokeDasharray="4 4" className="animate-spin" style={{ animationDuration: '30s' }} />
+                {/* Glowing Connective Paths */}
+                <path d="M200 50 L320 110" stroke="url(#blue-grad)" strokeWidth="1.5" />
+                <path d="M320 110 L350 240" stroke="url(#purple-grad)" strokeWidth="1.5" />
+              </svg>
+
+              {/* Central Core */}
+              <div className="absolute w-24 h-24 rounded-full bg-slate-100/90 dark:bg-[#161b26]/90 border border-slate-300 dark:border-white/10 flex flex-col items-center justify-center shadow-xl backdrop-blur-md z-20">
+                <span className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-600 dark:from-blue-400 dark:via-purple-400 dark:to-cyan-400">{percent}%</span>
+                <span className="text-[9px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-semibold mt-1">Generating</span>
+              </div>
+            </div>
+
+            {/* Right: Progress Tracker Timeline */}
+            <div className="lg:col-span-5 flex flex-col text-left">
+              <h2 className="text-xl md:text-2xl font-extrabold text-slate-950 dark:text-white mb-2 leading-tight">Analysing Requirements...</h2>
+              <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-[#161b26] overflow-hidden mb-6">
+                <div style={{ width: percent + "%" }} className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-cyan-500 transition-all duration-300" />
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}`,
+      error: `import React, { useState } from 'react';
+import { AlertTriangle, RefreshCw, Bug, ShieldAlert, Terminal, ChevronDown } from 'lucide-react';
+
+export default function ErrorState() {
+  const [collapsed, setCollapsed] = useState(true);
+
+  return (
+    <div className="relative min-h-screen bg-slate-50 dark:bg-[#07080d] text-slate-800 dark:text-[#e8eaf0] flex flex-col justify-between transition-colors duration-300 overflow-hidden">
+      <main className="relative z-10 flex-1 flex flex-col items-center justify-center max-w-4xl mx-auto w-full px-4 py-8">
+        <div className="w-full bg-white/60 dark:bg-[#0f1117]/60 backdrop-blur-xl border border-slate-200/50 dark:border-white/5 rounded-2xl p-8 md:p-12 flex flex-col items-center text-center shadow-2xl relative">
+          
+          {/* Diagnostic Icon */}
+          <div className="relative w-22 h-22 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center shadow-lg mb-6">
+            <AlertTriangle className="w-10 h-10 text-red-500" />
+            <div className="absolute -inset-1.5 rounded-full bg-red-500/10 blur-md" />
+          </div>
+
+          <h2 className="text-2xl md:text-3xl font-extrabold mb-3 text-slate-900 dark:text-white">Something Went Wrong</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 max-w-lg mb-8 leading-relaxed">
+            The orchestrator failed during the server compilation stage. Verify your server connection status and try executing the pipeline again.
+          </p>
+
+          {/* Action CTAs */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full sm:w-auto relative z-20 mb-8">
+            <button className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-red-600 via-rose-600 to-purple-600 hover:opacity-90 text-white font-semibold text-sm shadow-md flex items-center justify-center gap-2 transition-all">
+              <RefreshCw className="w-4 h-4 animate-spin" /> Retry Connection
+            </button>
+            <button className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-white dark:bg-[#161b26] border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 font-semibold text-sm flex items-center justify-center gap-2 transition-all">
+              <Bug className="w-4 h-4 text-slate-400" /> Report Issue
+            </button>
+          </div>
+
+          {/* Collapsible logs */}
+          <div className="w-full max-w-2xl border border-slate-200 dark:border-white/5 rounded-xl overflow-hidden">
+            <button onClick={() => setCollapsed(!collapsed)} className="w-full px-5 py-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-semibold">
+              <span className="flex items-center gap-2"><Terminal className="w-4 h-4" /> Technical Details</span>
+              <ChevronDown className="w-4 h-4 transition-transform duration-200" />
+            </button>
+            {!collapsed && (
+              <pre className="p-5 font-mono text-[11px] text-left text-red-400 bg-slate-900 border-t border-white/5 overflow-x-auto">
+                ConnectionResetError: [Errno 10054] An existing connection was forcibly closed by remote host.
+              </pre>
+            )}
+          </div>
+
+        </div>
+      </main>
+    </div>
+  );
+}`,
+      no_internet: `import React from 'react';
+import { WifiOff, RefreshCw, Terminal, Settings } from 'lucide-react';
+
+export default function OfflineState() {
+  return (
+    <div className="relative min-h-screen bg-slate-50 dark:bg-[#07080d] text-slate-800 dark:text-[#e8eaf0] flex flex-col justify-between transition-colors duration-300 overflow-hidden">
+      <main className="relative z-10 flex-1 flex flex-col items-center justify-center max-w-4xl mx-auto w-full px-4 py-12">
+        <div className="w-full bg-white/60 dark:bg-[#0f1117]/60 backdrop-blur-xl border border-slate-200/50 dark:border-white/5 rounded-2xl p-8 md:p-12 flex flex-col items-center text-center shadow-2xl relative">
+          
+          {/* Signal wave anim */}
+          <div className="relative w-64 h-64 mb-6 flex items-center justify-center">
+            <div className="absolute w-24 h-24 rounded-full border border-blue-500/20 animate-ping" />
+            <div className="w-20 h-20 rounded-full bg-slate-100 dark:bg-[#161b26] border border-slate-200 dark:border-slate-800 flex items-center justify-center shadow-lg">
+              <WifiOff className="w-8 h-8 text-slate-400 dark:text-slate-600" />
+            </div>
+          </div>
+
+          <h2 className="text-2xl md:text-3xl font-extrabold mb-3 text-slate-900 dark:text-white">You're Offline</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mb-8 leading-relaxed">
+            The Cytron.AI platform cannot reach the cloud services or Git APIs. Check your local network status.
+          </p>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 w-full sm:w-auto">
+            <button className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white font-semibold text-sm shadow-md flex items-center justify-center gap-2 transition-all">
+              <RefreshCw className="w-4 h-4" /> Retry Connection
+            </button>
+            <button className="w-full sm:w-auto px-6 py-3 rounded-xl bg-white dark:bg-[#161b26] border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 font-semibold text-sm shadow-sm flex items-center justify-center gap-2 transition-all">
+              <Terminal className="w-4 h-4 text-slate-400" /> Launch Offline Mode
+            </button>
+            <button className="w-full sm:w-auto px-5 py-3 text-slate-500 dark:text-slate-400 hover:text-slate-700 font-semibold text-sm flex items-center justify-center gap-1 transition-all">
+              <Settings className="w-4 h-4" /> Settings
+            </button>
+          </div>
+
+        </div>
+      </main>
+    </div>
+  );
+}`,
+      slow_network: `import React from 'react';
+import { Network, ChevronRight, RefreshCw, Clock } from 'lucide-react';
+
+export default function SlowNetworkState() {
+  return (
+    <div className="relative min-h-screen bg-slate-50 dark:bg-[#07080d] text-slate-800 dark:text-[#e8eaf0] flex flex-col justify-between transition-colors duration-300 overflow-hidden">
+      <main className="relative z-10 flex-1 flex flex-col items-center justify-center max-w-4xl mx-auto w-full px-4 py-8">
+        <div className="w-full bg-white/60 dark:bg-[#0f1117]/60 backdrop-blur-xl border border-slate-200/50 dark:border-white/5 rounded-2xl p-8 md:p-12 flex flex-col items-center text-center shadow-2xl">
+          
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center w-full mb-8">
+            <div className="md:col-span-5 flex flex-col items-center justify-center">
+              {/* Circular Dial Speedometer */}
+              <div className="w-32 h-32 border-4 border-amber-500/20 border-t-amber-500 rounded-full animate-spin flex items-center justify-center" />
+            </div>
+            
+            <div className="md:col-span-7 flex flex-col items-center">
+              <span className="text-xs font-bold text-amber-500 uppercase tracking-widest bg-amber-500/10 px-3 py-1 rounded-full">Poor Network</span>
+            </div>
+          </div>
+
+          <h2 className="text-2xl md:text-3xl font-extrabold mb-3 text-slate-900 dark:text-white">Slow Network Detected</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 max-w-lg mb-8 leading-relaxed">
+            The orchestrator is experiencing network throughput latency. Project codebase generation will proceed.
+          </p>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 w-full sm:w-auto">
+            <button className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-amber-600 via-purple-600 to-cyan-600 text-white font-semibold text-sm shadow-md flex items-center justify-center gap-2 transition-all">
+              Continue Anyway <ChevronRight className="w-4 h-4" />
+            </button>
+            <button className="w-full sm:w-auto px-6 py-3 rounded-xl bg-white dark:bg-[#161b26] border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 font-semibold text-sm flex items-center justify-center gap-2 transition-all">
+              <RefreshCw className="w-4 h-4" /> Retry Connection
+            </button>
+          </div>
+
+        </div>
+      </main>
+    </div>
+  );
+}`,
+      no_results: `import React from 'react';
+import { Search, ZoomIn, Check, RotateCcw } from 'lucide-react';
+
+export default function NoResultsState() {
+  return (
+    <div className="relative min-h-screen bg-slate-50 dark:bg-[#07080d] text-slate-800 dark:text-[#e8eaf0] flex flex-col justify-between transition-colors duration-300 overflow-hidden">
+      <main className="relative z-10 flex-1 flex flex-col items-center justify-center max-w-4xl mx-auto w-full px-4 py-8">
+        <div className="w-full bg-white/60 dark:bg-[#0f1117]/60 backdrop-blur-xl border border-slate-200/50 dark:border-white/5 rounded-2xl p-8 md:p-12 flex flex-col items-center text-center shadow-2xl">
+          
+          {/* Search magnifying glass */}
+          <div className="w-18 h-18 rounded-full bg-slate-100 dark:bg-[#161b26] border border-slate-200 dark:border-slate-800 flex items-center justify-center shadow-lg mb-6">
+            <Search className="w-8 h-8 text-slate-400 dark:text-slate-600" />
+          </div>
+
+          <h2 className="text-2xl md:text-3xl font-extrabold mb-3 text-slate-900 dark:text-white">No Results Found</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mb-8 leading-relaxed">
+            We searched all files, folders, and repository graphs, but couldn't find matching items.
+          </p>
+
+          {/* Recommendations checklist */}
+          <div className="w-full max-w-sm text-left bg-slate-100/50 dark:bg-[#161b26]/50 p-5 rounded-xl border border-slate-200 dark:border-white/5 mb-8">
+            <span className="text-[10px] uppercase font-extrabold text-slate-400 dark:text-slate-500 block mb-3">Tips</span>
+            <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-300 font-medium">
+              <li class="flex items-center gap-2"><Check className="w-4 h-4 text-blue-500" /> Check spelling</li>
+              <li class="flex items-center gap-2"><Check className="w-4 h-4 text-blue-500" /> Try broader keywords</li>
+              <li class="flex items-center gap-2"><Check className="w-4 h-4 text-blue-500" /> Clear filters</li>
+            </ul>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full sm:w-auto">
+            <button className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-600 text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all">
+              <Search className="w-4 h-4" /> Search Again
+            </button>
+            <button className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-white dark:bg-[#161b26] border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 font-semibold text-sm transition-all">
+              Clear Filters
+            </button>
+          </div>
+
+        </div>
+      </main>
+    </div>
+  );
+}`,
+      success: `import React from 'react';
+import { CheckCircle, ExternalLink, Download, BookOpen, Rocket, RotateCcw } from 'lucide-react';
+
+export default function SuccessState() {
+  return (
+    <div className="relative min-h-screen bg-slate-50 dark:bg-[#07080d] text-slate-800 dark:text-[#e8eaf0] flex flex-col justify-between transition-colors duration-300 overflow-hidden">
+      <main className="relative z-10 flex-1 flex flex-col items-center justify-center max-w-5xl mx-auto w-full px-4 py-8">
+        <div className="w-full bg-white/60 dark:bg-[#0f1117]/60 backdrop-blur-xl border border-slate-200/50 dark:border-white/5 rounded-2xl p-6 md:p-10 flex flex-col items-center text-center shadow-2xl">
+          
+          {/* Central Success Check */}
+          <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-500 flex items-center justify-center text-white shadow-lg mb-6">
+            <CheckCircle className="w-10 h-10" />
+          </div>
+
+          <h2 className="text-2xl md:text-3xl font-extrabold mb-2 text-slate-900 dark:text-white">Project Completed Successfully</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mb-8">
+            The autonomous agents successfully generated, tested, and documented your codebase.
+          </p>
+
+          {/* Stats Dashboard Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full mb-8">
+            <div className="p-4 rounded-xl bg-slate-100/50 dark:bg-[#161b26]/50 border border-slate-200 dark:border-white/5">
+              <span className="text-lg font-mono font-extrabold block">42</span>
+              <span className="text-[9px] uppercase tracking-wider text-slate-400 dark:text-slate-500">Files Created</span>
+            </div>
+            <div className="p-4 rounded-xl bg-slate-100/50 dark:bg-[#161b26]/50 border border-slate-200 dark:border-white/5">
+              <span className="text-lg font-mono font-extrabold block">3,450</span>
+              <span className="text-[9px] uppercase tracking-wider text-slate-400 dark:text-slate-500">Lines</span>
+            </div>
+            <div className="p-4 rounded-xl bg-slate-100/50 dark:bg-[#161b26]/50 border border-slate-200 dark:border-white/5">
+              <span className="text-lg font-mono font-extrabold block">38/38</span>
+              <span className="text-[9px] uppercase tracking-wider text-slate-400 dark:text-slate-500 text-emerald-500">Tests Passed</span>
+            </div>
+            <div className="p-4 rounded-xl bg-slate-100/50 dark:bg-[#161b26]/50 border border-slate-200 dark:border-white/5">
+              <span className="text-lg font-mono font-extrabold block">1m 32s</span>
+              <span className="text-[9px] uppercase tracking-wider text-slate-400 dark:text-slate-500">Build Time</span>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <button className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 text-white font-semibold text-sm shadow-md flex items-center justify-center gap-2">
+              <ExternalLink className="w-4 h-4" /> Open Project
+            </button>
+            <button className="px-5 py-2.5 rounded-xl bg-white dark:bg-[#161b26] border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 font-semibold text-sm flex items-center justify-center gap-2">
+              <Download className="w-4 h-4 text-slate-400" /> Download ZIP
+            </button>
+            <button className="px-5 py-2.5 rounded-xl bg-white dark:bg-[#161b26] border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 font-semibold text-sm flex items-center justify-center gap-2">
+              <Rocket className="w-4 h-4 text-slate-400" /> Deploy Project
+            </button>
+          </div>
+
+        </div>
+      </main>
+    </div>
+  );
+}`
+    };
+
+    let activeState = 'empty';
+
+    function selectState(stateName) {
+      activeState = stateName;
+
+      // Update Nav active style
+      document.querySelectorAll('#sidebar-nav button').forEach(btn => {
+        btn.className = "w-full text-left px-3.5 py-3 rounded-xl border border-transparent hover:bg-slate-200/50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300 font-semibold text-xs flex items-center justify-between transition-all group";
+      });
+      const activeNav = document.getElementById(`nav-${stateName}`);
+      activeNav.className = "w-full text-left px-3.5 py-3 rounded-xl border border-blue-500/20 bg-blue-500/5 text-blue-600 dark:text-blue-400 font-semibold text-xs flex items-center justify-between transition-all group";
+
+      // Load into sandbox iframe
+      const iframe = document.getElementById('sandbox-iframe');
+      iframe.src = `/static/states/${stateName}.html`;
+
+      // Set standalone link
+      document.getElementById('standalone-link').href = `/static/states/${stateName}.html`;
+
+      // Load code snippet
+      const codeContainer = document.getElementById('code-snippet-element');
+      codeContainer.textContent = codeSnippets[stateName];
+
+      // Reset Copy Button
+      const copyBtn = document.getElementById('copy-btn');
+      copyBtn.innerHTML = `<i class="ti ti-copy text-xs"></i> Copy Code`;
+      copyBtn.className = "px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-200 dark:hover:bg-white/5 text-[11px] font-semibold transition-all flex items-center gap-1 cursor-pointer";
+    }
+
+    function copyCode() {
+      const code = document.getElementById('code-snippet-element').textContent;
+      navigator.clipboard.writeText(code).then(() => {
+        const copyBtn = document.getElementById('copy-btn');
+        copyBtn.innerHTML = `<i class="ti ti-check text-xs text-emerald-500"></i> Copied!`;
+        copyBtn.className = "px-3 py-1.5 rounded-lg border border-emerald-500/20 bg-emerald-500/5 text-[11px] font-semibold text-emerald-500 transition-all flex items-center gap-1 cursor-pointer";
+      });
+    }
+
+    // Theme switching logic
+    function toggleTheme() {
+      const html = document.documentElement;
+      const isDark = html.classList.contains('dark');
+      const iframe = document.getElementById('sandbox-iframe');
+      
+      if (isDark) {
+        html.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+        // Tell iframe to toggle theme
+        try {
+          if (iframe && iframe.contentWindow) {
+            iframe.contentWindow.document.documentElement.classList.remove('dark');
+          }
+        } catch (e) {
+          // sandbox domain restrictions might block it, but since it is same-origin, it works.
+        }
+      } else {
+        html.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+        try {
+          if (iframe && iframe.contentWindow) {
+            iframe.contentWindow.document.documentElement.classList.add('dark');
+          }
+        } catch (e) {
+          // Ignore
+        }
+      }
+    }
+
+    // Set theme on load
+    if (localStorage.getItem('theme') === 'light' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: light)').matches)) {
+      document.documentElement.classList.remove('dark');
+    } else {
+      document.documentElement.classList.add('dark');
+    }
+
+    // On iframe load, match parent theme
+    document.getElementById('sandbox-iframe').addEventListener('load', () => {
+      const isDark = document.documentElement.classList.contains('dark');
+      const iframe = document.getElementById('sandbox-iframe');
+      try {
+        if (isDark) {
+          iframe.contentWindow.document.documentElement.classList.add('dark');
+        } else {
+          iframe.contentWindow.document.documentElement.classList.remove('dark');
+        }
+      } catch (e) {
+        // Ignore
+      }
+    });
+
+    // Initialize Default State
+    selectState('empty');
+  </script>
+  {% endraw %}
+</body>
+</html>

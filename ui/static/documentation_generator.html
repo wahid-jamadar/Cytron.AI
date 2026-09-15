@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+
+{% block title %}Documentation Generator - Cytron.AI{% endblock %}
+
+{% block content %}
+<div style="text-align: center; margin-bottom: 2rem;">
+  <div class="logo-badge" style="display: inline-flex; align-items: center; gap: 8px; background: rgba(124,58,237,0.15); border: 1px solid var(--border-glow); border-radius: 100px; padding: 6px 16px; font-size: 0.75rem; color: var(--accent-2); font-weight: 600; text-transform: uppercase; margin-bottom: 1rem;"><i class="ti ti-book"></i> Documentation Generator</div>
+  <h1 style="font-size: 2.5rem; margin-bottom: 1rem;">Documentation Generator</h1>
+  <p style="color: var(--text-muted);">Create professional technical documentation and API specifications.</p>
+</div>
+
+<div class="input-card" style="padding: 2rem;">
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;">
+    <div>
+      <label class="input-label" style="color: var(--accent-2);"><i class="ti ti-book"></i> Documentation Type</label>
+      <select id="doc-type" style="width: 100%; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none; color: var(--text); font-family: var(--font); font-size: 0.95rem; padding: 0.75rem; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        <option value="README">README</option>
+        <option value="API Reference">API Reference (Swagger / OpenAPI)</option>
+        <option value="User Guide">User Guide / Tutorial</option>
+        <option value="Technical Specifications">Technical Specifications</option>
+        <option value="Technical Specs">Technical Specs (Legacy)</option>
+        <option value="Software Requirements Specification (SRS)">Software Requirements Specification (SRS)</option>
+        <option value="Business Requirements Document (BRD)">Business Requirements Document (BRD)</option>
+        <option value="Product Requirements Document (PRD)">Product Requirements Document (PRD)</option>
+        <option value="High-Level Design (HLD)">High-Level Design (HLD)</option>
+        <option value="Low-Level Design (LLD)">Low-Level Design (LLD)</option>
+        <option value="Software Architecture">Software Architecture</option>
+        <option value="Database Documentation">Database Documentation</option>
+        <option value="CI/CD Documentation">CI/CD Documentation</option>
+        <option value="Deployment Guide">Deployment Guide</option>
+        <option value="Configuration Guide">Configuration Guide</option>
+        <option value="Security Documentation">Security Documentation</option>
+        <option value="Test Plan">Test Plan</option>
+        <option value="Test Cases">Test Cases</option>
+        <option value="Release Notes">Release Notes</option>
+        <option value="Migration Guide">Migration Guide</option>
+        <option value="Troubleshooting Guide">Troubleshooting Guide</option>
+        <option value="Prompt Documentation">Prompt Documentation</option>
+        <option value="Multi-Agent Workflow Documentation">Multi-Agent Workflow Documentation</option>
+        <option value="Code Documentation">Code Documentation</option>
+        <option value="Code Comments">Inline Code Comments</option>
+        <option value="SDK Documentation">SDK Documentation</option>
+        <option value="Data Dictionary">Data Dictionary</option>
+        <option value="Monitoring & Logging Guide">Monitoring & Logging Guide</option>
+        <option value="Maintenance Manual">Maintenance Manual</option>
+      </select>
+    </div>
+    <div>
+      <label class="input-label" style="color: var(--success);"><i class="ti ti-file-export"></i> Output Format</label>
+      <select id="doc-format" style="width: 100%; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none; color: var(--text); font-family: var(--font); font-size: 0.95rem; padding: 0.75rem; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        <option value="Markdown">Markdown (.md)</option>
+        <option value="HTML">HTML (.html)</option>
+        <option value="PDF">PDF Report (.pdf)</option>
+        <option value="DOCX">Microsoft Word (.docx)</option>
+        <option value="TXT">Plain Text (.txt)</option>
+        <option value="JSON">JSON (.json)</option>
+        <option value="YAML">YAML (.yaml / .yml)</option>
+        <option value="XML">XML (.xml)</option>
+        <option value="DRAWIO">Draw.io Diagram (.drawio)</option>
+        <option value="PPTX">Microsoft PowerPoint (.pptx)</option>
+        <option value="JSON (Swagger)">JSON (Swagger/OpenAPI)</option>
+      </select>
+    </div>
+    <div>
+      <label class="input-label" style="color: var(--warning);"><i class="ti ti-palette"></i> Style & Tone</label>
+      <select id="doc-tone" style="width: 100%; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none; color: var(--text); font-family: var(--font); font-size: 0.95rem; padding: 0.75rem; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        <option value="Professional & Formal">Professional & Formal</option>
+        <option value="Friendly & Accessible">Friendly & Accessible</option>
+        <option value="Concise (Bullet Points)">Concise (Bullet Points)</option>
+        <option value="Highly Technical">Highly Technical</option>
+      </select>
+    </div>
+  </div>
+  
+  <div style="margin-bottom: 1.5rem;">
+    <label class="input-label" style="color: var(--info);"><i class="ti ti-code"></i> Source Code / API Schema</label>
+    <div style="border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden;">
+      <textarea id="doc-source" placeholder="Paste your source code, JSON schema, or raw notes here..." style="width: 100%; background: var(--surface-2); border: none; outline: none; resize: vertical; color: var(--text); font-family: var(--mono); font-size: 0.9rem; line-height: 1.6; min-height: 200px; padding: 1rem; transition: background 0.2s;" onfocus="this.style.background='var(--surface)'" onblur="this.style.background='var(--surface-2)'"></textarea>
+    </div>
+  </div>
+
+  <div>
+    <label class="input-label"><i class="ti ti-adjustments-horizontal"></i> Specific Instructions</label>
+    <textarea id="doc-instructions" placeholder="Any specific formatting rules, sections to include (e.g., 'Make sure to include a troubleshooting section')..." style="width: 100%; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none; resize: vertical; color: var(--text); font-family: var(--font); font-size: 0.95rem; line-height: 1.6; min-height: 100px; padding: 1rem; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+  </div>
+</div>
+
+<button class="run-btn" onclick="runService()">
+  <i class="ti ti-sparkles"></i> Run Documentation Generator
+</button>
+
+<div class="result-card" id="result-card" style="display: none; background: var(--surface); border: 1px solid var(--success); border-radius: var(--radius); padding: 1.75rem;">
+  <div class="result-title" style="font-size: 1.1rem; font-weight: 700; color: var(--success); margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px;"><i class="ti ti-circle-check"></i> Result</div>
+  <div class="result-grid" id="result-grid"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function runService() {
+    const btn = document.querySelector('.run-btn');
+    const originalBtnText = btn.innerHTML;
+    
+    const type = document.getElementById('doc-type').value;
+    const format = document.getElementById('doc-format').value;
+    const tone = document.getElementById('doc-tone').value;
+    const source = document.getElementById('doc-source').value;
+    const instructions = document.getElementById('doc-instructions').value;
+    
+    if (!source.trim()) {
+      alert("Please provide source code or API schema before running the generator.");
+      return;
+    }
+    
+    if (typeof startProcessingProgress === 'function') {
+      startProcessingProgress([
+        "Analyzing source material...",
+        "Invoking LLM to draft content...",
+        "Structuring documentation hierarchy...",
+        "Drafting explanations and summaries...",
+        "Formatting code examples...",
+        "Applying selected style and tone...",
+        "Finalizing document format...",
+        "Writing output file to disk..."
+      ]);
+    } else {
+      btn.innerHTML = '<i class="ti ti-loader ti-spin"></i> Processing...';
+    }
+    btn.disabled = true;
+    
+    fetch('/documentation-generator/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: type,
+        format: format,
+        tone: tone,
+        source: source,
+        instructions: instructions
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (typeof stopProcessingProgress === 'function') stopProcessingProgress();
+      btn.innerHTML = originalBtnText;
+      btn.disabled = false;
+      
+      const resultCard = document.getElementById('result-card');
+      const resultGrid = document.getElementById('result-grid');
+      resultCard.style.display = 'block';
+      
+      if (data.status === 'success') {
+        let outputHTML = '';
+        if (data.download_url) {
+          outputHTML += `
+            <div style="margin-bottom: 1.25rem; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+              <a href="${data.download_url}" class="run-btn" style="width: auto; margin: 0; padding: 0.6rem 1.2rem; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px;" download>
+                <i class="ti ti-download"></i> Download ${data.format}
+              </a>
+              <span style="font-size: 0.85rem; color: var(--text-muted);">
+                Filename: <strong style="color: var(--text);">${data.filename}</strong>
+              </span>
+            </div>
+          `;
+        }
+        
+        if (data.content) {
+          const escaped = data.content.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          outputHTML += `
+            <div style="margin-top: 1rem;">
+              <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem;"><i class="ti ti-eye"></i> Content Preview</div>
+              <pre style="white-space: pre-wrap; font-family: var(--mono); color: var(--text); background: var(--surface-2); padding: 1.25rem; border-radius: var(--radius-sm); border: 1px solid var(--border); max-height: 500px; overflow-y: auto; font-size: 0.9rem; line-height: 1.6;">${escaped}</pre>
+            </div>
+          `;
+        } else {
+          outputHTML += `
+            <div style="padding: 1rem 1.25rem; background: rgba(16, 185, 129, 0.1); border-radius: var(--radius-sm); border: 1px solid var(--success); color: var(--success); display: flex; align-items: center; gap: 8px;">
+              <i class="ti ti-circle-check"></i> Binary file generated successfully. Click the download button above to retrieve it.
+            </div>
+          `;
+        }
+        resultGrid.innerHTML = outputHTML;
+      } else {
+        resultGrid.innerHTML = `
+          <div style="color: var(--error); padding: 1rem 1.25rem; background: rgba(239, 68, 68, 0.1); border-radius: var(--radius-sm); border: 1px solid var(--error); display: flex; align-items: center; gap: 8px;">
+            <i class="ti ti-alert-triangle"></i> Error: ${data.error || 'Unknown error occurred during generation.'}
+          </div>
+        `;
+      }
+    })
+    .catch(err => {
+      if (typeof stopProcessingProgress === 'function') stopProcessingProgress();
+      btn.innerHTML = originalBtnText;
+      btn.disabled = false;
+      
+      const resultCard = document.getElementById('result-card');
+      const resultGrid = document.getElementById('result-grid');
+      resultCard.style.display = 'block';
+      resultGrid.innerHTML = `
+        <div style="color: var(--error); padding: 1rem 1.25rem; background: rgba(239, 68, 68, 0.1); border-radius: var(--radius-sm); border: 1px solid var(--error); display: flex; align-items: center; gap: 8px;">
+          <i class="ti ti-alert-triangle"></i> Server Connection Error: Failed to reach backend API.
+        </div>
+      `;
+    });
+  }
+</script>
+{% endblock %}

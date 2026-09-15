@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>You're Offline — Cytron.AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          animation: {
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'ping-slow': 'ping-custom 2.5s cubic-bezier(0, 0, 0.2, 1) infinite',
+            'wifi-wave': 'wifi-search 2s ease-in-out infinite',
+          },
+          keyframes: {
+            'ping-custom': {
+              '0%': { transform: 'scale(1)', opacity: '0.4' },
+              '100%': { transform: 'scale(1.8)', opacity: '0' },
+            },
+            'wifi-search': {
+              '0%, 100%': { opacity: '0.3', transform: 'scale(0.95)' },
+              '50%': { opacity: '0.9', transform: 'scale(1.05)', stroke: '#3b82f6' }
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .bg-grid-pattern {
+        background-size: 30px 30px;
+        background-image: 
+          linear-gradient(to right, rgba(148, 163, 184, 0.04) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(148, 163, 184, 0.04) 1px, transparent 1px);
+      }
+      .dark .bg-grid-pattern {
+        background-image: 
+          linear-gradient(to right, rgba(255, 255, 255, 0.01) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(255, 255, 255, 0.01) 1px, transparent 1px);
+      }
+      .glassmorphism {
+        @apply bg-white/60 dark:bg-[#0f1117]/60 backdrop-blur-xl border border-slate-200/50 dark:border-white/5 shadow-xl dark:shadow-2xl;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 dark:bg-[#07080d] text-slate-800 dark:text-[#e8eaf0] min-h-screen font-sans transition-colors duration-300 overflow-x-hidden relative flex flex-col justify-between">
+
+  <!-- Background decorative gradients -->
+  <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+    <div class="absolute -top-[40%] -left-[20%] w-[80vw] h-[80vw] rounded-full bg-slate-400/10 dark:bg-slate-800/5 blur-[120px] animate-pulse-slow"></div>
+    <div class="absolute -bottom-[30%] -right-[10%] w-[60vw] h-[60vw] rounded-full bg-blue-500/5 dark:bg-blue-600/3 blur-[120px] animate-pulse-slow" style="animation-delay: 1.5s;"></div>
+    <div class="absolute inset-0 bg-grid-pattern opacity-100"></div>
+  </div>
+
+  <!-- Top Utilities Bar -->
+  <header class="relative z-10 flex items-center justify-between px-6 py-4 border-b border-slate-200/50 dark:border-white/5 bg-slate-50/50 dark:bg-[#07080d]/50 backdrop-blur-md">
+    <div class="flex items-center gap-2.5">
+      <img src="/static/Cytron.AI-Logo.png" alt="Cytron.AI" style="height: 28px; width: auto;" class="object-contain" />
+      <div>
+        <span class="text-xs block text-slate-400 dark:text-slate-500">Autonomous Orchestration v1.0</span>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <button onclick="toggleTheme()" class="flex items-center justify-center w-9 h-9 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 transition-all text-slate-600 dark:text-slate-400" title="Toggle Theme">
+        <i id="theme-icon" class="ti ti-sun text-lg dark:hidden"></i>
+        <i id="theme-icon-dark" class="ti ti-moon text-lg hidden dark:block"></i>
+      </button>
+      <a href="/hub" class="text-xs font-semibold px-3.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 transition-all text-slate-600 dark:text-slate-400 flex items-center gap-1">
+        <i class="ti ti-chevron-left"></i> Back to services
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="relative z-10 flex-1 flex flex-col items-center justify-center px-4 py-12 max-w-4xl mx-auto w-full">
+    
+    <div class="glassmorphism w-full rounded-2xl p-8 md:p-12 flex flex-col items-center text-center relative overflow-hidden transition-all duration-300">
+      
+      <!-- Large Premium Illustration -->
+      <div class="relative w-64 h-64 mb-6 flex items-center justify-center">
+        <!-- Pulse Wave Animations (Signal searching) -->
+        <div class="absolute w-24 h-24 rounded-full border border-blue-500/25 dark:border-blue-400/20 animate-ping-slow"></div>
+        <div class="absolute w-36 h-36 rounded-full border border-blue-500/15 dark:border-blue-400/10 animate-ping-slow" style="animation-delay: 0.8s;"></div>
+        <div class="absolute w-48 h-48 rounded-full border border-purple-500/10 dark:border-purple-400/5 animate-ping-slow" style="animation-delay: 1.6s;"></div>
+
+        <!-- SVG Network Link Nodes -->
+        <svg class="absolute w-full h-full text-slate-300 dark:text-slate-800/40" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Disconnected cloud symbol -->
+          <path d="M70 70 A 20 20 0 0 1 110 50 A 25 25 0 0 1 150 70 A 18 18 0 0 1 145 106 L 140 106 L 70 106 A 18 18 0 0 1 70 70 Z" 
+                stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 3" />
+          
+          <!-- Cloud disconnect lightning bolt symbol in center -->
+          <path d="M102 65 L90 85 H108 L96 102" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="animate-pulse" />
+
+          <!-- Network connection line (broken) -->
+          <path d="M100 110 L100 135" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="2 4" />
+        </svg>
+
+        <!-- Dynamic Wifi Searching Signal waves -->
+        <div class="relative z-10 flex flex-col items-center justify-center">
+          <div class="w-20 h-20 rounded-full bg-slate-100 dark:bg-[#161b26] border border-slate-200 dark:border-slate-800 flex items-center justify-center shadow-lg transition-colors duration-300">
+            <i class="ti ti-wifi-off text-3xl text-slate-400 dark:text-slate-600"></i>
+          </div>
+          <span class="text-[9px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-bold mt-2">Core Offline</span>
+        </div>
+
+      </div>
+
+      <!-- Title & Description -->
+      <h2 class="text-2xl md:text-3xl font-extrabold mb-3 tracking-tight text-slate-900 dark:text-white">
+        You're Offline
+      </h2>
+      <p class="text-sm md:text-base text-slate-500 dark:text-slate-400 max-w-md mb-8 leading-relaxed">
+        The Cytron.AI platform cannot reach the cloud services or Git APIs. Check your local network routers, cables, and configurations to restore agent functionality.
+      </p>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-3.5 w-full sm:w-auto relative z-20">
+        <button onclick="retryConnection()" id="retry-btn" class="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:via-indigo-500 hover:to-purple-500 text-white font-semibold text-sm shadow-md hover:shadow-blue-500/25 transition-all duration-300 flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer">
+          <i class="ti ti-refresh text-base"></i> Retry Connection
+        </button>
+        <button onclick="enableOfflineMode()" class="w-full sm:w-auto px-6 py-3 rounded-xl bg-white dark:bg-[#161b26] hover:bg-slate-100 dark:hover:bg-[#1e2537] border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 font-semibold text-sm transition-all duration-300 flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer">
+          <i class="ti ti-terminal-2 text-base text-slate-400"></i> Launch Offline Mode
+        </button>
+        <button onclick="alert('Opening Network Settings...')" class="w-full sm:w-auto px-5 py-3 rounded-xl bg-transparent hover:bg-slate-200/50 dark:hover:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 font-semibold text-sm transition-all duration-300 flex items-center justify-center gap-1 cursor-pointer">
+          <i class="ti ti-settings text-base text-slate-400"></i> Settings
+        </button>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="relative z-10 text-center py-8 text-xs text-slate-400 dark:text-slate-600 border-t border-slate-200/50 dark:border-white/5 bg-slate-50/50 dark:bg-[#07080d]/50 backdrop-blur-md">
+    <div class="max-w-4xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <span>Cytron.AI Platform — Design States Showcase</span>
+      <div class="flex gap-4">
+        <a href="/hub" class="hover:text-slate-600 dark:hover:text-slate-400 transition-colors">Hub</a>
+        <span>·</span>
+        <a href="/docs" target="_blank" class="hover:text-slate-600 dark:hover:text-slate-400 transition-colors">API Docs</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    function retryConnection() {
+      const btn = document.getElementById('retry-btn');
+      btn.innerHTML = `<i class="ti ti-loader-2 text-base animate-spin"></i> Testing Connection...`;
+      btn.disabled = true;
+
+      // Simulate a connection check
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="ti ti-refresh text-base"></i> Retry Connection`;
+        
+        // Randomly simulate success or failure
+        if (Math.random() > 0.5) {
+          alert('Network connection restored! Returning to loading status...');
+          location.href = 'loading.html';
+        } else {
+          alert('No internet access detected. Check network hardware parameters.');
+        }
+      }, 1800);
+    }
+
+    function enableOfflineMode() {
+      alert('Activating Offline Orchestration sandbox mode... Running local agents only (Docker CLI).');
+    }
+
+    // Theme switching logic
+    function toggleTheme() {
+      const html = document.documentElement;
+      const isDark = html.classList.contains('dark');
+      if (isDark) {
+        html.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+      } else {
+        html.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+      }
+    }
+
+    // Set theme on load
+    if (localStorage.getItem('theme') === 'light' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: light)').matches)) {
+      document.documentElement.classList.remove('dark');
+    } else {
+      document.documentElement.classList.add('dark');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,769 @@
+{% extends "base.html" %}
+
+{% block title %}Activity & Execution History - Cytron.AI{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ── Header & Stats ──────────────────────────────────── */
+  .header-section { margin-bottom: 2rem; }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  }
+  .stat-card-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+  }
+  .stat-card-value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--text);
+  }
+
+  /* ── Filters & Search ────────────────────────────────── */
+  .filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  .search-input-wrapper {
+    position: relative;
+    flex: 1 1 250px;
+    min-width: 200px;
+  }
+  .search-input-wrapper i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-dim);
+    font-size: 0.95rem;
+  }
+  .search-input {
+    width: 100%;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.55rem 1rem 0.55rem 2.2rem;
+    color: var(--text);
+    font-size: 0.85rem;
+    outline: none;
+    transition: all var(--transition-fast);
+  }
+  .search-input:focus {
+    border-color: var(--accent);
+    background: var(--surface);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+  .filter-select {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.55rem 1.5rem 0.55rem 0.75rem;
+    color: var(--text);
+    font-size: 0.85rem;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+    background-size: 1em;
+  }
+  .filter-select:focus {
+    border-color: var(--accent);
+  }
+  
+  .filter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .filter-chip {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--surface-3);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2px 10px;
+    font-size: 0.75rem;
+    color: var(--text);
+  }
+  .filter-chip i {
+    cursor: pointer;
+    color: var(--text-muted);
+  }
+  .filter-chip i:hover {
+    color: var(--error);
+  }
+
+  .view-toggle {
+    display: flex;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 2px;
+  }
+  .view-toggle-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    padding: 0.4rem 0.75rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+  }
+  .view-toggle-btn.active {
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  }
+
+  /* ── Content Area ────────────────────────────────────── */
+  .content-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    overflow: hidden;
+  }
+  
+  /* Table View */
+  .data-table-wrapper {
+    overflow-x: auto;
+  }
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+  .data-table th, .data-table td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  .data-table th {
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    background: var(--surface-2);
+  }
+  .data-table tbody tr {
+    cursor: pointer;
+    transition: background var(--transition-fast);
+  }
+  .data-table tbody tr:hover {
+    background: var(--surface-2);
+  }
+
+  /* Timeline View */
+  .timeline-view {
+    padding: 2rem;
+    display: none;
+  }
+  .timeline-item {
+    position: relative;
+    padding-left: 2rem;
+    margin-bottom: 1.5rem;
+    cursor: pointer;
+  }
+  .timeline-item:hover .timeline-card {
+    background: var(--surface-2);
+  }
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: 7px;
+    top: 0;
+    bottom: -1.5rem;
+    width: 2px;
+    background: var(--border);
+  }
+  .timeline-item:last-child::before {
+    display: none;
+  }
+  .timeline-marker {
+    position: absolute;
+    left: 0;
+    top: 4px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--surface-3);
+    border: 2px solid var(--border);
+    z-index: 1;
+  }
+  .timeline-item.success .timeline-marker { border-color: var(--success); background: var(--success-glow); }
+  .timeline-item.failed .timeline-marker { border-color: var(--error); background: rgba(239, 68, 68, 0.1); }
+  .timeline-item.running .timeline-marker { border-color: var(--info); background: rgba(59, 130, 246, 0.1); }
+  
+  .timeline-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 1rem;
+    transition: background var(--transition-fast);
+  }
+  .timeline-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.25rem;
+  }
+  .timeline-title {
+    font-weight: 700;
+    color: var(--text);
+  }
+  .timeline-time {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+  }
+  .timeline-meta {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  /* ── Drawer ──────────────────────────────────────────── */
+  .drawer-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(2px);
+    z-index: 9998; opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  }
+  .drawer-overlay.open { opacity: 1; pointer-events: auto; }
+  .drawer {
+    position: fixed; top: 0; right: -500px; width: 450px; max-width: 90%; height: 100vh;
+    background: var(--surface); border-left: 1px solid var(--border); z-index: 9999;
+    box-shadow: -5px 0 25px rgba(0,0,0,0.2); transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex; flex-direction: column;
+  }
+  .drawer.open { right: 0; }
+  .drawer-header {
+    padding: 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;
+  }
+  .drawer-title { font-weight: 800; font-size: 1.1rem; color: var(--text); }
+  .drawer-close { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.25rem; }
+  .drawer-close:hover { color: var(--text); }
+  .drawer-content {
+    padding: 1.5rem; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 1.25rem;
+  }
+  .detail-row { display: flex; flex-direction: column; gap: 4px; }
+  .detail-label { font-size: 0.75rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; }
+  .detail-value { font-size: 0.85rem; color: var(--text); word-break: break-all; }
+  .detail-box {
+    background: var(--surface-3); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 1rem; font-family: var(--mono); font-size: 0.75rem; color: var(--text); white-space: pre-wrap;
+    max-height: 200px; overflow-y: auto;
+  }
+  .error-box { border-color: rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.05); color: var(--error); }
+
+  /* ── Pagination ──────────────────────────────────────── */
+  .pagination {
+    display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--text-muted);
+  }
+  .page-controls { display: flex; gap: 0.5rem; }
+  .page-btn {
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 0.4rem 0.75rem; color: var(--text); cursor: pointer; font-size: 0.8rem;
+  }
+  .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  
+  .status-badge {
+    padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+  }
+  .status-SUCCESS, .status-COMPLETED { background: rgba(34,197,94,0.15); color: var(--success); }
+  .status-FAILED, .status-ERROR { background: rgba(239,68,68,0.15); color: var(--error); }
+  .status-RUNNING, .status-IN_PROGRESS { background: rgba(59,130,246,0.15); color: var(--info); }
+  .status-QUEUED { background: rgba(168,162,158,0.15); color: var(--text-muted); }
+
+  .action-type-badge {
+    padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: 800; background: var(--surface-3); border: 1px solid var(--border); color: var(--text-dim);
+  }
+  .action-USER { color: var(--accent); border-color: rgba(139, 92, 246, 0.3); }
+  .action-AGENT { color: var(--success); border-color: rgba(34, 197, 94, 0.3); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="header-section">
+  <h1 style="font-size: 1.8rem; font-weight: 800; color: var(--text); margin-bottom: 0.25rem;">Activity & Execution History</h1>
+  <p style="color: var(--text-muted); font-size: 0.88rem;">Complete record of user actions, agent executions, workflow runs, outputs, and system events.</p>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-card-title">Total Activities</div>
+    <div class="stat-card-value" id="stat-total">-</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-title">Successful</div>
+    <div class="stat-card-value" id="stat-success" style="color: var(--success);">-</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-title">Failed</div>
+    <div class="stat-card-value" id="stat-failed" style="color: var(--error);">-</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-title">Running</div>
+    <div class="stat-card-value" id="stat-running" style="color: var(--info);">-</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-title">Agents Used</div>
+    <div class="stat-card-value" id="stat-agents">-</div>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="filter-bar">
+  <div class="search-input-wrapper">
+    <i class="ti ti-search"></i>
+    <input type="text" id="search-box" class="search-input" placeholder="Search activity, project, agent, execution ID..." onkeypress="if(event.key === 'Enter') applyFilters()">
+  </div>
+  
+  <select id="filter-agent" class="filter-select" onchange="applyFilters()">
+    <option value="all">All Agents</option>
+    <!-- Agents populated dynamically or hardcoded defaults -->
+    <option value="AI Requirement Analyzer">AI Requirement Analyzer</option>
+    <option value="Build Complete Project">Build Complete Project</option>
+    <option value="Test Case Generator">Test Case Generator</option>
+    <option value="Code Review Agent">Code Review Agent</option>
+    <option value="Document Generator">Document Generator</option>
+  </select>
+
+  <select id="filter-activity" class="filter-select" onchange="applyFilters()">
+    <option value="all">All Activities</option>
+    <option value="Requirement Analysis">Requirement Analysis</option>
+    <option value="Project Generation">Project Generation</option>
+    <option value="Code Generation">Code Generation</option>
+    <option value="Code Review">Code Review</option>
+  </select>
+
+  <select id="filter-status" class="filter-select" onchange="applyFilters()">
+    <option value="all">All Status</option>
+    <option value="COMPLETED">Completed</option>
+    <option value="SUCCESS">Success</option>
+    <option value="FAILED">Failed</option>
+    <option value="ERROR">Error</option>
+    <option value="RUNNING">Running</option>
+    <option value="QUEUED">Queued</option>
+  </select>
+  
+  <button class="btn btn-secondary" style="padding: 0.55rem 1rem;" onclick="clearFilters()">Clear Filters</button>
+  <button class="btn btn-primary" style="padding: 0.55rem 1rem; margin-left: auto;" onclick="exportHistory()">Export ▾</button>
+  
+  <div class="view-toggle">
+    <button id="btn-view-timeline" class="view-toggle-btn active" onclick="setView('timeline')"><i class="ti ti-list-details"></i> Timeline</button>
+    <button id="btn-view-table" class="view-toggle-btn" onclick="setView('table')"><i class="ti ti-table"></i> Table</button>
+  </div>
+</div>
+
+<div class="filter-chips" id="filter-chips"></div>
+
+<!-- Content -->
+<div class="content-card">
+  <!-- Table View -->
+  <div id="view-table" class="data-table-wrapper" style="display: none;">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Agent</th>
+          <th>Activity</th>
+          <th>Action</th>
+          <th>Target</th>
+          <th>Status</th>
+          <th>Duration</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="history-table-body">
+        <tr><td colspan="8" style="text-align: center; padding: 2rem;">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+  
+  <!-- Timeline View -->
+  <div id="view-timeline" class="timeline-view" style="display: block;">
+    <div id="timeline-container">
+      <div style="text-align: center; padding: 2rem; color: var(--text-dim);">Loading...</div>
+    </div>
+  </div>
+
+  <div class="pagination">
+    <span id="page-info">Showing 0-0 of 0</span>
+    <div class="page-controls">
+      <button class="page-btn" id="btn-prev" onclick="changePage(-1)">Previous</button>
+      <button class="page-btn" id="btn-next" onclick="changePage(1)">Next</button>
+    </div>
+  </div>
+</div>
+
+<!-- Details Drawer -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="details-drawer">
+  <div class="drawer-header">
+    <div class="drawer-title">Execution Details</div>
+    <button class="drawer-close" onclick="closeDrawer()"><i class="ti ti-x"></i></button>
+  </div>
+  <div class="drawer-content" id="drawer-content">
+    <!-- Populated dynamically -->
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  let currentView = 'timeline';
+  let limit = 50;
+  let skip = 0;
+  let totalRecords = 0;
+  let historyData = [];
+
+  function getHeaders() {
+    const headers = {};
+    const token = localStorage.getItem('eto_access');
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    return headers;
+  }
+
+  function setView(view) {
+    currentView = view;
+    document.getElementById('btn-view-table').classList.toggle('active', view === 'table');
+    document.getElementById('btn-view-timeline').classList.toggle('active', view === 'timeline');
+    
+    document.getElementById('view-table').style.display = view === 'table' ? 'block' : 'none';
+    document.getElementById('view-timeline').style.display = view === 'timeline' ? 'block' : 'none';
+  }
+
+  function applyFilters() {
+    skip = 0; // reset to first page on filter change
+    updateFilterChips();
+    fetchHistory();
+    fetchStats();
+  }
+  
+  function clearFilters() {
+    document.getElementById('search-box').value = '';
+    document.getElementById('filter-agent').value = 'all';
+    document.getElementById('filter-activity').value = 'all';
+    document.getElementById('filter-status').value = 'all';
+    applyFilters();
+  }
+  
+  function updateFilterChips() {
+    const chipsContainer = document.getElementById('filter-chips');
+    chipsContainer.innerHTML = '';
+    
+    const search = document.getElementById('search-box').value.trim();
+    const agent = document.getElementById('filter-agent').value;
+    const activity = document.getElementById('filter-activity').value;
+    const status = document.getElementById('filter-status').value;
+    
+    if (search) addChip(`Search: ${search}`, () => { document.getElementById('search-box').value = ''; applyFilters(); });
+    if (agent !== 'all') addChip(`Agent: ${agent}`, () => { document.getElementById('filter-agent').value = 'all'; applyFilters(); });
+    if (activity !== 'all') addChip(`Activity: ${activity}`, () => { document.getElementById('filter-activity').value = 'all'; applyFilters(); });
+    if (status !== 'all') addChip(`Status: ${status}`, () => { document.getElementById('filter-status').value = 'all'; applyFilters(); });
+    
+    function addChip(text, onRemove) {
+      const chip = document.createElement('div');
+      chip.className = 'filter-chip';
+      chip.innerHTML = `<span>${text}</span> <i class="ti ti-x"></i>`;
+      chip.querySelector('i').onclick = onRemove;
+      chipsContainer.appendChild(chip);
+    }
+  }
+
+  async function fetchStats() {
+    const search = document.getElementById('search-box').value.trim();
+    const agent = document.getElementById('filter-agent').value;
+    const activity = document.getElementById('filter-activity').value;
+    const status = document.getElementById('filter-status').value;
+    
+    let url = `/api/hub/history/statistics?`;
+    if (search) url += `search=${encodeURIComponent(search)}&`;
+    if (agent !== 'all') url += `agent=${encodeURIComponent(agent)}&`;
+    if (activity !== 'all') url += `activity=${encodeURIComponent(activity)}&`;
+    if (status !== 'all') url += `status=${encodeURIComponent(status)}&`;
+    
+    try {
+      const res = await fetch(url, { headers: getHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        document.getElementById('stat-total').innerText = data.total_activities;
+        document.getElementById('stat-success').innerText = data.successful;
+        document.getElementById('stat-failed').innerText = data.failed;
+        document.getElementById('stat-running').innerText = data.running;
+        document.getElementById('stat-agents').innerText = data.agents_used;
+      }
+    } catch (e) { console.error('Failed to fetch stats', e); }
+  }
+
+  async function fetchHistory() {
+    const search = document.getElementById('search-box').value.trim();
+    const agent = document.getElementById('filter-agent').value;
+    const activity = document.getElementById('filter-activity').value;
+    const status = document.getElementById('filter-status').value;
+    
+    let url = `/api/hub/history?skip=${skip}&limit=${limit}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    if (agent !== 'all') url += `&agent=${encodeURIComponent(agent)}`;
+    if (activity !== 'all') url += `&activity=${encodeURIComponent(activity)}`;
+    if (status !== 'all') url += `&status=${encodeURIComponent(status)}`;
+    
+    try {
+      const res = await fetch(url, { headers: getHeaders() });
+      if (!res.ok) throw new Error('API returned ' + res.status);
+      const data = await res.json();
+      
+      historyData = data.items;
+      totalRecords = data.total;
+      
+      renderTable();
+      renderTimeline();
+      updatePagination();
+    } catch (e) {
+      console.error(e);
+      document.getElementById('history-table-body').innerHTML = `<tr><td colspan="8" style="color:var(--error);text-align:center;">Failed to load history</td></tr>`;
+      document.getElementById('timeline-container').innerHTML = `<div style="color:var(--error);text-align:center;">Failed to load history</div>`;
+    }
+  }
+
+  function renderTable() {
+    const tbody = document.getElementById('history-table-body');
+    tbody.innerHTML = '';
+    
+    if (historyData.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--text-dim);padding:3rem;">No activity found.</td></tr>`;
+      return;
+    }
+    
+    historyData.forEach((item, idx) => {
+      const tr = document.createElement('tr');
+      tr.onclick = () => openDrawer(idx);
+      
+      const timeStr = item.created_at ? new Date(item.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '-';
+      const dateStr = item.created_at ? new Date(item.created_at).toLocaleDateString() : '-';
+      
+      tr.innerHTML = `
+        <td><div style="font-weight:600;">${timeStr}</div><div style="font-size:0.7rem;color:var(--text-dim);">${dateStr}</div></td>
+        <td><div style="font-weight:600;">${item.agent_name || 'System'}</div></td>
+        <td>${item.activity_type || '-'}</td>
+        <td><span class="action-type-badge action-${item.action_type || 'SYSTEM'}">${item.action_type || 'SYSTEM'}</span></td>
+        <td>${item.project_name || '-'}</td>
+        <td><span class="status-badge status-${item.status}">${item.status || 'UNKNOWN'}</span></td>
+        <td style="font-family:var(--mono);">${item.duration_ms ? (item.duration_ms/1000).toFixed(1)+'s' : '-'}</td>
+        <td><span style="color:var(--accent);font-size:0.8rem;font-weight:600;">View →</span></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderTimeline() {
+    const container = document.getElementById('timeline-container');
+    container.innerHTML = '';
+    
+    if (historyData.length === 0) {
+      container.innerHTML = `<div style="text-align:center;color:var(--text-dim);padding:3rem;">No activity found.</div>`;
+      return;
+    }
+    
+    let lastDate = '';
+    
+    historyData.forEach((item, idx) => {
+      const dateObj = item.created_at ? new Date(item.created_at) : new Date();
+      const dateStr = dateObj.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      const timeStr = dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+      
+      if (dateStr !== lastDate) {
+        const header = document.createElement('div');
+        header.style = "font-size:0.75rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;margin: 2rem 0 1rem 0;";
+        header.innerText = dateStr;
+        container.appendChild(header);
+        lastDate = dateStr;
+      }
+      
+      let typeClass = 'success';
+      if (['FAILED','ERROR'].includes(item.status)) typeClass = 'failed';
+      if (['RUNNING','QUEUED','IN_PROGRESS'].includes(item.status)) typeClass = 'running';
+      
+      const el = document.createElement('div');
+      el.className = `timeline-item ${typeClass}`;
+      el.onclick = () => openDrawer(idx);
+      
+      let durationStr = item.duration_ms ? ` · ${(item.duration_ms/1000).toFixed(1)}s` : '';
+      
+      el.innerHTML = `
+        <div class="timeline-marker"></div>
+        <div class="timeline-card">
+          <div class="timeline-header">
+            <div class="timeline-title">${item.agent_name || 'User Action'} <span style="color:var(--text-muted);font-weight:400;">— ${item.activity_type || ''}</span></div>
+            <div class="timeline-time">${timeStr}</div>
+          </div>
+          <div class="timeline-meta">
+            Target: <strong>${item.project_name || '-'}</strong>
+            <span style="margin: 0 6px;">|</span>
+            <span class="status-badge status-${item.status}">${item.status}</span>
+            ${durationStr}
+          </div>
+        </div>
+      `;
+      container.appendChild(el);
+    });
+  }
+
+  function changePage(dir) {
+    const newSkip = skip + (dir * limit);
+    if (newSkip >= 0 && newSkip < totalRecords) {
+      skip = newSkip;
+      fetchHistory();
+    }
+  }
+
+  function updatePagination() {
+    const end = Math.min(skip + limit, totalRecords);
+    document.getElementById('page-info').innerText = `Showing ${totalRecords === 0 ? 0 : skip + 1}-${end} of ${totalRecords}`;
+    document.getElementById('btn-prev').disabled = skip === 0;
+    document.getElementById('btn-next').disabled = end >= totalRecords;
+  }
+  
+  function exportHistory() {
+    const search = document.getElementById('search-box').value.trim();
+    const agent = document.getElementById('filter-agent').value;
+    const activity = document.getElementById('filter-activity').value;
+    const status = document.getElementById('filter-status').value;
+    
+    let url = `/api/hub/history/export?`;
+    if (search) url += `search=${encodeURIComponent(search)}&`;
+    if (agent !== 'all') url += `agent=${encodeURIComponent(agent)}&`;
+    if (activity !== 'all') url += `activity=${encodeURIComponent(activity)}&`;
+    if (status !== 'all') url += `status=${encodeURIComponent(status)}&`;
+    
+    window.location.href = url;
+  }
+
+  // Details Drawer
+  function openDrawer(idx) {
+    const item = historyData[idx];
+    if (!item) return;
+    
+    const content = document.getElementById('drawer-content');
+    
+    let errorSection = '';
+    if (item.status === 'FAILED' || item.status === 'ERROR' || item.error_details) {
+      errorSection = `
+        <div class="detail-row">
+          <div class="detail-label" style="color:var(--error);">Error Details</div>
+          <div class="detail-box error-box">${item.error_details || 'Unknown error occurred'}</div>
+        </div>
+        ${item.error_code ? `<div class="detail-row"><div class="detail-label">Error Code</div><div class="detail-value" style="color:var(--error);">${item.error_code}</div></div>` : ''}
+      `;
+    }
+    
+    let filesStr = '-';
+    if (item.files_generated) {
+      try {
+        const arr = JSON.parse(item.files_generated);
+        if (Array.isArray(arr) && arr.length > 0) {
+          filesStr = arr.map(f => `<div style="padding:4px;background:var(--surface-2);border-radius:4px;margin-bottom:4px;font-family:var(--mono);font-size:0.8rem;">${f}</div>`).join('');
+        }
+      } catch(e){}
+    }
+
+    content.innerHTML = `
+      <div class="detail-row">
+        <div class="detail-label">Execution ID</div>
+        <div class="detail-value" style="font-family:var(--mono);">${item.execution_id || `RUN-${item.id}`}</div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-label">Agent</div>
+        <div class="detail-value" style="font-weight:600;">${item.agent_name || 'System'}</div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-label">Activity</div>
+        <div class="detail-value">${item.activity_type || '-'}</div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-label">Project / Target</div>
+        <div class="detail-value">${item.project_name || '-'}</div>
+      </div>
+      
+      <div style="display:flex;gap:1rem;">
+        <div class="detail-row" style="flex:1;">
+          <div class="detail-label">Status</div>
+          <div class="detail-value"><span class="status-badge status-${item.status}">${item.status}</span></div>
+        </div>
+        <div class="detail-row" style="flex:1;">
+          <div class="detail-label">Duration</div>
+          <div class="detail-value" style="font-family:var(--mono);">${item.duration_ms ? (item.duration_ms/1000).toFixed(1)+'s' : '-'}</div>
+        </div>
+      </div>
+      
+      <hr style="border:none;border-top:1px solid var(--border);margin: 0.5rem 0;" />
+      
+      ${errorSection}
+      
+      <div class="detail-row">
+        <div class="detail-label">Started</div>
+        <div class="detail-value">${item.created_at ? new Date(item.created_at).toLocaleString() : '-'}</div>
+      </div>
+      
+      <div class="detail-row">
+        <div class="detail-label">Input / Context</div>
+        <div class="detail-box">${item.input_summary || 'No input context available.'}</div>
+      </div>
+      
+      <div class="detail-row">
+        <div class="detail-label">Output Summary</div>
+        <div class="detail-box">${item.output_summary || 'No output summary available.'}</div>
+      </div>
+      
+      <div class="detail-row">
+        <div class="detail-label">Files Generated</div>
+        <div style="margin-top: 0.25rem;">${filesStr}</div>
+      </div>
+    `;
+    
+    document.getElementById('drawer-overlay').classList.add('open');
+    document.getElementById('details-drawer').classList.add('open');
+  }
+
+  function closeDrawer() {
+    document.getElementById('drawer-overlay').classList.remove('open');
+    document.getElementById('details-drawer').classList.remove('open');
+  }
+
+  // Initialize
+  fetchStats();
+  fetchHistory();
+  
+  // Auto refresh
+  setInterval(() => {
+    // only auto refresh if on first page to prevent jarring jumps while reading old history
+    if(skip === 0 && !document.getElementById('details-drawer').classList.contains('open')) {
+      fetchHistory();
+      fetchStats();
+    }
+  }, 15000);
+</script>
+{% endblock %}

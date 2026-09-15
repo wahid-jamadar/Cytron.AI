@@ -1,0 +1,3 @@
+[
+  "import React, { useState, useEffect } from 'react';\nimport { useNavigate } from 'react-router-dom';\nimport api from '../lib/api';\n\nconst AdminDashboard = () => {\n  const [systemOverview, setSystemOverview] = useState({});\n  const navigate = useNavigate();\n\n  useEffect(() => {\n    const fetchSystemOverview = async () => {\n      try {\n        const response = await api.get('/api/v1/system/overview');\n        setSystemOverview(response.data);\n      } catch (error) {\n        console.error(error);\n      }\n    };\n    fetchSystemOverview();\n  }, []);\n\n  return (\n    <div>\n      <h1>Admin Dashboard</h1>\n      <p>System Overview: {systemOverview}</p>\n    </div>\n  );\n};\n\nexport default AdminDashboard;"
+]

@@ -1,0 +1,1772 @@
+{% extends "base.html" %}
+
+{% block title %}Enterprise Test Case Generator - Cytron.AI{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* Custom modern dashboard styles */
+  .main-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    max-width: 900px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  
+  .form-group {
+    margin-bottom: 1.25rem;
+  }
+  
+  .form-group label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--accent-2);
+    margin-bottom: 0.4rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  
+  .form-select, .form-textarea, .form-input {
+    width: 100%;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    outline: none;
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 0.9rem;
+    padding: 0.7rem 0.9rem;
+    transition: all 0.2s;
+  }
+  .form-select:focus, .form-textarea:focus, .form-input:focus {
+    border-color: var(--accent);
+    background: var(--surface-3);
+  }
+  
+  .form-textarea {
+    resize: vertical;
+    min-height: 120px;
+    font-family: var(--mono);
+    line-height: 1.5;
+  }
+
+  /* Configuration summary chips */
+  .config-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    background: rgba(255,255,255,0.02);
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+  }
+  
+  .config-trigger-btn {
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.2) 0%, rgba(168, 85, 247, 0.2) 100%);
+    border: 1px solid var(--border-glow);
+    color: var(--accent-2);
+    padding: 0.5rem 1.2rem;
+    font-family: var(--font);
+    font-size: 0.88rem;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.25s;
+  }
+  .config-trigger-btn:hover {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
+    transform: translateY(-1px);
+  }
+
+  .chips-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .chip {
+    font-size: 0.72rem;
+    font-weight: 600;
+    background: var(--surface-3);
+    color: var(--text-muted);
+    padding: 4px 10px;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.15s;
+  }
+  .chip.active {
+    background: rgba(124, 58, 237, 0.1);
+    color: var(--accent-2);
+    border-color: rgba(124, 58, 237, 0.3);
+  }
+
+  /* Drawer CSS */
+  .drawer-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(7, 8, 13, 0.7);
+    backdrop-filter: blur(6px);
+    z-index: 9999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .drawer-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  
+  .drawer-content {
+    position: fixed;
+    top: 0;
+    right: -500px;
+    width: 500px;
+    max-width: 100%;
+    height: 100vh;
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    box-shadow: -10px 0 40px rgba(0, 0, 0, 0.6);
+    display: flex;
+    flex-direction: column;
+    transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: hidden;
+  }
+  .drawer-overlay.open .drawer-content {
+    right: 0;
+  }
+  
+  .drawer-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--surface-2);
+  }
+  .drawer-header h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .drawer-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .reset-link {
+    font-size: 0.75rem;
+    color: var(--accent-2);
+    cursor: pointer;
+    text-decoration: none;
+    font-weight: 600;
+    transition: opacity 0.15s;
+  }
+  .reset-link:hover {
+    text-decoration: underline;
+    opacity: 0.85;
+  }
+  .close-drawer-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.3rem;
+    cursor: pointer;
+    transition: color 0.15s;
+    display: flex;
+    align-items: center;
+  }
+  .close-drawer-btn:hover {
+    color: var(--error);
+  }
+
+  .drawer-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+  }
+  
+  .drawer-footer {
+    padding: 1.25rem 1.5rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    background: var(--surface-2);
+  }
+  
+  /* Collapsible Accordion logic */
+  .accordion-item {
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    border-radius: var(--radius-sm);
+    margin-bottom: 0.75rem;
+    overflow: hidden;
+  }
+  .accordion-header {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.88rem;
+    color: var(--text);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+    transition: background 0.15s;
+  }
+  .accordion-header:hover {
+    background: var(--surface-3);
+  }
+  .accordion-header i {
+    font-size: 1rem;
+    color: var(--accent-2);
+    transition: transform 0.2s;
+  }
+  .accordion-content {
+    padding: 1rem;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    display: none;
+  }
+  .accordion-item.open .accordion-content {
+    display: block;
+  }
+  .accordion-item.open .accordion-header i {
+    transform: rotate(180deg);
+  }
+
+  /* Switch Toggle CSS */
+  .switch-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+  }
+  .switch-container:last-child {
+    border-bottom: none;
+  }
+  .switch-label {
+    font-size: 0.85rem;
+    color: var(--text);
+    font-weight: 500;
+  }
+  .switch-desc {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-weight: 400;
+    margin-top: 0.1rem;
+  }
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 42px;
+    height: 22px;
+    flex-shrink: 0;
+  }
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background-color: var(--surface-3);
+    transition: .25s;
+    border-radius: 34px;
+    border: 1px solid var(--border);
+  }
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 14px;
+    width: 14px;
+    left: 3px;
+    bottom: 3px;
+    background-color: var(--text-muted);
+    transition: .25s;
+    border-radius: 50%;
+  }
+  input:checked + .slider {
+    background-color: var(--accent);
+    border-color: var(--border-glow);
+  }
+  input:checked + .slider:before {
+    transform: translateX(20px);
+    background-color: #fff;
+  }
+
+  /* Checkbox Grid layout */
+  .checkbox-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 0.5rem;
+    padding: 0.25rem 0;
+  }
+  .checkbox-card {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0.5rem;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .checkbox-card:hover {
+    background: var(--surface-3);
+    border-color: var(--accent-glow);
+  }
+  .checkbox-card input[type="checkbox"] {
+    accent-color: var(--accent);
+  }
+
+  /* Styled search list */
+  .search-container {
+    margin-bottom: 0.75rem;
+    position: relative;
+  }
+  .search-container i {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+  .search-input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    padding: 0.5rem 0.5rem 0.5rem 2rem;
+    font-size: 0.85rem;
+    outline: none;
+    font-family: var(--font);
+  }
+  .search-input:focus {
+    border-color: var(--accent);
+  }
+
+  .scroll-list {
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    border-radius: var(--radius-sm);
+    max-height: 180px;
+    overflow-y: auto;
+    padding: 0.5rem;
+  }
+  .list-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0.35rem 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.15s;
+    font-size: 0.85rem;
+    color: var(--text);
+  }
+  .list-item:hover {
+    background: var(--surface-3);
+  }
+  .list-item input[type="checkbox"] {
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+
+  /* Drawer Footer Buttons */
+  .drawer-btn {
+    padding: 0.5rem 1.25rem;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-family: var(--font);
+    transition: all 0.2s;
+  }
+  .drawer-btn-done {
+    background: var(--accent);
+    color: #fff;
+    border: 1px solid var(--border-glow);
+  }
+  .drawer-btn-done:hover {
+    background: var(--accent-2);
+    box-shadow: 0 4px 12px rgba(124,58,237,0.25);
+  }
+  .drawer-btn-cancel {
+    background: var(--surface-3);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .drawer-btn-cancel:hover {
+    background: rgba(255,255,255,0.05);
+  }
+
+  /* Tabs system */
+  .tabs-nav {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+  }
+  .tab-link {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 0.75rem 1.25rem;
+    color: var(--text-muted);
+    font-family: var(--font);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .tab-link:hover {
+    color: var(--text);
+  }
+  .tab-link.active {
+    color: var(--accent-2);
+    border-bottom-color: var(--accent-2);
+  }
+  .tab-pane {
+    display: none;
+  }
+  .tab-pane.active {
+    display: block;
+  }
+  
+  /* Test Cases rendering */
+  .tc-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .tc-card {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .tc-card:hover {
+    border-color: var(--border-glow);
+  }
+  .tc-header {
+    background: var(--surface-3);
+    padding: 0.75rem 1.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+  }
+  .tc-header h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .tc-badges {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  .badge-critical { background: rgba(239, 68, 68, 0.2); color: var(--error); border: 1px solid var(--error); }
+  .badge-high { background: rgba(245, 158, 11, 0.2); color: var(--warning); border: 1px solid var(--warning); }
+  .badge-medium { background: rgba(59, 130, 246, 0.2); color: var(--info); border: 1px solid var(--info); }
+  .badge-low { background: rgba(107, 114, 128, 0.2); color: var(--text-muted); border: 1px solid var(--border); }
+  .badge-category { background: rgba(168, 85, 247, 0.15); color: var(--accent-2); border: 1px solid rgba(168, 85, 247, 0.4); }
+  
+  .tc-content {
+    padding: 1.25rem;
+  }
+  .tc-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    font-size: 0.88rem;
+  }
+  .tc-detail-item strong {
+    color: var(--accent-2);
+    display: block;
+    margin-bottom: 0.2rem;
+  }
+  
+  /* Steps Table */
+  .steps-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0.75rem;
+    margin-bottom: 1.25rem;
+    font-size: 0.88rem;
+  }
+  .steps-table th, .steps-table td {
+    padding: 0.6rem 0.8rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .steps-table th {
+    background: var(--surface-3);
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+  
+  /* Code window styling */
+  .code-window-container {
+    background: #0d1117;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .code-header {
+    background: #161b22;
+    padding: 0.5rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+  }
+  .code-title {
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+  .code-pre {
+    margin: 0;
+    padding: 1.25rem;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 0.88rem;
+    line-height: 1.5;
+    color: #c9d1d9;
+    max-height: 600px;
+  }
+  
+  /* Analysis Panel styles */
+  .analysis-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1rem;
+  }
+  .analysis-card {
+    background: var(--surface-2);
+    border-left: 4px solid var(--error);
+    border-top: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    padding: 1rem;
+  }
+  .analysis-card.sec { border-left-color: var(--error); }
+  .analysis-card.perf { border-left-color: var(--warning); }
+  .analysis-card.logic { border-left-color: var(--info); }
+  .analysis-card.db { border-left-color: var(--success); }
+  .analysis-card h4 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .analysis-card ul {
+    padding-left: 1.2rem;
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+  .analysis-card li {
+    margin-bottom: 0.35rem;
+  }
+  
+  /* Export Section styling */
+  .export-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1rem;
+  }
+  .export-btn {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    padding: 0.8rem;
+    font-family: var(--font);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+  }
+  .export-btn:hover {
+    border-color: var(--accent);
+    background: var(--surface-3);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.15);
+  }
+  .export-btn i {
+    font-size: 1.5rem;
+    color: var(--accent-2);
+  }
+  
+  .copy-btn, .action-sub-btn {
+    background: var(--surface-3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.35rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.15s;
+  }
+  .copy-btn:hover, .action-sub-btn:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="text-align: center; margin-bottom: 1.5rem;">
+  <div class="logo-badge" style="display: inline-flex; align-items: center; gap: 8px; background: rgba(124,58,237,0.15); border: 1px solid var(--border-glow); border-radius: 100px; padding: 6px 16px; font-size: 0.75rem; color: var(--accent-2); font-weight: 600; text-transform: uppercase; margin-bottom: 0.75rem;"><i class="ti ti-flask"></i> Enterprise Testing</div>
+  <h1 style="font-size: 2.2rem; margin-bottom: 0.5rem; background: linear-gradient(90deg, #fff, var(--text-muted)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">AI-Powered Enterprise Testing Platform</h1>
+  <p style="color: var(--text-muted); font-size: 0.95rem;">Generate enterprise-grade manual/automated test suites and access deep analytical coverage strategies.</p>
+</div>
+
+<div class="main-panel">
+  
+  <!-- INPUT SECTION CARD -->
+  <div class="input-card" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.75rem; position: relative;">
+    
+    <!-- Config Trigger Bar -->
+    <div class="config-section-header">
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">Testing Strategy Configurations</span>
+        <div id="config-summary-text" style="font-size: 0.85rem; color: #fff; font-weight: 500;">
+          0 Configurations Applied
+        </div>
+      </div>
+      <button class="config-trigger-btn" onclick="openConfigDrawer()">
+        <i class="ti ti-settings"></i> Configurations
+      </button>
+    </div>
+
+    <!-- Active Config Chips Summary -->
+    <div class="chips-container" id="chips-summary-container" style="margin-bottom: 1.25rem;">
+      <!-- Active preferences chips render here -->
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+      <div class="form-group" style="margin-bottom: 0;">
+        <label><i class="ti ti-file-text"></i> Input Source Type</label>
+        <select id="tc-input-type" class="form-select">
+          <option value="Source code">Source code</option>
+          <option value="API specifications">API specifications</option>
+          <option value="OpenAPI/Swagger">OpenAPI / Swagger Specs</option>
+          <option value="User stories">User stories</option>
+          <option value="SRS documents">SRS documents</option>
+          <option value="BRD">BRD (Business Requirements)</option>
+          <option value="PRD">PRD (Product Requirements)</option>
+          <option value="Database schema">Database schema</option>
+          <option value="UML diagrams">UML diagrams</option>
+          <option value="Existing documentation">Existing documentation</option>
+          <option value="Plain-text requirements" selected>Plain-text requirements</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="form-group">
+      <label><i class="ti ti-code"></i> Input Specification / Content to Test</label>
+      <textarea id="tc-content" class="form-textarea" placeholder="Paste your source code, OpenAPI specs, database schemas, or plain requirements here..." style="min-height: 180px;"></textarea>
+    </div>
+    
+    <div class="form-group">
+      <label><i class="ti ti-plug"></i> Mocking & Special Requirements</label>
+      <textarea id="tc-special" class="form-textarea" placeholder="Describe any external dependencies to mock or validation limits..." style="min-height: 80px;"></textarea>
+    </div>
+    
+    <button class="run-btn" onclick="runGenerator()" style="margin-bottom: 0;">
+      <i class="ti ti-sparkles"></i> Generate Enterprise Test Suite
+    </button>
+  </div>
+  
+  <!-- RESULTS SECTION -->
+  <div class="result-card" id="results-panel" style="display: none; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem;">
+    <nav class="tabs-nav">
+      <button class="tab-link active" onclick="switchTab('tab-tcs', this)"><i class="ti ti-checklist"></i> Test Cases (<span id="tc-count">0</span>)</button>
+      <button class="tab-link" id="code-tab-btn" onclick="switchTab('tab-code', this)"><i class="ti ti-code"></i> Executable Code</button>
+      <button class="tab-link" onclick="switchTab('tab-analysis', this)"><i class="ti ti-shield-check"></i> Quality Analysis</button>
+      <button class="tab-link" onclick="switchTab('tab-export', this)"><i class="ti ti-download"></i> Export Platform</button>
+    </nav>
+    
+    <!-- TAB 1: STRUCTURED TEST CASES -->
+    <div class="tab-pane active" id="tab-tcs">
+      <div class="tc-list" id="test-cases-render"></div>
+    </div>
+    
+    <!-- TAB 2: AUTOMATED CODE -->
+    <div class="tab-pane" id="tab-code">
+      <div class="code-window-container">
+        <div class="code-header">
+          <span class="code-title" id="code-filename">test_suite.py</span>
+          <button class="copy-btn" onclick="copyCode()"><i class="ti ti-copy"></i> Copy Code</button>
+        </div>
+        <pre class="code-pre"><code id="code-block-render"></code></pre>
+      </div>
+    </div>
+    
+    <!-- TAB 3: QUALITY ANALYSIS -->
+    <div class="tab-pane" id="tab-analysis">
+      <div class="analysis-grid" id="analysis-render"></div>
+    </div>
+    
+    <!-- TAB 4: EXPORT PIPELINES -->
+    <div class="tab-pane" id="tab-export">
+      <h3 style="font-size: 1rem; color: #fff; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;"><i class="ti ti-file-export"></i> Select Export Target Format</h3>
+      <div class="export-grid">
+        <button class="export-btn" onclick="triggerExport('markdown')"><i class="ti ti-markdown"></i> Markdown (.md)</button>
+        <button class="export-btn" onclick="triggerExport('docx')"><i class="ti ti-file-word"></i> Word (.docx)</button>
+        <button class="export-btn" onclick="triggerExport('pdf')"><i class="ti ti-file-text"></i> PDF Document</button>
+        <button class="export-btn" onclick="triggerExport('html')"><i class="ti ti-html5"></i> HTML Report</button>
+        <button class="export-btn" onclick="triggerExport('excel')"><i class="ti ti-table"></i> Excel Spreadsheet</button>
+        <button class="export-btn" onclick="triggerExport('csv')"><i class="ti ti-file-spreadsheet"></i> Standard CSV</button>
+        <button class="export-btn" onclick="triggerExport('json')"><i class="ti ti-braces"></i> JSON Output</button>
+        <button class="export-btn" onclick="triggerExport('yaml')"><i class="ti ti-file-code"></i> YAML Config</button>
+        <button class="export-btn" onclick="triggerExport('xml')"><i class="ti ti-xml"></i> Suite XML</button>
+        <button class="export-btn" onclick="triggerExport('junit')"><i class="ti ti-file-report"></i> JUnit XML Report</button>
+        <button class="export-btn" onclick="triggerExport('allure')"><i class="ti ti-circle-dot"></i> Allure Report ZIP</button>
+        <button class="export-btn" onclick="triggerExport('testrail')"><i class="ti ti-cloud-download"></i> TestRail CSV</button>
+        <button class="export-btn" onclick="triggerExport('xray')"><i class="ti ti-settings-automation"></i> Xray JSON</button>
+        <button class="export-btn" onclick="triggerExport('zephyr')"><i class="ti ti-database-import"></i> Zephyr CSV</button>
+        <button class="export-btn" onclick="triggerExport('azure')"><i class="ti ti-brand-azure"></i> Azure DevOps CSV</button>
+        <button class="export-btn" onclick="triggerExport('github')"><i class="ti ti-brand-github"></i> GitHub MD</button>
+        <button class="export-btn" onclick="triggerExport('gitlab')"><i class="ti ti-brand-gitlab"></i> GitLab MD</button>
+        <button class="export-btn" onclick="triggerExport('zip')"><i class="ti ti-zip"></i> Complete ZIP Package</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE-OUT DRAWER OVERLAY -->
+<div class="drawer-overlay" id="config-drawer" onclick="handleOutsideClick(event)">
+  <div class="drawer-content" onclick="event.stopPropagation()">
+    
+    <!-- Drawer Header -->
+    <div class="drawer-header">
+      <h3><i class="ti ti-settings"></i> Advanced Configurations</h3>
+      <div class="drawer-header-actions">
+        <a href="#" class="reset-link" onclick="resetConfigToDefault(event)"><i class="ti ti-rotate-dot"></i> Reset to Default</a>
+        <button class="close-drawer-btn" onclick="closeConfigDrawer()"><i class="ti ti-x"></i></button>
+      </div>
+    </div>
+
+    <!-- Drawer Body (Accordions) -->
+    <div class="drawer-body">
+      
+      <!-- Accordion 1: Core Framework Settings -->
+      <div class="accordion-item open">
+        <div class="accordion-header" onclick="toggleAccordion(this)">
+          <span><i class="ti ti-cpu"></i> 1. Core Framework & Language</span>
+          <i class="ti ti-chevron-down"></i>
+        </div>
+        <div class="accordion-content">
+          <div class="form-group">
+            <label>Testing Framework</label>
+            <select id="tc-framework" class="form-select">
+              <option value="PyTest (Python)">PyTest (Python)</option>
+              <option value="Jest (JavaScript/TypeScript)">Jest (JavaScript/TypeScript)</option>
+              <option value="JUnit (Java)">JUnit (Java)</option>
+              <option value="Go Test">Go Test</option>
+              <option value="RSpec (Ruby)">RSpec (Ruby)</option>
+              <option value="Mocha/Chai">Mocha/Chai</option>
+              <option value="NUnit (.NET)">NUnit (.NET)</option>
+              <option value="MSTest (.NET)">MSTest (.NET)</option>
+              <option value="xUnit (.NET)">xUnit (.NET)</option>
+              <option value="PHPUnit (PHP)">PHPUnit (PHP)</option>
+              <option value="Pest (PHP)">Pest (PHP)</option>
+              <option value="TestNG (Java)">TestNG (Java)</option>
+              <option value="Spock (Groovy)">Spock (Groovy)</option>
+              <option value="Vitest">Vitest</option>
+              <option value="Jasmine">Jasmine</option>
+              <option value="Cypress">Cypress</option>
+              <option value="Playwright">Playwright</option>
+              <option value="Selenium WebDriver">Selenium WebDriver</option>
+              <option value="Robot Framework">Robot Framework</option>
+              <option value="Cucumber (BDD)">Cucumber (BDD)</option>
+              <option value="Karate DSL">Karate DSL</option>
+              <option value="Appium">Appium</option>
+              <option value="Espresso (Android)">Espresso (Android)</option>
+              <option value="XCTest (iOS)">XCTest (iOS)</option>
+              <option value="K6">K6 (Performance)</option>
+              <option value="JMeter">JMeter (Performance)</option>
+              <option value="Locust">Locust (Performance)</option>
+              <option value="Gatling">Gatling (Performance)</option>
+              <option value="PyUnit (unittest)">PyUnit (unittest)</option>
+              <option value="Behat">Behat (PHP BDD)</option>
+              <option value="Capybara">Capybara (Ruby)</option>
+              <option value="SuperTest">SuperTest (API)</option>
+              <option value="REST Assured">REST Assured (API)</option>
+              <option value="Postman/Newman">Postman/Newman</option>
+              <option value="Pact (Contract Testing)">Pact (Contract Testing)</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label>Programming Language</label>
+            <select id="tc-language" class="form-select">
+              <option value="Generic">Generic / Auto-detect</option>
+              <option value="Python">Python</option>
+              <option value="TypeScript">TypeScript</option>
+              <option value="JavaScript">JavaScript</option>
+              <option value="Java">Java</option>
+              <option value="C#">C#</option>
+              <option value="Go">Go</option>
+              <option value="PHP">PHP</option>
+              <option value="Ruby">Ruby</option>
+              <option value="Kotlin">Kotlin</option>
+              <option value="Swift">Swift</option>
+              <option value="Rust">Rust</option>
+              <option value="C++">C++</option>
+            </select>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0;">
+            <label>Target Coverage Strategy</label>
+            <select id="tc-coverage" class="form-select">
+              <option value="Standard (80%)">Standard (~80% Coverage)</option>
+              <option value="High (90%+)&quot;">High (90%+ Coverage)</option>
+              <option value="Critical (100%)">Critical (100% Coverage + Edge Cases)</option>
+              <option value="Basic (Happy Path Only)">Basic (Happy Path Only)</option>
+              <option value="Smoke Testing Coverage">Smoke Testing Coverage</option>
+              <option value="Sanity Testing Coverage">Sanity Testing Coverage</option>
+              <option value="Functional Coverage">Functional Coverage</option>
+              <option value="Regression Coverage">Regression Coverage</option>
+              <option value="Boundary Value Coverage">Boundary Value Coverage</option>
+              <option value="Equivalence Partition Coverage">Equivalence Partition Coverage</option>
+              <option value="Decision Coverage">Decision Coverage</option>
+              <option value="Branch Coverage">Branch Coverage</option>
+              <option value="Statement Coverage">Statement Coverage</option>
+              <option value="Condition Coverage">Condition Coverage</option>
+              <option value="Path Coverage">Path Coverage</option>
+              <option value="Risk-Based Coverage">Risk-Based Coverage</option>
+              <option value="Security Coverage">Security Coverage</option>
+              <option value="Performance Coverage">Performance Coverage</option>
+              <option value="API Coverage">API Coverage</option>
+              <option value="Database Coverage">Database Coverage</option>
+              <option value="UI Coverage">UI Coverage</option>
+              <option value="Accessibility Coverage">Accessibility Coverage</option>
+              <option value="Cross-Browser Coverage">Cross-Browser Coverage</option>
+              <option value="Mobile Coverage">Mobile Coverage</option>
+              <option value="Maximum Coverage (All Test Scenarios)">Maximum Coverage (All Scenarios)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Accordion 2: Execution & Output Details -->
+      <div class="accordion-item">
+        <div class="accordion-header" onclick="toggleAccordion(this)">
+          <span><i class="ti ti-activity"></i> 2. Execution & Output Parameters</span>
+          <i class="ti ti-chevron-down"></i>
+        </div>
+        <div class="accordion-content">
+          <div class="form-group">
+            <label>Test Style</label>
+            <select id="tc-style" class="form-select">
+              <option value="Automated Test Cases">Automated Test Cases</option>
+              <option value="Manual Test Cases">Manual Test Cases</option>
+              <option value="BDD (Given-When-Then)">BDD (Given-When-Then)</option>
+              <option value="TDD">TDD (Test-Driven Development)</option>
+              <option value="ATDD">ATDD (Acceptance TDD)</option>
+            </select>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label>Priority Default</label>
+              <select id="tc-priority" class="form-select">
+                <option value="Critical">Critical</option>
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label>Severity Level</label>
+              <select id="tc-severity" class="form-select">
+                <option value="Critical">Critical</option>
+                <option value="Major">Major</option>
+                <option value="Minor">Minor</option>
+                <option value="Trivial">Trivial</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Complexity Level</label>
+            <select id="tc-complexity" class="form-select">
+              <option value="Beginner">Beginner</option>
+              <option value="Standard">Standard</option>
+              <option value="Advanced">Advanced</option>
+              <option value="Enterprise">Enterprise</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Execution Environment</label>
+            <select id="tc-environment" class="form-select">
+              <option value="Local">Local</option>
+              <option value="Docker">Docker</option>
+              <option value="Kubernetes">Kubernetes</option>
+              <option value="Staging">Staging</option>
+              <option value="Production-like">Production-like</option>
+              <option value="Cloud Environment">Cloud Environment</option>
+            </select>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0;">
+            <label>Output Detail Level</label>
+            <select id="tc-detail" class="form-select">
+              <option value="Summary Only">Summary Only</option>
+              <option value="Standard">Standard</option>
+              <option value="Detailed">Detailed</option>
+              <option value="Enterprise Documentation">Enterprise Documentation</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Accordion 3: Strategy & Advanced Scenarios (Toggles) -->
+      <div class="accordion-item">
+        <div class="accordion-header" onclick="toggleAccordion(this)">
+          <span><i class="ti ti-shield-check"></i> 3. Quality & Advanced Testing Rules</span>
+          <i class="ti ti-chevron-down"></i>
+        </div>
+        <div class="accordion-content" style="padding-top: 0.5rem; padding-bottom: 0.5rem;">
+          
+          <div class="switch-container">
+            <div class="switch-label">
+              Incorporate Positive Scenarios
+              <span class="switch-desc">Verify standard success pathways</span>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="tc-opt-positive" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="switch-container">
+            <div class="switch-label">
+              Incorporate Negative Scenarios
+              <span class="switch-desc">Verify error states and validation triggers</span>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="tc-opt-negative" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="switch-container">
+            <div class="switch-label">
+              Generate Edge Cases
+              <span class="switch-desc">Verify rare, concurrent, or complex sequences</span>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="tc-opt-edge" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="switch-container">
+            <div class="switch-label">
+              Apply Boundary Value Analysis
+              <span class="switch-desc">Test input range extremes (min/max/out-of-bounds)</span>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="tc-opt-boundary" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="switch-container">
+            <div class="switch-label">
+              Apply Equivalence Partitioning
+              <span class="switch-desc">Test representatives of distinct data ranges</span>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="tc-opt-equivalence" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="switch-container">
+            <div class="switch-label">
+              Generate Sample Test Data
+              <span class="switch-desc">Output realistic fields, payloads, or values</span>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="tc-opt-test-data" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="switch-container">
+            <div class="switch-label">
+              Include Preconditions
+              <span class="switch-desc">Document initial states or prerequisite configurations</span>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="tc-opt-preconditions" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="switch-container">
+            <div class="switch-label">
+              Include Postconditions & Cleanup
+              <span class="switch-desc">Verify resource releases and database resets</span>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="tc-opt-postconditions" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="switch-container">
+            <div class="switch-label">
+              Incorporate Expected Results
+              <span class="switch-desc">Assert definite outcomes for each step</span>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="tc-opt-expected-results" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="switch-container" style="border-bottom: none;">
+            <div class="switch-label">
+              Generate Automation Script Code
+              <span class="switch-desc">Create full executable file assets in target framework</span>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="tc-opt-automation-script" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Accordion 4: Target Browser, OS, Devices -->
+      <div class="accordion-item">
+        <div class="accordion-header" onclick="toggleAccordion(this)">
+          <span><i class="ti ti-device-laptop"></i> 4. Compatibility & Environment Scope</span>
+          <i class="ti ti-chevron-down"></i>
+        </div>
+        <div class="accordion-content">
+          <div class="form-group">
+            <label>Target Browsers</label>
+            <div class="checkbox-grid" id="browser-group">
+              <label class="checkbox-card"><input type="checkbox" value="Chrome" checked> Chrome</label>
+              <label class="checkbox-card"><input type="checkbox" value="Firefox" checked> Firefox</label>
+              <label class="checkbox-card"><input type="checkbox" value="Safari"> Safari</label>
+              <label class="checkbox-card"><input type="checkbox" value="Edge"> Edge</label>
+              <label class="checkbox-card"><input type="checkbox" value="WebKit"> WebKit</label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Device Compatibility</label>
+            <div class="checkbox-grid" id="device-group">
+              <label class="checkbox-card"><input type="checkbox" value="Desktop" checked> Desktop</label>
+              <label class="checkbox-card"><input type="checkbox" value="Mobile"> Mobile</label>
+              <label class="checkbox-card"><input type="checkbox" value="Tablet"> Tablet</label>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0;">
+            <label>Target Operating System</label>
+            <div class="checkbox-grid" id="os-group">
+              <label class="checkbox-card"><input type="checkbox" value="Windows" checked> Windows</label>
+              <label class="checkbox-card"><input type="checkbox" value="macOS"> macOS</label>
+              <label class="checkbox-card"><input type="checkbox" value="Linux" checked> Linux</label>
+              <label class="checkbox-card"><input type="checkbox" value="iOS"> iOS</label>
+              <label class="checkbox-card"><input type="checkbox" value="Android"> Android</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Accordion 5: Searchable Test Types -->
+      <div class="accordion-item">
+        <div class="accordion-header" onclick="toggleAccordion(this)">
+          <span><i class="ti ti-list-check"></i> 5. Test Types & Coverage Scope</span>
+          <i class="ti ti-chevron-down"></i>
+        </div>
+        <div class="accordion-content">
+          <div class="search-container">
+            <i class="ti ti-search"></i>
+            <input type="text" class="search-input" id="test-types-search" placeholder="Search test types..." oninput="filterTestTypes()">
+          </div>
+          <div class="scroll-list" id="drawer-test-types">
+            <!-- Render check boxes -->
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Drawer Footer -->
+    <div class="drawer-footer">
+      <button class="drawer-btn drawer-btn-cancel" onclick="closeConfigDrawer()">Cancel</button>
+      <button class="drawer-btn drawer-btn-done" onclick="saveConfigurations()">Done</button>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // List of all 38+ test types
+  const testTypesList = [
+    "Smoke Tests", "Sanity Tests", "Regression Tests", "Functional Tests", "API Tests", "UI Tests",
+    "Database Tests", "Performance Tests", "Load Tests", "Stress Tests", "Spike Tests", "Volume Tests",
+    "Scalability Tests", "Security Tests", "Penetration Tests", "Authentication Tests", "Authorization Tests",
+    "Compatibility Tests", "Cross-Browser Tests", "Mobile Tests", "Accessibility Tests", "Localization Tests",
+    "Internationalization Tests", "Installation Tests", "Recovery Tests", "Failover Tests", "Reliability Tests",
+    "Usability Tests", "Acceptance Tests (UAT)", "Exploratory Tests", "Boundary Value Tests",
+    "Equivalence Partition Tests", "Negative Tests", "Positive Tests", "Edge Case Tests",
+    "Mutation Tests", "Contract Tests", "Chaos Engineering Tests"
+  ];
+  
+  // Default values mapping
+  const defaultConfig = {
+    framework: "PyTest (Python)",
+    language: "Python",
+    coverage: "Standard (80%)",
+    style: "Automated Test Cases",
+    priority: "Medium",
+    severity: "Major",
+    environment: "Local",
+    complexity: "Standard",
+    detail: "Standard",
+    test_types: ["Functional Tests", "API Tests", "Edge Case Tests"],
+    include_positive: true,
+    include_negative: true,
+    include_edge: true,
+    include_boundary: true,
+    include_equivalence: true,
+    generate_test_data: true,
+    include_preconditions: true,
+    include_postconditions: true,
+    include_expected_results: true,
+    generate_automation_script: true,
+    browsers: ["Chrome", "Firefox"],
+    devices: ["Desktop"],
+    os: ["Windows", "Linux"]
+  };
+
+  // Active configurations in session (JS state)
+  let configState = { ...defaultConfig };
+  
+  // Data cache for generated suites
+  let currentTestSuite = null;
+  
+  function initDrawerTestTypes() {
+    const container = document.getElementById('drawer-test-types');
+    container.innerHTML = '';
+    
+    testTypesList.forEach(t => {
+      const isChecked = configState.test_types.includes(t);
+      const label = document.createElement('label');
+      label.className = 'list-item';
+      label.setAttribute('data-name', t.toLowerCase());
+      label.innerHTML = `
+        <input type="checkbox" value="${t}" ${isChecked ? 'checked' : ''}>
+        <span>${t}</span>
+      `;
+      container.appendChild(label);
+    });
+  }
+
+  function filterTestTypes() {
+    const query = document.getElementById('test-types-search').value.toLowerCase().trim();
+    document.querySelectorAll('#drawer-test-types .list-item').forEach(item => {
+      const name = item.getAttribute('data-name');
+      if (name.includes(query)) {
+        item.style.display = 'flex';
+      } else {
+        item.style.display = 'none';
+      }
+    });
+  }
+  
+  function toggleAccordion(header) {
+    const item = header.parentElement;
+    item.classList.toggle('open');
+  }
+
+  function openConfigDrawer() {
+    // Sync current state to form fields
+    syncStateToForm();
+    
+    // Reset search
+    document.getElementById('test-types-search').value = '';
+    filterTestTypes();
+    
+    // Open panel with drawer overlay classes
+    const drawer = document.getElementById('config-drawer');
+    drawer.classList.add('open');
+  }
+  
+  function closeConfigDrawer() {
+    const drawer = document.getElementById('config-drawer');
+    drawer.classList.remove('open');
+  }
+
+  function handleOutsideClick(event) {
+    if (event.target === document.getElementById('config-drawer')) {
+      closeConfigDrawer();
+    }
+  }
+
+  function syncStateToForm() {
+    document.getElementById('tc-framework').value = configState.framework;
+    document.getElementById('tc-language').value = configState.language;
+    document.getElementById('tc-coverage').value = configState.coverage;
+    document.getElementById('tc-style').value = configState.style;
+    document.getElementById('tc-priority').value = configState.priority;
+    document.getElementById('tc-severity').value = configState.severity;
+    document.getElementById('tc-complexity').value = configState.complexity;
+    document.getElementById('tc-environment').value = configState.environment;
+    document.getElementById('tc-detail').value = configState.detail;
+
+    document.getElementById('tc-opt-positive').checked = configState.include_positive;
+    document.getElementById('tc-opt-negative').checked = configState.include_negative;
+    document.getElementById('tc-opt-edge').checked = configState.include_edge;
+    document.getElementById('tc-opt-boundary').checked = configState.include_boundary;
+    document.getElementById('tc-opt-equivalence').checked = configState.include_equivalence;
+    document.getElementById('tc-opt-test-data').checked = configState.generate_test_data;
+    document.getElementById('tc-opt-preconditions').checked = configState.include_preconditions;
+    document.getElementById('tc-opt-postconditions').checked = configState.include_postconditions;
+    document.getElementById('tc-opt-expected-results').checked = configState.include_expected_results;
+    document.getElementById('tc-opt-automation-script').checked = configState.generate_automation_script;
+
+    // Browsers
+    document.querySelectorAll('#browser-group input').forEach(input => {
+      input.checked = configState.browsers.includes(input.value);
+    });
+    // Devices
+    document.querySelectorAll('#device-group input').forEach(input => {
+      input.checked = configState.devices.includes(input.value);
+    });
+    // OS
+    document.querySelectorAll('#os-group input').forEach(input => {
+      input.checked = configState.os.includes(input.value);
+    });
+
+    // Test Types
+    document.querySelectorAll('#drawer-test-types input').forEach(input => {
+      input.checked = configState.test_types.includes(input.value);
+    });
+  }
+
+  function syncFormToState() {
+    configState.framework = document.getElementById('tc-framework').value;
+    configState.language = document.getElementById('tc-language').value;
+    configState.coverage = document.getElementById('tc-coverage').value;
+    configState.style = document.getElementById('tc-style').value;
+    configState.priority = document.getElementById('tc-priority').value;
+    configState.severity = document.getElementById('tc-severity').value;
+    configState.complexity = document.getElementById('tc-complexity').value;
+    configState.environment = document.getElementById('tc-environment').value;
+    configState.detail = document.getElementById('tc-detail').value;
+
+    configState.include_positive = document.getElementById('tc-opt-positive').checked;
+    configState.include_negative = document.getElementById('tc-opt-negative').checked;
+    configState.include_edge = document.getElementById('tc-opt-edge').checked;
+    configState.include_boundary = document.getElementById('tc-opt-boundary').checked;
+    configState.include_equivalence = document.getElementById('tc-opt-equivalence').checked;
+    configState.generate_test_data = document.getElementById('tc-opt-test-data').checked;
+    configState.include_preconditions = document.getElementById('tc-opt-preconditions').checked;
+    configState.include_postconditions = document.getElementById('tc-opt-postconditions').checked;
+    configState.include_expected_results = document.getElementById('tc-opt-expected-results').checked;
+    configState.generate_automation_script = document.getElementById('tc-opt-automation-script').checked;
+
+    // Browsers
+    configState.browsers = [];
+    document.querySelectorAll('#browser-group input:checked').forEach(input => {
+      configState.browsers.push(input.value);
+    });
+    // Devices
+    configState.devices = [];
+    document.querySelectorAll('#device-group input:checked').forEach(input => {
+      configState.devices.push(input.value);
+    });
+    // OS
+    configState.os = [];
+    document.querySelectorAll('#os-group input:checked').forEach(input => {
+      configState.os.push(input.value);
+    });
+
+    // Test Types
+    configState.test_types = [];
+    document.querySelectorAll('#drawer-test-types input:checked').forEach(input => {
+      configState.test_types.push(input.value);
+    });
+  }
+
+  function saveConfigurations() {
+    syncFormToState();
+    renderConfigSummary();
+    toggleCodeTab();
+    closeConfigDrawer();
+  }
+
+  function resetConfigToDefault(event) {
+    if (event) event.preventDefault();
+    configState = { ...defaultConfig };
+    syncStateToForm();
+    renderConfigSummary();
+    toggleCodeTab();
+    closeConfigDrawer();
+  }
+
+  function renderConfigSummary() {
+    const summaryContainer = document.getElementById('chips-summary-container');
+    const textEl = document.getElementById('config-summary-text');
+    
+    // Count active custom settings from defaultConfig
+    let count = 0;
+    const chips = [];
+
+    // Main chips
+    chips.push({ text: configState.framework, active: true });
+    chips.push({ text: configState.coverage.split(" ")[0], active: true });
+    chips.push({ text: configState.style.replace(" Test Cases", ""), active: true });
+    chips.push({ text: `Env: ${configState.environment}`, active: false });
+    chips.push({ text: `Priority: ${configState.priority}`, active: false });
+    
+    if (configState.include_positive) chips.push({ text: "+ Positive", active: false });
+    if (configState.include_negative) chips.push({ text: "- Negative", active: false });
+    if (configState.include_edge) chips.push({ text: "Edge Cases", active: false });
+    if (configState.include_boundary) chips.push({ text: "Boundaries", active: false });
+
+    // Count non-default values
+    Object.keys(defaultConfig).forEach(k => {
+      if (JSON.stringify(defaultConfig[k]) !== JSON.stringify(configState[k])) {
+        count++;
+      }
+    });
+
+    // Count of applied settings
+    const activeSettingCount = 9 + configState.test_types.length + configState.browsers.length + configState.devices.length + configState.os.length;
+    textEl.textContent = `${activeSettingCount} Configurations Applied (${count} customized)`;
+
+    summaryContainer.innerHTML = '';
+    chips.forEach(c => {
+      const el = document.createElement('div');
+      el.className = `chip ${c.active ? 'active' : ''}`;
+      el.textContent = c.text;
+      summaryContainer.appendChild(el);
+    });
+  }
+  
+  function switchTab(paneId, button) {
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-link').forEach(l => l.classList.remove('active'));
+    
+    document.getElementById(paneId).classList.add('active');
+    button.classList.add('active');
+  }
+  
+  function toggleCodeTab() {
+    const style = configState.style;
+    const codeBtn = document.getElementById('code-tab-btn');
+    if (style === 'Manual Test Cases') {
+      codeBtn.style.display = 'none';
+    } else {
+      codeBtn.style.display = 'flex';
+    }
+  }
+  
+  async function runGenerator() {
+    const btn = document.querySelector('.run-btn');
+    const originalBtnText = btn.innerHTML;
+    
+    const content = document.getElementById('tc-content').value.strip ? document.getElementById('tc-content').value.strip() : document.getElementById('tc-content').value;
+    if (!content) {
+      alert("Please input specifications or source code to test.");
+      return;
+    }
+    
+    // Build full request body matching expanded schema
+    const reqBody = {
+      framework: configState.framework,
+      coverage: configState.coverage,
+      test_types: configState.test_types,
+      language: configState.language,
+      style: configState.style,
+      priority: configState.priority,
+      environment: configState.environment,
+      complexity: configState.complexity,
+      detail: configState.detail,
+      content: content,
+      special_requirements: document.getElementById('tc-special').value,
+      input_source_type: document.getElementById('tc-input-type').value,
+      
+      severity: configState.severity,
+      include_positive: configState.include_positive,
+      include_negative: configState.include_negative,
+      include_edge: configState.include_edge,
+      include_boundary: configState.include_boundary,
+      include_equivalence: configState.include_equivalence,
+      generate_test_data: configState.generate_test_data,
+      browsers: configState.browsers,
+      devices: configState.devices,
+      os: configState.os,
+      include_preconditions: configState.include_preconditions,
+      include_postconditions: configState.include_postconditions,
+      include_expected_results: configState.include_expected_results,
+      generate_automation_script: configState.generate_automation_script
+    };
+    
+    if (typeof startProcessingProgress === 'function') {
+      startProcessingProgress([
+        "Analyzing target specifications...",
+        "Identifying code execution pathways...",
+        "Applying target coverage logic...",
+        "Generating structured functional test steps...",
+        "Analyzing edge cases and boundary checks...",
+        "Running concurrency and validation scanner...",
+        "Synthesizing framework executable code...",
+        "Compiling enterprise quality reports..."
+      ]);
+    } else {
+      btn.innerHTML = '<i class="ti ti-loader ti-spin"></i> Processing...';
+    }
+    btn.disabled = true;
+    
+    try {
+      const res = await fetch('/test-case-generator/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(reqBody)
+      });
+      
+      const data = await res.json();
+      if (typeof stopProcessingProgress === 'function') stopProcessingProgress();
+      btn.innerHTML = originalBtnText;
+      btn.disabled = false;
+      
+      if (!res.ok) {
+        alert("Error generating test cases: " + (data.detail || "Server error"));
+        return;
+      }
+      
+      currentTestSuite = data;
+      renderResults(data, reqBody);
+      
+    } catch (err) {
+      console.error(err);
+      if (typeof stopProcessingProgress === 'function') stopProcessingProgress();
+      btn.innerHTML = originalBtnText;
+      btn.disabled = false;
+      alert("Failed to connect to generator endpoint.");
+    }
+  }
+  
+  function renderResults(data, requestParams) {
+    document.getElementById('results-panel').style.display = 'block';
+    
+    const tcs = data.test_cases || [];
+    document.getElementById('tc-count').textContent = tcs.length;
+    
+    const tcContainer = document.getElementById('test-cases-render');
+    tcContainer.innerHTML = '';
+    
+    tcs.forEach((tc, idx) => {
+      const priorityClass = `badge-${(tc.priority || 'medium').toLowerCase()}`;
+      
+      let stepRows = '';
+      const steps = tc.steps || [];
+      steps.forEach(s => {
+        stepRows += `
+          <tr>
+            <td>${s.step_number}</td>
+            <td>${escapeHtml(s.action)}</td>
+            <td>${escapeHtml(s.expected_result)}</td>
+          </tr>
+        `;
+      });
+      
+      const stepsTable = steps.length > 0 ? `
+        <table class="steps-table">
+          <thead>
+            <tr>
+              <th style="width: 8%;">Step</th>
+              <th style="width: 52%;">Action</th>
+              <th style="width: 40%;">Expected Result</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${stepRows}
+          </tbody>
+        </table>
+      ` : `<div style="margin-top:0.5rem; font-size:0.9rem;"><strong>Expected Result:</strong> ${escapeHtml(tc.expected_result || '')}</div>`;
+      
+      const detailId = `tc-details-${idx}`;
+      
+      const card = document.createElement('div');
+      card.className = 'tc-card';
+      card.innerHTML = `
+        <div class="tc-header" onclick="toggleCard('${detailId}')">
+          <h3>${tc.id || 'TC'}: ${escapeHtml(tc.title)}</h3>
+          <div class="tc-badges">
+            <span class="badge ${priorityClass}">${tc.priority || 'Medium'}</span>
+            <span class="badge badge-category">${tc.category || 'Functional'}</span>
+            <i class="ti ti-chevron-down" id="chevron-${detailId}" style="transition: transform 0.2s;"></i>
+          </div>
+        </div>
+        <div class="tc-content" id="${detailId}" style="display: none;">
+          <div class="tc-details-grid">
+            <div class="tc-detail-item"><strong>Objective</strong>${escapeHtml(tc.objective || '')}</div>
+            ${tc.preconditions ? `<div class="tc-detail-item"><strong>Preconditions</strong>${escapeHtml(tc.preconditions)}</div>` : ''}
+            ${tc.dependencies ? `<div class="tc-detail-item"><strong>Dependencies</strong>${escapeHtml(tc.dependencies)}</div>` : ''}
+            ${tc.test_data ? `<div class="tc-detail-item"><strong>Test Data</strong><code>${escapeHtml(tc.test_data)}</code></div>` : ''}
+            ${tc.environment_setup ? `<div class="tc-detail-item"><strong>Env Setup</strong>${escapeHtml(tc.environment_setup)}</div>` : ''}
+            ${tc.estimated_execution_time ? `<div class="tc-detail-item"><strong>Estimated Execution Time</strong>${escapeHtml(tc.estimated_execution_time)}</div>` : ''}
+          </div>
+          
+          ${stepsTable}
+          
+          <div class="tc-details-grid" style="border-top: 1px dotted var(--border); padding-top: 1rem; margin-bottom: 0;">
+            ${tc.edge_cases ? `<div class="tc-detail-item"><strong>Edge Cases</strong>${escapeHtml(tc.edge_cases)}</div>` : ''}
+            ${tc.negative_scenarios ? `<div class="tc-detail-item"><strong>Negative Scenarios</strong>${escapeHtml(tc.negative_scenarios)}</div>` : ''}
+            ${tc.boundary_conditions ? `<div class="tc-detail-item"><strong>Boundary Conditions</strong>${escapeHtml(tc.boundary_conditions)}</div>` : ''}
+            ${tc.risk_assessment ? `<div class="tc-detail-item"><strong>Risk Assessment</strong>${escapeHtml(tc.risk_assessment)}</div>` : ''}
+            ${tc.automation_feasibility ? `<div class="tc-detail-item"><strong>Automation Feasibility</strong>${escapeHtml(tc.automation_feasibility)}</div>` : ''}
+            ${tc.cleanup_steps ? `<div class="tc-detail-item"><strong>Cleanup Steps</strong>${escapeHtml(tc.cleanup_steps)}</div>` : ''}
+          </div>
+        </div>
+      `;
+      tcContainer.appendChild(card);
+    });
+    
+    if (tcs.length > 0) {
+      toggleCard('tc-details-0');
+    }
+    
+    const codeVal = data.code || "";
+    document.getElementById('code-block-render').textContent = codeVal;
+    const ext = data.extension || ".txt";
+    document.getElementById('code-filename').textContent = `automated_tests${ext}`;
+    
+    const analysis = data.analysis || {};
+    const analysisContainer = document.getElementById('analysis-render');
+    analysisContainer.innerHTML = '';
+    
+    const analysisTypes = [
+      { key: "missing_test_scenarios", title: "Missing Test Scenarios", class: "sec", icon: "ti-alert-circle" },
+      { key: "edge_cases", title: "Edge Cases & Boundaries", class: "sec", icon: "ti-border-outer" },
+      { key: "security_risks", title: "Security & Vulnerabilities", class: "sec", icon: "ti-shield-alert" },
+      { key: "performance_bottlenecks", title: "Performance Risks", class: "perf", icon: "ti-gauge" },
+      { key: "concurrency_issues", title: "Concurrency & Race Conditions", class: "perf", icon: "ti-git-fork" },
+      { key: "validation_failures", title: "Validation Failures", class: "logic", icon: "ti-bug" },
+      { key: "exception_handling_scenarios", title: "Exception Handling", class: "logic", icon: "ti-code-off" },
+      { key: "api_failure_cases", title: "API Failure Vectors", class: "db", icon: "ti-plug" },
+      { key: "database_consistency_issues", title: "Database Integrity", class: "db", icon: "ti-database" }
+    ];
+    
+    analysisTypes.forEach(t => {
+      const items = analysis[t.key] || [];
+      if (items.length > 0) {
+        const div = document.createElement('div');
+        div.className = `analysis-card ${t.class}`;
+        
+        let listItems = '';
+        items.forEach(i => {
+          listItems += `<li>${escapeHtml(i)}</li>`;
+        });
+        
+        div.innerHTML = `
+          <h4><i class="ti ${t.icon}"></i> ${t.title}</h4>
+          <ul>${listItems}</ul>
+        `;
+        analysisContainer.appendChild(div);
+      }
+    });
+    
+    if (analysisContainer.innerHTML === '') {
+      analysisContainer.innerHTML = '<div style="color:var(--success); font-size:0.95rem;"><i class="ti ti-circle-check"></i> Quality analysis found no security, logic, or performance warnings in the target input specs.</div>';
+    }
+    
+    switchTab('tab-tcs', document.querySelector('.tabs-nav button'));
+  }
+  
+  function toggleCard(id) {
+    const el = document.getElementById(id);
+    const chev = document.getElementById(`chevron-${id}`);
+    if (el.style.display === 'none') {
+      el.style.display = 'block';
+      if (chev) chev.style.transform = 'rotate(180deg)';
+    } else {
+      el.style.display = 'none';
+      if (chev) chev.style.transform = 'rotate(0deg)';
+    }
+  }
+  
+  function copyCode() {
+    const code = document.getElementById('code-block-render').textContent;
+    navigator.clipboard.writeText(code).then(() => {
+      const btn = document.querySelector('.copy-btn');
+      const orig = btn.innerHTML;
+      btn.innerHTML = '<i class="ti ti-check"></i> Copied!';
+      setTimeout(() => { btn.innerHTML = orig; }, 1500);
+    });
+  }
+  
+  async function triggerExport(format) {
+    if (!currentTestSuite) {
+      alert("No test suite generated yet. Please generate tests first.");
+      return;
+    }
+    
+    const reqBody = {
+      format: format,
+      test_cases: currentTestSuite.test_cases,
+      analysis: currentTestSuite.analysis,
+      info: {
+        title: "Enterprise Test Suite",
+        framework: configState.framework,
+        language: configState.language,
+        coverage: configState.coverage,
+        style: configState.style,
+        priority: configState.priority,
+        environment: configState.environment,
+        complexity: configState.complexity,
+        detail: configState.detail,
+        code: currentTestSuite.code,
+        extension: currentTestSuite.extension,
+        severity: configState.severity,
+        include_positive: configState.include_positive,
+        include_negative: configState.include_negative,
+        include_edge: configState.include_edge,
+        include_boundary: configState.include_boundary,
+        include_equivalence: configState.include_equivalence,
+        generate_test_data: configState.generate_test_data,
+        browsers: configState.browsers,
+        devices: configState.devices,
+        os: configState.os,
+        include_preconditions: configState.include_preconditions,
+        include_postconditions: configState.include_postconditions,
+        include_expected_results: configState.include_expected_results,
+        generate_automation_script: configState.generate_automation_script
+      }
+    };
+    
+    try {
+      const res = await fetch('/test-case-generator/api/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(reqBody)
+      });
+      
+      if (!res.ok) {
+        const err = await res.json();
+        alert("Failed to export: " + (err.detail || "Server error"));
+        return;
+      }
+      
+      const blob = await res.blob();
+      
+      let filename = `test_suite.${format}`;
+      if (format === 'excel') filename = 'test_suite.xlsx';
+      else if (format === 'junit') filename = 'junit_report.xml';
+      else if (format === 'allure') filename = 'allure_results.zip';
+      else if (format === 'testrail') filename = 'testrail_import.csv';
+      else if (format === 'xray') filename = 'xray_import.json';
+      else if (format === 'zephyr') filename = 'zephyr_import.csv';
+      else if (format === 'azure') filename = 'azure_devops_import.csv';
+      else if (format === 'github') filename = 'github_test_suite.md';
+      else if (format === 'gitlab') filename = 'gitlab_test_suite.md';
+      
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      
+    } catch (err) {
+      console.error(err);
+      alert("Network error during file download export.");
+    }
+  }
+  
+  function escapeHtml(text) {
+    if (!text) return '';
+    return text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+  
+  // Initialize elements
+  window.addEventListener('DOMContentLoaded', () => {
+    initDrawerTestTypes();
+    renderConfigSummary();
+    toggleCodeTab();
+  });
+</script>
+{% endblock %}

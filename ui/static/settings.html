@@ -1,0 +1,377 @@
+{% extends "base.html" %}
+
+{% block title %}System Settings - Cytron.AI{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ── Two-Column Layout ────────────────────────────────── */
+  .settings-layout {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 1.5rem;
+  }
+
+  @media (max-width: 1024px) {
+    .settings-layout {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .settings-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  }
+
+  .card-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ── Feature Flag Switch ────────────────────────────── */
+  .flag-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+  }
+
+  .flag-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-width: 75%;
+  }
+
+  .flag-name {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .flag-desc {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    line-height: 1.45;
+  }
+
+  /* ── System Variables Display ───────────────────────── */
+  .var-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.82rem;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .var-label {
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  .var-value {
+    font-weight: 600;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.78rem;
+  }
+
+  .status-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  .status-active { background: rgba(16, 185, 129, 0.12); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.25); }
+  .status-inactive { background: rgba(244, 182, 168, 0.12); color: var(--error); border: 1px solid rgba(244, 182, 168, 0.25); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="header-section" style="margin-bottom: 2rem;">
+  <div class="header-title">
+    <h1 style="font-size: 1.8rem; font-weight: 800; color: var(--text); margin-bottom: 0.25rem;">System Settings</h1>
+    <p style="color: var(--text-muted); font-size: 0.88rem;">Manage workspace user preferences and toggle core experimental feature gates</p>
+  </div>
+</div>
+
+<!-- Settings Layout -->
+<div class="settings-layout">
+  
+  <!-- Left Column: User Preferences Form -->
+  <div class="settings-card">
+    <h3 class="card-title">
+      <i class="ti ti-user" style="color: var(--accent);"></i> User Preferences
+    </h3>
+    
+    <form id="preferences-form" onsubmit="savePreferences(event)">
+      <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+        
+        <div class="form-group">
+          <label class="form-label">Preferred LLM Provider</label>
+          <select id="pref-provider" class="form-select">
+            <option value="groq">Groq (Inference Engine)</option>
+            <option value="openai">OpenAI (GPT-4o)</option>
+            <option value="anthropic">Anthropic (Claude 3.5 Sonnet)</option>
+            <option value="ollama">Ollama (Local Models)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Default Target Language</label>
+          <select id="pref-lang" class="form-select">
+            <option value="typescript">TypeScript / JavaScript</option>
+            <option value="python">Python</option>
+            <option value="go">Go (Golang)</option>
+            <option value="rust">Rust</option>
+            <option value="java">Java</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">UI Visual Theme</label>
+          <select id="pref-theme" class="form-select">
+            <option value="light">Classic Warm Off-White (Default)</option>
+            <option value="dark">Premium Dark (Glassmorphic)</option>
+            <option value="oled">Pure black (OLED Mode)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Timezone</label>
+          <input type="text" id="pref-timezone" class="form-input" placeholder="e.g. UTC, Asia/Kolkata">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Alert Notifications</label>
+          <select id="pref-notifications" class="form-select">
+            <option value="all">Email & Push Notifications</option>
+            <option value="email_only">Email Only</option>
+            <option value="push_only">Browser Push Only</option>
+            <option value="none">Disable All Alerts</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">
+          <i class="ti ti-device-floppy"></i> Save Preferences
+        </button>
+
+      </div>
+    </form>
+  </div>
+
+  <!-- Right Column: System Vars & Feature Flags -->
+  <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+    
+    <!-- Feature Flags Card -->
+    <div class="settings-card">
+      <h3 class="card-title">
+        <i class="ti ti-toggle-left" style="color: var(--accent-2);"></i> Feature Flags
+      </h3>
+      
+      <div style="display: flex; flex-direction: column; gap: 1rem;" id="feature-flags-container">
+        <div style="text-align: center; color: var(--text-dim); font-size: 0.8rem; padding: 1.5rem;">
+          <i class="ti ti-loader ti-spin" style="margin-bottom: 6px; display: block; color: var(--accent);"></i> Loading flags registry...
+        </div>
+      </div>
+    </div>
+
+    <!-- Read-only System Configuration -->
+    <div class="settings-card">
+      <h3 class="card-title">
+        <i class="ti ti-server" style="color: var(--info);"></i> System Configuration
+      </h3>
+      
+      <div style="display: flex; flex-direction: column;" id="system-config-container">
+        <!-- Loaded dynamically via settings API -->
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function getHeaders(extraHeaders = {}) {
+    const headers = { ...extraHeaders };
+    const token = localStorage.getItem('eto_access');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    return headers;
+  }
+
+  async function fetchSettings() {
+    try {
+      const response = await fetch('/api/hub/settings', {
+        headers: getHeaders()
+      });
+      if (!response.ok) throw new Error("Failed to fetch settings configurations");
+      const data = await response.json();
+
+      populatePreferences(data.preferences);
+      populateFeatureFlags(data.feature_flags);
+      populateSystemConfig(data.system);
+    } catch (err) {
+      console.error(err);
+      showToast(`Error loading settings: ${err.message}`);
+    }
+  }
+
+  function populatePreferences(prefs) {
+    document.getElementById('pref-provider').value = prefs.preferred_provider || 'groq';
+    document.getElementById('pref-lang').value = prefs.preferred_language || 'typescript';
+    document.getElementById('pref-theme').value = prefs.ui_theme || 'light';
+    document.getElementById('pref-timezone').value = prefs.timezone || 'UTC';
+    document.getElementById('pref-notifications').value = prefs.notification_preferences || 'all';
+  }
+
+  async function savePreferences(event) {
+    event.preventDefault();
+    const payload = {
+      preferred_provider: document.getElementById('pref-provider').value,
+      preferred_language: document.getElementById('pref-lang').value,
+      ui_theme: document.getElementById('pref-theme').value,
+      timezone: document.getElementById('pref-timezone').value,
+      notification_preferences: document.getElementById('pref-notifications').value
+    };
+
+    try {
+      const response = await fetch('/api/hub/settings/save', {
+        method: 'POST',
+        headers: getHeaders({
+          'Content-Type': 'application/json'
+        }),
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json();
+      if (response.ok) {
+        showToast("Preferences saved successfully!");
+        
+        // Sync theme using global applyTheme in base.html
+        if (typeof applyTheme === 'function') {
+          applyTheme(payload.ui_theme);
+        }
+      } else {
+        showToast(`Failed: ${data.detail || 'Unknown error'}`);
+      }
+    } catch (err) {
+      showToast(`Error: ${err.message}`);
+    }
+  }
+
+  function populateFeatureFlags(flags) {
+    const container = document.getElementById('feature-flags-container');
+    if (!flags || flags.length === 0) {
+      container.innerHTML = `
+        <div style="text-align: center; color: var(--text-dim); font-size: 0.8rem; padding: 1rem;">
+          No experimental feature gates registered in the database.
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = '';
+    flags.forEach(f => {
+      const item = document.createElement('div');
+      item.className = 'flag-item';
+      item.innerHTML = `
+        <div class="flag-info">
+          <span class="flag-name">${f.name}</span>
+          <span class="flag-desc">${f.description || 'No description provided.'}</span>
+        </div>
+        <label class="form-toggle">
+          <input type="checkbox" ${f.is_enabled ? 'checked' : ''} onchange="toggleFlag(${f.id}, this.checked)">
+          <span class="form-toggle-slider"></span>
+        </label>
+      `;
+      container.appendChild(item);
+    });
+  }
+
+  async function toggleFlag(flagId, isChecked) {
+    try {
+      const response = await fetch(`/api/hub/settings/flags/${flagId}`, {
+        method: 'POST',
+        headers: getHeaders({
+          'Content-Type': 'application/json'
+        }),
+        body: JSON.stringify({ is_enabled: isChecked })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        showToast("Feature flag updated successfully!");
+      } else {
+        showToast(`Error: ${data.detail || 'Failed to toggle'}`);
+      }
+    } catch (err) {
+      showToast(`Error: ${err.message}`);
+    }
+  }
+
+  function populateSystemConfig(sys) {
+    const container = document.getElementById('system-config-container');
+    container.innerHTML = `
+      <div class="var-item">
+        <span class="var-label">Groq Model Presets</span>
+        <span class="var-value">${sys.groq_model}</span>
+      </div>
+      <div class="var-item">
+        <span class="var-label">VCS Organization</span>
+        <span class="var-value">${sys.github_org || 'None (Local)'}</span>
+      </div>
+      <div class="var-item">
+        <span class="var-label">VCS Repo Visibility</span>
+        <span class="var-value" style="text-transform: uppercase;">${sys.github_default_visibility}</span>
+      </div>
+      <div class="var-item">
+        <span class="var-label">GCP Project ID</span>
+        <span class="var-value">${sys.gcp_project_id || 'None'}</span>
+      </div>
+      <div class="var-item">
+        <span class="var-label">GCP Target Region</span>
+        <span class="var-value">${sys.gcp_region}</span>
+      </div>
+      <div class="var-item">
+        <span class="var-label">Max Retry Cycles</span>
+        <span class="var-value">${sys.max_retry_cycles}</span>
+      </div>
+      <div class="var-item">
+        <span class="var-label">Hard Process Timeout</span>
+        <span class="var-value">${sys.pipeline_timeout_seconds}s</span>
+      </div>
+      <div class="var-item">
+        <span class="var-label">Server Bind Address</span>
+        <span class="var-value">${sys.ui_host}:${sys.ui_port}</span>
+      </div>
+      <div class="var-item" style="border-bottom: none; padding-bottom: 0;">
+        <span class="var-label">Integrations Status</span>
+        <span style="display: flex; gap: 8px;">
+          <span class="status-badge ${sys.github_token_configured ? 'status-active' : 'status-inactive'}">GitHub</span>
+          <span class="status-badge ${sys.gcp_configured ? 'status-active' : 'status-inactive'}">GCP</span>
+        </span>
+      </div>
+    `;
+  }
+
+  fetchSettings();
+</script>
+{% endblock %}

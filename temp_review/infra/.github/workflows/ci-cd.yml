@@ -1,0 +1,53 @@
+{
+  "name": "CI/CD Pipeline",
+  "on": {
+    "push": {
+      "branches": [
+        "main"
+      ]
+    }
+  },
+  "jobs": {
+    "build-and-deploy": {
+      "runs-on": "ubuntu-latest",
+      "steps": [
+        {
+          "name": "Checkout code",
+          "uses": "actions/checkout@v2"
+        },
+        {
+          "name": "Setup Python and Node",
+          "run": "sudo apt-get update && sudo apt-get install -y python3-pip nodejs npm"
+        },
+        {
+          "name": "Install dependencies",
+          "run": "pip3 install -r backend/requirements.txt && npm install --prefix frontend"
+        },
+        {
+          "name": "Run backend tests",
+          "run": "pytest backend/tests"
+        },
+        {
+          "name": "Build Docker images",
+          "run": "docker-compose build"
+        },
+        {
+          "name": "Login to GCP",
+          "uses": "google-github-actions/login@v1",
+          "with": {
+            "credentials_json": "${{ secrets.GCP_CREDENTIALS }}",
+            "project-id": "YOUR_GCP_PROJECT_ID"
+          }
+        },
+        {
+          "name": "Push to GCP Artifact Registry",
+          "run": "docker tag hospital_management_system-backend:latest gcr.io/YOUR_GCP_PROJECT_ID/hospital_management_system-backend:latest && docker push gcr.io/YOUR_GCP_PROJECT_ID/hospital_management_system-backend:latest && docker tag hospital_management_system-frontend:latest gcr.io/YOUR_GCP_PROJECT_ID/hospital_management_system-frontend:latest && docker push gcr.io/YOUR_GCP_PROJECT_ID/hospital_management_system-frontend:latest"
+        },
+        {
+          "name": "Deploy to Cloud Run",
+          "run": "gcloud run deploy hospital-management-system-backend --image gcr.io/YOUR_GCP_PROJECT_ID/hospital_management_system-backend:latest --region us-central1 --platform managed --allow-unauthenticated && gcloud run deploy hospital-management-system-frontend --image gcr.io/YOUR_GCP_PROJECT_ID/hospital_management_system-frontend:latest --region us-central1 --platform managed --allow-unauthenticated"
+        }
+      ]
+    }
+  }
+}
