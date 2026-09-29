@@ -60,6 +60,14 @@ app = FastAPI(
     version="1.0.0",
 )
 
+@app.on_event("startup")
+async def startup_event():
+    print("\n" + "="*50)
+    print("Cytron.AI is successfully running!")
+    print("Please use this URL to access the system:")
+    print("http://localhost:8000")
+    print("="*50 + "\n")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

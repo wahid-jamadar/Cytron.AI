@@ -232,22 +232,25 @@
     const themeIcon = document.getElementById('theme-icon');
     
     function applyTheme(theme) {
+      // Migrate any existing 'dark' theme users to 'oled'
+      if (theme === 'dark') theme = 'oled';
+      
       document.documentElement.className = 'theme-' + theme;
       localStorage.setItem('ui_theme', theme);
       if (theme === 'light') {
         themeIcon.className = 'ti ti-sun';
-      } else if (theme === 'dark') {
-        themeIcon.className = 'ti ti-moon';
       } else {
         themeIcon.className = 'ti ti-moon-stars';
       }
     }
     
     themeToggle.addEventListener('click', () => {
-      const current = localStorage.getItem('ui_theme') || 'light';
+      let current = localStorage.getItem('ui_theme') || 'light';
+      if (current === 'dark') current = 'oled'; // handle deprecated theme
+      
       let next = 'light';
-      if (current === 'light') next = 'dark';
-      else if (current === 'dark') next = 'oled';
+      if (current === 'light') next = 'oled';
+      
       applyTheme(next);
       
       // If we are on settings page, update the selector value

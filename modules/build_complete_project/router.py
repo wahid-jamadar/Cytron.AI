@@ -16,10 +16,11 @@ import os
 from pathlib import Path
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Request, Depends
 from fastapi.responses import FileResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sse_starlette.sse import EventSourceResponse
 from modules.common.utils import templates
 from .generator import job_manager, run_real_generation
+from .analyzer import analyze_tech_stack, AnalyzerResponse
 from modules.auth.rbac import get_current_user_optional
 from modules.database.models import User
 
@@ -31,6 +32,12 @@ class ProjectConfig(BaseModel):
     backend:      str = "FastAPI"
     architecture: str = "Monolith"
     details:      str = ""
+    clarified_decisions: dict = Field(default_factory=dict)
+
+
+class AnalyzeRequest(BaseModel):
+    prompt: str
+    selected_tech_stack: dict
 
 
 # ── Page ─────────────────────────────────────────────────────────────────────
@@ -43,6 +50,20 @@ async def page(request: Request):
 
 
 # ── Generate ─────────────────────────────────────────────────────────────────
+
+@router.post("/analyze-stack", response_model=AnalyzerResponse)
+async def analyze_stack(request: AnalyzeRequest):
+    """
+    Analyze the project prompt and selected tech stack for completeness and conflicts.
+    Returns clarification questions if necessary.
+    """
+    if not request.prompt.strip():
+        raise HTTPException(
+            status_code=400,
+            detail="Project details cannot be empty.",
+        )
+    return analyze_tech_stack(request.prompt, request.selected_tech_stack)
+
 
 @router.post("/generate")
 async def generate_project(config: ProjectConfig, background_tasks: BackgroundTasks, current_user: User | None = Depends(get_current_user_optional)):

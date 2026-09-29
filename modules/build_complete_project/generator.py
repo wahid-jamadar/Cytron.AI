@@ -35,6 +35,7 @@ from typing import Any, Dict, Set
 
 from config.settings import settings
 from orchestrator.runner import PipelineRunner
+from modules.build_complete_project.resolver import resolve_tech_stack
 
 logger = logging.getLogger(__name__)
 
@@ -280,15 +281,30 @@ async def run_real_generation(job_id: str) -> None:
     backend  = params.get("backend", "FastAPI")
     arch     = params.get("architecture", "Monolith")
     details  = params.get("details", "").strip()
+    clarified = params.get("clarified_decisions", {})
 
-    # Build a rich combined prompt
+    selected_stack = {
+        "frontend": frontend,
+        "backend": backend,
+        "architecture": arch,
+    }
+    
+    final_stack = resolve_tech_stack(selected_stack, clarified)
+    
+    frontend_final = final_stack.get("frontend", frontend)
+    backend_final = final_stack.get("backend", backend)
+    arch_final = final_stack.get("architecture", arch)
+
+    # Build a rich combined prompt incorporating the final stack explicitly
+    tech_stack_str = "\n".join(f"{k.capitalize()}: {v}" for k, v in final_stack.items())
+    
     user_prompt = (
-        f"Build a complete {arch} web application.\n\n"
-        f"Frontend: {frontend}\n"
-        f"Backend: {backend}\n\n"
+        f"Build a complete {arch_final} web application.\n\n"
+        f"Final Tech Stack:\n{tech_stack_str}\n\n"
         f"Project Requirements:\n{details}\n\n"
         f"Requirements:\n"
         f"- Generate ALL modules listed above with full implementation\n"
+        f"- Use the explicitly specified Final Tech Stack for all decisions.\n"
         f"- Include JWT authentication with role-based access control\n"
         f"- Include Docker and docker-compose configuration\n"
         f"- Include Swagger/OpenAPI documentation\n"

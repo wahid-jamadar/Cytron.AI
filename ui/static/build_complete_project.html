@@ -120,6 +120,36 @@ textarea::placeholder {
   }
 </style>
 
+<!-- Clarification Modal -->
+<div id="clarification-modal" class="fixed inset-0 z-50 items-center justify-center bg-black/60 backdrop-blur-sm hidden">
+  <div class="relative w-full max-w-2xl bg-[#0f1117] border border-slate-200/20 dark:border-white/10 shadow-2xl rounded-2xl overflow-hidden glassmorphism flex flex-col max-h-[85vh]">
+    <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between">
+      <div>
+        <h3 class="text-lg font-bold text-white tracking-tight flex items-center gap-2">
+          <i class="ti ti-adjustments-horizontal text-purple-400"></i> Clarify Technical Decisions
+        </h3>
+        <p class="text-xs text-slate-400 mt-1">Please clarify the following to proceed with generation.</p>
+      </div>
+      <button onclick="closeClarificationModal()" class="text-slate-400 hover:text-white transition-colors">
+        <i class="ti ti-x text-xl"></i>
+      </button>
+    </div>
+    
+    <div id="clarification-questions-container" class="p-6 overflow-y-auto flex-1 space-y-6">
+      <!-- Questions will be injected here dynamically -->
+    </div>
+    
+    <div class="px-6 py-4 border-t border-white/5 bg-[#090b0f] flex justify-end gap-3">
+      <button onclick="closeClarificationModal()" class="px-4 py-2 text-xs font-semibold rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors">
+        Cancel
+      </button>
+      <button onclick="submitClarification()" class="px-5 py-2 text-xs font-semibold rounded-lg bg-purple-600 text-white hover:bg-purple-500 shadow-lg shadow-purple-500/20 transition-all flex items-center gap-2">
+        <span>Submit & Continue</span> <i class="ti ti-arrow-right"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
 <div class="relative z-10 text-center mb-6">
   <div class="logo-badge inline-flex items-center gap-2 bg-purple-500/15 border border-purple-500/30 rounded-full px-4 py-1.5 text-xs font-bold text-purple-600 dark:text-purple-400 uppercase tracking-widest mb-3">
     <i class="ti ti-rocket"></i> Build Complete Project
@@ -609,6 +639,85 @@ textarea::placeholder {
   }
 
   // ── Pipeline Runner ──
+  let currentClarifiedDecisions = {};
+  let clarificationState = {}; // { questionId: selectedOptionId }
+  let currentGenerationContext = {}; // stores frontend, backend, arch, details when modal is open
+
+  function showClarificationModal(questions, frontend, backend, arch, details) {
+    currentGenerationContext = { frontend, backend, arch, details };
+    clarificationState = {};
+    const container = document.getElementById('clarification-questions-container');
+    container.innerHTML = '';
+
+    questions.forEach((q, index) => {
+      if (q.required) {
+        clarificationState[q.id] = null; // Mark as required but unselected
+      }
+      
+      const qDiv = document.createElement('div');
+      qDiv.className = "bg-[#13161f] border border-white/5 p-5 rounded-xl";
+      
+      let optionsHtml = q.options.map(opt => `
+        <label class="flex items-start gap-3 p-3 rounded-lg border border-white/10 hover:border-purple-500/50 bg-[#0a0c10] cursor-pointer transition-colors ${opt.recommended ? 'ring-1 ring-purple-500/30' : ''}">
+          <input type="radio" name="clarify_${q.id}" value="${opt.id}" class="mt-1 bg-slate-800 border-slate-600 text-purple-500 focus:ring-purple-500 focus:ring-offset-slate-900" onchange="clarificationState['${q.id}'] = '${opt.id}'">
+          <div>
+            <div class="text-sm font-semibold text-slate-200 flex items-center gap-2">
+              ${opt.label}
+              ${opt.recommended ? '<span class="text-[9px] bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded uppercase tracking-wider">Recommended</span>' : ''}
+            </div>
+            <div class="text-xs text-slate-400 mt-1 leading-relaxed">${opt.description}</div>
+          </div>
+        </label>
+      `).join('');
+
+      qDiv.innerHTML = `
+        <div class="mb-3">
+          <div class="text-[10px] text-purple-400 font-bold uppercase tracking-widest mb-1">${q.category}</div>
+          <h4 class="text-base font-bold text-slate-100 flex items-center gap-2">
+            ${q.title}
+            ${q.required ? '<span class="text-red-400 text-lg" title="Required">*</span>' : ''}
+          </h4>
+          <p class="text-xs text-slate-400 mt-1">${q.description}</p>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+          ${optionsHtml}
+        </div>
+      `;
+      container.appendChild(qDiv);
+    });
+
+    const modal = document.getElementById('clarification-modal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    modal.querySelector('.relative').classList.add('animate-scale-up');
+  }
+
+  function closeClarificationModal() {
+    const modal = document.getElementById('clarification-modal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    const runBtn = document.getElementById('proceed-btn');
+    runBtn.disabled = false;
+    runBtn.innerHTML = 'Generate Complete Project';
+  }
+
+  async function submitClarification() {
+    // Validate required
+    for (const [qId, selectedOpt] of Object.entries(clarificationState)) {
+      if (selectedOpt === null) {
+        alert("Please answer all required questions.");
+        return;
+      }
+    }
+
+    currentClarifiedDecisions = { ...clarificationState };
+    closeClarificationModal();
+    
+    // Resume generation
+    const { frontend, backend, arch, details } = currentGenerationContext;
+    await triggerRealGeneration(frontend, backend, arch, details, currentClarifiedDecisions);
+  }
+
   async function startGeneration() {
     const frontend = document.getElementById('bcp-frontend').value;
     const backend  = document.getElementById('bcp-backend').value;
@@ -621,6 +730,40 @@ textarea::placeholder {
       return;
     }
 
+    const runBtn = document.getElementById('proceed-btn');
+    runBtn.disabled = true;
+    runBtn.innerHTML = '<i class="ti ti-loader animate-spin text-base"></i> Checking preferences...';
+
+    try {
+      const selected_tech_stack = { frontend, backend, architecture: arch };
+      const analyzeRes = await fetch('/build-complete-project/analyze-stack', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: details, selected_tech_stack })
+      });
+
+      if (!analyzeRes.ok) {
+        // Fallback to generation on analyzer failure
+        console.warn('Analyzer failed, proceeding to generation.');
+        await triggerRealGeneration(frontend, backend, arch, details, {});
+        return;
+      }
+
+      const analyzerData = await analyzeRes.json();
+      if (analyzerData.needs_clarification && analyzerData.questions && analyzerData.questions.length > 0) {
+        runBtn.innerHTML = 'Generate Complete Project';
+        runBtn.disabled = false;
+        showClarificationModal(analyzerData.questions, frontend, backend, arch, details);
+      } else {
+        await triggerRealGeneration(frontend, backend, arch, details, {});
+      }
+    } catch (err) {
+      console.warn('Analyzer request failed:', err);
+      await triggerRealGeneration(frontend, backend, arch, details, {});
+    }
+  }
+
+  async function triggerRealGeneration(frontend, backend, arch, details, clarified_decisions) {
     // Clear import data once consumed
     sessionStorage.removeItem('antigravity_import_data');
     sessionStorage.removeItem('antigravity_edit_data');
@@ -655,7 +798,7 @@ textarea::placeholder {
       const response = await fetch('/build-complete-project/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ frontend, backend, architecture: arch, details })
+        body: JSON.stringify({ frontend, backend, architecture: arch, details, clarified_decisions })
       });
 
       if (!response.ok) {

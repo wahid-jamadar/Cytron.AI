@@ -1,13 +1,13 @@
 # Cytron.AI
 
-> **Autonomous Multi-Agent Software Engineering Platform** — describe any web application in plain English and a coordinated pipeline of AI agents will analyze requirements, architect, generate, test, review, fix, document, and optionally deploy it automatically.
-
+> **Multi-Agent Software Engineering Platform** — describe any web application in plain English and a coordinated pipeline of AI agents will analyze requirements, architect, generate, test, review, fix, document, and optionally deploy it automatically.
+ 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688)](https://fastapi.tiangolo.com)
 [![React](https://img.shields.io/badge/Frontend-React%2019-61DAFB)](https://react.dev)
 [![LangGraph](https://img.shields.io/badge/Orchestration-LangGraph-purple)](https://github.com/langchain-ai/langgraph)
 [![LLM](https://img.shields.io/badge/LLM-Llama%203.3%2070B%20via%20Groq-orange)](https://groq.com)
-[![TypeScript](https://img.shields.io/badge/TypeScript-~6.0-blue)](https://www.typescriptlang.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-~6.0-blue)](https://www.typescriptlang.org)s
 [![License: MIT](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
 ---
@@ -94,64 +94,78 @@ Software development involves enormous amounts of repetitive, structured work th
 
 Cytron.AI addresses several real engineering problems:
 
-| Problem | Cytron.AI Solution |
-|---|---|
+| Problem                          | Cytron.AI Solution                                                         |
+| -------------------------------- | -------------------------------------------------------------------------- |
 | Requirements to code translation | Requirement Analyzer agent extracts structured specs from natural language |
-| Software architecture decisions | Project Planner agent produces API contracts, data models, page structure |
-| Repetitive project scaffolding | Frontend, Backend, Database agents generate complete scaffolded projects |
-| Coordinating multiple code areas | LangGraph orchestrates parallel and sequential agent work |
-| Automated code quality gates | Code Review agent combines static Python analysis + LLM review |
-| Test writing is time-consuming | Testing agent generates and executes pytest suites automatically |
-| Bug discovery and fixing | Failure enrichment + Bug Fixing agent applies targeted patches |
-| Documentation debt | Documentation agent generates README, API reference, architecture docs |
-| Repository setup | Repository agent creates and populates a GitHub repository |
-| CI/CD and containerization | Deployment agent generates Docker Compose + GitHub Actions workflows |
+| Software architecture decisions  | Project Planner agent produces API contracts, data models, page structure  |
+| Repetitive project scaffolding   | Frontend, Backend, Database agents generate complete scaffolded projects   |
+| Coordinating multiple code areas | LangGraph orchestrates parallel and sequential agent work                  |
+| Automated code quality gates     | Code Review agent combines static Python analysis + LLM review             |
+| Test writing is time-consuming   | Testing agent generates and executes pytest suites automatically           |
+| Bug discovery and fixing         | Failure enrichment + Bug Fixing agent applies targeted patches             |
+| Documentation debt               | Documentation agent generates README, API reference, architecture docs     |
+| Repository setup                 | Repository agent creates and populates a GitHub repository                 |
+| CI/CD and containerization       | Deployment agent generates Docker Compose + GitHub Actions workflows       |
 
 ---
 
 ## Core Capabilities
 
 ### 1. Requirement Analysis
+
 Transforms a natural-language description into a structured `RequirementSpec` (JSON) containing: `app_name`, `app_type`, `features`, `user_roles`, `workflows`, `data_entities`, and `non_functional` requirements. The spec is persisted to ChromaDB for downstream agent retrieval.
 
 ### 2. Project Planning
+
 Consumes the structured spec and produces a `ProjectPlan` containing: technology stack, page/route structure, API contracts (endpoint specifications), and data model definitions. Used by all three parallel build agents.
 
 ### 3. Parallel Code Generation
+
 Three agents (Frontend, Backend, Database) run concurrently:
+
 - **Frontend Agent** — generates a React + TypeScript + Tailwind CSS + ShadCN UI application
 - **Backend Agent** — generates a FastAPI + SQLAlchemy + Alembic Python application
 - **Database Agent** — generates schema files, SQL migrations, and ORM models
 
 ### 4. Automated Code Review
+
 Reviews generated backend and database code using a two-layer system:
+
 - **Static analysis** (Python AST/pattern-based, via `PythonAnalyzer`)
 - **LLM review** (Llama 3.3 security, style, maintainability review)
 
 HIGH severity issues block pipeline progression and route to bug fixing.
 
 ### 5. Test Generation and Execution
+
 Generates pytest test files targeting the FastAPI backend, then executes them in an isolated environment using `test_runner`. Failures are enriched with relevant source code and routed to the bug fixer.
 
 ### 6. Automated Bug Fixing
+
 Consumes failure reports and HIGH severity code review issues. Produces targeted snippet-level patches (not full file rewrites) using the LLM. Applies patches and triggers a re-test cycle. Supports up to `MAX_RETRY_CYCLES` (default: 3) iterations.
 
 ### 7. Infrastructure Generation
+
 Generates `docker-compose.yml`, GitHub Actions CI/CD workflows, and optionally Kubernetes manifests. Uses the tech registry to produce framework-specific configurations.
 
 ### 8. Optional GCP Deployment
+
 When GCP credentials are configured: builds Docker images, pushes to Artifact Registry, and deploys to Cloud Run. Gracefully skips if GCP is not configured.
 
 ### 9. Documentation Generation
+
 Produces `README.md`, `API_REFERENCE.md`, `SETUP.md`, and `ARCHITECTURE.md` for the **generated application** — not for Cytron.AI itself.
 
 ### 10. GitHub Repository Creation
+
 Pushes the complete generated project to a new GitHub repository via the PyGithub library. Non-blocking if `GITHUB_TOKEN` is not configured.
 
 ### 11. Web Platform
+
 Full authentication, onboarding, admin panel, workspace hub, history/event tracking, and real-time progress streaming via SSE and WebSockets.
 
 ### 12. Standalone Module APIs
+
 Each major capability is also available as a standalone REST API (requirement analysis, code generation, code review, database schema, system design, test case generation, SQL generation, documentation generation).
 
 ---
@@ -212,21 +226,21 @@ Agent  Agent  Agent
 
 The actual workflow is defined in `orchestrator/graph.py`. It follows this execution sequence:
 
-| Step | Agent/Node | Description | Parallel? | Conditional? |
-|---|---|---|---|---|
-| 1 | `requirement_analyzer` | Parse natural-language → structured spec | No | No |
-| 2 | `project_planner` | Spec → plan (stack, API contracts, data model) | No | No |
-| 3a | `frontend_agent` | Generate React + TS + Tailwind frontend | Yes (parallel) | No |
-| 3b | `backend_agent` | Generate FastAPI + SQLAlchemy backend | Yes (parallel) | No |
-| 3c | `database_agent` | Generate schema, SQL, migrations | Yes (parallel) | No |
-| 4 | `build_fanin` | Fan-in merge after parallel build | No | No |
-| 5 | `code_review` | Static + LLM code review | No | Yes → routes to `bug_fixing` if blocked |
-| 6 | `testing_agent` | Generate + execute pytest tests | No | Yes → routes based on pass/fail/retry limit |
-| 7 | `bug_fixing` | LLM snippet-level patch + apply | No | No (loops back to `testing_agent`) |
-| 8 | `deployment` | Generate infra + optionally deploy to GCP | No | No |
-| 9 | `documentation` | Generate docs for generated app | No | No |
-| 10 | `repository` | Push to GitHub (optional) | No | No |
-| — | `halt` | Terminal error node when retries exhausted | No | Terminal |
+| Step | Agent/Node             | Description                                    | Parallel?      | Conditional?                                |
+| ---- | ---------------------- | ---------------------------------------------- | -------------- | ------------------------------------------- |
+| 1    | `requirement_analyzer` | Parse natural-language → structured spec       | No             | No                                          |
+| 2    | `project_planner`      | Spec → plan (stack, API contracts, data model) | No             | No                                          |
+| 3a   | `frontend_agent`       | Generate React + TS + Tailwind frontend        | Yes (parallel) | No                                          |
+| 3b   | `backend_agent`        | Generate FastAPI + SQLAlchemy backend          | Yes (parallel) | No                                          |
+| 3c   | `database_agent`       | Generate schema, SQL, migrations               | Yes (parallel) | No                                          |
+| 4    | `build_fanin`          | Fan-in merge after parallel build              | No             | No                                          |
+| 5    | `code_review`          | Static + LLM code review                       | No             | Yes → routes to `bug_fixing` if blocked     |
+| 6    | `testing_agent`        | Generate + execute pytest tests                | No             | Yes → routes based on pass/fail/retry limit |
+| 7    | `bug_fixing`           | LLM snippet-level patch + apply                | No             | No (loops back to `testing_agent`)          |
+| 8    | `deployment`           | Generate infra + optionally deploy to GCP      | No             | No                                          |
+| 9    | `documentation`        | Generate docs for generated app                | No             | No                                          |
+| 10   | `repository`           | Push to GitHub (optional)                      | No             | No                                          |
+| —    | `halt`                 | Terminal error node when retries exhausted     | No             | Terminal                                    |
 
 ### Retry Loop Detail
 
@@ -319,21 +333,21 @@ graph TB
 
 Cytron.AI implements **14 distinct agent nodes** in the LangGraph pipeline. The table below documents each one based on the actual implementation.
 
-| Agent | File | Stage | Parallel? | LLM? | Static Analysis? |
-|---|---|---|---|---|---|
-| Requirement Analyzer | `agents/requirement_analyzer.py` | 1 | No | ✅ | No |
-| Project Planner | `agents/project_planner.py` | 2 | No | ✅ | No |
-| Frontend Agent | `agents/frontend_agent.py` | 3 (parallel) | ✅ | ✅ | No |
-| Backend Agent | `agents/backend_agent.py` | 3 (parallel) | ✅ | ✅ | No |
-| Database Agent | `agents/database_agent.py` | 3 (parallel) | ✅ | ✅ | No |
-| Build Fan-In | `orchestrator/graph.py` | 4 | No | No | No (merge node) |
-| Code Review Agent | `agents/code_review_agent.py` | 5 | No | ✅ | ✅ PythonAnalyzer |
-| Testing Agent | `agents/testing_agent.py` | 6 | No | ✅ | No |
-| Bug Fixing Agent | `agents/bug_fixing_agent.py` | 7 (loop) | No | ✅ | No |
-| Deployment Agent | `agents/deployment_agent.py` | 8 | No | ✅ | No |
-| Documentation Agent | `agents/documentation_agent.py` | 9 | No | ✅ | No |
-| Repository Agent | `agents/repository_agent.py` | 10 | No | No | No (API call) |
-| Halt Node | `orchestrator/graph.py` | Terminal | No | No | No |
+| Agent                | File                             | Stage        | Parallel? | LLM? | Static Analysis?  |
+| -------------------- | -------------------------------- | ------------ | --------- | ---- | ----------------- |
+| Requirement Analyzer | `agents/requirement_analyzer.py` | 1            | No        | ✅   | No                |
+| Project Planner      | `agents/project_planner.py`      | 2            | No        | ✅   | No                |
+| Frontend Agent       | `agents/frontend_agent.py`       | 3 (parallel) | ✅        | ✅   | No                |
+| Backend Agent        | `agents/backend_agent.py`        | 3 (parallel) | ✅        | ✅   | No                |
+| Database Agent       | `agents/database_agent.py`       | 3 (parallel) | ✅        | ✅   | No                |
+| Build Fan-In         | `orchestrator/graph.py`          | 4            | No        | No   | No (merge node)   |
+| Code Review Agent    | `agents/code_review_agent.py`    | 5            | No        | ✅   | ✅ PythonAnalyzer |
+| Testing Agent        | `agents/testing_agent.py`        | 6            | No        | ✅   | No                |
+| Bug Fixing Agent     | `agents/bug_fixing_agent.py`     | 7 (loop)     | No        | ✅   | No                |
+| Deployment Agent     | `agents/deployment_agent.py`     | 8            | No        | ✅   | No                |
+| Documentation Agent  | `agents/documentation_agent.py`  | 9            | No        | ✅   | No                |
+| Repository Agent     | `agents/repository_agent.py`     | 10           | No        | No   | No (API call)     |
+| Halt Node            | `orchestrator/graph.py`          | Terminal     | No        | No   | No                |
 
 > **Note:** The `sql_query_agent.py` and `system_design_agent.py` files in `agents/` serve as connectors to the standalone module APIs (`modules/sql_query_generator` and `modules/system_design`). They are not nodes in the primary pipeline graph but are used by the hub modules.
 
@@ -350,6 +364,7 @@ Cytron.AI implements **14 distinct agent nodes** in the LangGraph pipeline. The 
 **Output:** `structured_spec` (RequirementSpec TypedDict)
 
 **Process:**
+
 1. Calls Llama 3.3 70B with a structured JSON schema prompt
 2. Validates and slugifies the `app_name` field (lowercase, underscore-separated, max 40 chars)
 3. Persists the spec to ChromaDB under the project's collection for downstream agent retrieval
@@ -357,6 +372,7 @@ Cytron.AI implements **14 distinct agent nodes** in the LangGraph pipeline. The 
 **Failure behavior:** Sets `should_halt=True` if input is empty or LLM fails. Non-halting errors are appended to the `errors` list.
 
 **RequirementSpec output fields:**
+
 - `app_name` — snake_case slug used as output directory name
 - `app_type` — `crud`, `dashboard`, `ecommerce`, `blog`, `saas`, or `other`
 - `features` — list of feature strings
@@ -377,12 +393,14 @@ Cytron.AI implements **14 distinct agent nodes** in the LangGraph pipeline. The 
 **Output:** `project_plan` (ProjectPlan TypedDict)
 
 **Process:**
+
 1. Calls Llama 3.3 70B with the spec and a detailed JSON schema
 2. Technology decisions use the StackConfig defaults (React, FastAPI, SQLite/PostgreSQL/MySQL, SQLAlchemy, Alembic, JWT)
 3. Produces `pages`, `api_contracts`, `data_model`, and per-agent `frontend_tasks`, `backend_tasks`, `database_tasks`
 4. Persists the plan to ChromaDB
 
 **ProjectPlan output fields:**
+
 - `architecture` — `monolith` or `modular_api`
 - `stack` — full StackConfig dict (framework choices, ORM, auth strategy, cloud provider)
 - `pages` — list of `{name, route, description, components[], requires_auth}`
@@ -401,6 +419,7 @@ Cytron.AI implements **14 distinct agent nodes** in the LangGraph pipeline. The 
 **Output:** `frontend_code` (CodeArtifact with `files` dict of `{relative_path: content}`)
 
 **Generated content:**
+
 - `package.json` with React + TypeScript + Tailwind + ShadCN dependencies
 - `src/App.tsx` with routing (React Router)
 - Per-page components for every page in the project plan
@@ -422,6 +441,7 @@ Cytron.AI implements **14 distinct agent nodes** in the LangGraph pipeline. The 
 **Output:** `backend_code` (CodeArtifact)
 
 **Generated content:**
+
 - `main.py` — FastAPI app with CORS and router registration
 - `requirements.txt`
 - Per-resource router files (`routers/<resource>.py`)
@@ -444,6 +464,7 @@ Cytron.AI implements **14 distinct agent nodes** in the LangGraph pipeline. The 
 **Output:** `database_schema` (CodeArtifact)
 
 **Generated content:**
+
 - SQLAlchemy model definitions
 - Alembic migration files
 - `schema.sql` with `CREATE TABLE` statements
@@ -476,6 +497,7 @@ Cytron.AI implements **14 distinct agent nodes** in the LangGraph pipeline. The 
 **Blocking logic:** `blocked=True` if any HIGH or CRITICAL severity issues exist in either layer. Blocked state routes to Bug Fixing Agent.
 
 **Review issue fields:**
+
 - `file` — relative file path
 - `issue_type` — `security | style | maintainability | correctness`
 - `description` — what the issue is
@@ -493,6 +515,7 @@ Cytron.AI implements **14 distinct agent nodes** in the LangGraph pipeline. The 
 **Output:** `test_results` (TestResult TypedDict)
 
 **Process:**
+
 1. Calls Llama 3.3 70B to generate `tests/conftest.py` and `tests/test_<resource>.py` files
 2. Generated tests use `TestClient` or `httpx.AsyncClient`, SQLite in-memory test DB, and per-test fixtures
 3. Writes test files to `output/<app_name>/backend/tests/`
@@ -500,6 +523,7 @@ Cytron.AI implements **14 distinct agent nodes** in the LangGraph pipeline. The 
 5. Parses pass/fail results and enriches failures with relevant source snippets
 
 **Test file requirements enforced by prompt:**
+
 - `conftest.py` with SQLite override for `get_db` dependency
 - At least one happy path + one error case per endpoint
 - Auth tests if JWT is enabled
@@ -518,6 +542,7 @@ Cytron.AI implements **14 distinct agent nodes** in the LangGraph pipeline. The 
 **Output:** Updated `backend_code` and/or `database_schema` with patches applied; incremented `retry_count`
 
 **Process:**
+
 1. Gathers relevant source snippets for each failing test (up to 5 failures per cycle)
 2. Calls Llama 3.3 70B with failures, source context, and HIGH severity review issues
 3. LLM returns a list of `{file, component, original_snippet, fixed_snippet, explanation}` patches
@@ -540,6 +565,7 @@ Cytron.AI implements **14 distinct agent nodes** in the LangGraph pipeline. The 
 **Output:** `deployment_info` (DeploymentInfo TypedDict)
 
 **Process:**
+
 1. Parses the tech stack from user input via `tech_registry.parse_tech_stack()`
 2. Calls Llama 3.3 70B with a framework-aware prompt to generate:
    - `docker-compose.yml` (backend, frontend, database services with healthchecks)
@@ -550,6 +576,7 @@ Cytron.AI implements **14 distinct agent nodes** in the LangGraph pipeline. The 
 5. **If GCP is not configured:** skips cloud steps and sets URLs to `localhost:3000/8000 (docker-compose)`
 
 **DeploymentInfo output fields:**
+
 - `app_url` — live URL or `http://localhost:3000`
 - `deployment_id` — unique ID
 - `cloud_provider` — `gcp` or `local`
@@ -567,6 +594,7 @@ Cytron.AI implements **14 distinct agent nodes** in the LangGraph pipeline. The 
 **Output:** `docs` (Documentation TypedDict) + files written to `output/<app_name>/docs/`
 
 **Generated files (for the generated app, not for Cytron.AI):**
+
 - `README.md` — project overview, features, quick start, tech stack, contributing
 - `docs/API_REFERENCE.md` — per-endpoint documentation with curl examples
 - `docs/SETUP.md` — prerequisites, docker-compose steps, environment variables
@@ -585,6 +613,7 @@ Cytron.AI implements **14 distinct agent nodes** in the LangGraph pipeline. The 
 **Output:** `repo_url` (string or None)
 
 **Process:** Uses PyGithub (`tools/github_tool.py`) to:
+
 1. Create a new repository (public or private) under the configured org or user
 2. Commit all generated files from the project directory
 
@@ -623,16 +652,16 @@ graph TD
 
 ### Key LangGraph Concepts Used
 
-| Concept | Usage |
-|---|---|
-| `StateGraph` | Wraps `PipelineState` TypedDict — all nodes share this state |
-| `add_node()` | Registers each agent as an async-capable node |
-| `add_edge()` | Sequential deterministic transitions |
-| `add_conditional_edges()` | Routing based on `review_routing()` and `testing_routing()` return values |
-| `MemorySaver` | In-memory checkpointing for state persistence across interruptions |
-| Parallel fan-out | Three `add_edge()` calls from `project_planner` to three build agents |
-| Annotated reducers | `_keep_last`, `_merge_lists`, `_merge_dicts` used on fields written by parallel nodes |
-| `astream()` | Async streaming of node outputs for real-time UI updates |
+| Concept                   | Usage                                                                                 |
+| ------------------------- | ------------------------------------------------------------------------------------- |
+| `StateGraph`              | Wraps `PipelineState` TypedDict — all nodes share this state                          |
+| `add_node()`              | Registers each agent as an async-capable node                                         |
+| `add_edge()`              | Sequential deterministic transitions                                                  |
+| `add_conditional_edges()` | Routing based on `review_routing()` and `testing_routing()` return values             |
+| `MemorySaver`             | In-memory checkpointing for state persistence across interruptions                    |
+| Parallel fan-out          | Three `add_edge()` calls from `project_planner` to three build agents                 |
+| Annotated reducers        | `_keep_last`, `_merge_lists`, `_merge_dicts` used on fields written by parallel nodes |
+| `astream()`               | Async streaming of node outputs for real-time UI updates                              |
 
 ### State Reducers for Parallel Nodes
 
@@ -648,31 +677,32 @@ Because `frontend_agent`, `backend_agent`, and `database_agent` run concurrently
 
 ### Provider and Model
 
-| Setting | Value |
-|---|---|
-| Provider | Groq |
-| Model | `llama-3.3-70b-versatile` (configurable via `GROQ_MODEL`) |
-| Library | `langchain-groq` (`ChatGroq`) |
-| Authentication | `GROQ_API_KEY` |
+| Setting        | Value                                                     |
+| -------------- | --------------------------------------------------------- |
+| Provider       | Groq                                                      |
+| Model          | `llama-3.3-70b-versatile` (configurable via `GROQ_MODEL`) |
+| Library        | `langchain-groq` (`ChatGroq`)                             |
+| Authentication | `GROQ_API_KEY`                                            |
 
 ### Agent-Specific LLM Configuration
 
-| Agent | Temperature | max_retries | Strategy |
-|---|---|---|---|
-| Requirement Analyzer | 0.2 | 2 | Structured JSON extraction |
-| Project Planner | (default) | 2 | Structured JSON planning |
-| Frontend Agent | (default) | 2 | Code generation |
-| Backend Agent | (default) | 2 | Code generation |
-| Database Agent | (default) | 2 | Schema generation |
-| Code Review Agent | 0.1 | 2 | Deterministic security review |
-| Testing Agent | 0.1 | 2 | Deterministic test generation |
-| Bug Fixing Agent | 0.1 | 2 | Targeted patch generation |
-| Deployment Agent | 0.1 | 2 | Infrastructure templating |
-| Documentation Agent | 0.3 | 2 | Creative documentation writing |
+| Agent                | Temperature | max_retries | Strategy                       |
+| -------------------- | ----------- | ----------- | ------------------------------ |
+| Requirement Analyzer | 0.2         | 2           | Structured JSON extraction     |
+| Project Planner      | (default)   | 2           | Structured JSON planning       |
+| Frontend Agent       | (default)   | 2           | Code generation                |
+| Backend Agent        | (default)   | 2           | Code generation                |
+| Database Agent       | (default)   | 2           | Schema generation              |
+| Code Review Agent    | 0.1         | 2           | Deterministic security review  |
+| Testing Agent        | 0.1         | 2           | Deterministic test generation  |
+| Bug Fixing Agent     | 0.1         | 2           | Targeted patch generation      |
+| Deployment Agent     | 0.1         | 2           | Infrastructure templating      |
+| Documentation Agent  | 0.3         | 2           | Creative documentation writing |
 
 ### Prompt Architecture
 
 All agents use a two-message structure:
+
 1. `SystemMessage` — role definition, output schema (JSON), generation rules
 2. `HumanMessage` — specific context (requirements, code, failures, etc.)
 
@@ -695,25 +725,25 @@ The `PipelineState` TypedDict (`state/pipeline_state.py`) is the single shared d
 
 ### State Fields
 
-| Field | Type | Writer | Description |
-|---|---|---|---|
-| `user_input` | `str` | Initial | Raw natural-language requirement |
-| `structured_spec` | `RequirementSpec` | Requirement Analyzer | Parsed application specification |
-| `project_plan` | `ProjectPlan` | Project Planner | Full technical plan |
-| `frontend_code` | `CodeArtifact` | Frontend Agent | Frontend files dict |
-| `backend_code` | `CodeArtifact` | Backend + Bug Fixer | Backend files dict (patched in-place) |
-| `database_schema` | `CodeArtifact` | Database + Bug Fixer | DB files dict (patched in-place) |
-| `review_results` | `ReviewResult` | Code Review | Issues list + blocked flag |
-| `test_results` | `TestResult` | Testing Agent | Pass/fail + failures list |
-| `deployment_info` | `DeploymentInfo` | Deployment Agent | URLs, images, infra paths |
-| `docs` | `Documentation` | Documentation Agent | Generated doc files |
-| `repo_url` | `str \| None` | Repository Agent | GitHub repository URL |
-| `stage` | `Annotated[str, _keep_last]` | All agents | Current pipeline stage label |
-| `should_halt` | `Annotated[bool, _keep_last]` | Orchestrator / agents | Abort signal |
-| `retry_count` | `int` | Bug Fixing Agent | Bug-fix iteration counter |
-| `max_retries` | `int` | Initial (from settings) | Maximum allowed retry cycles |
-| `errors` | `Annotated[list, _merge_lists]` | All agents | Accumulated non-fatal errors |
-| `agent_logs` | `Annotated[dict, _merge_dicts]` | All agents | Per-agent structured logs |
+| Field             | Type                            | Writer                  | Description                           |
+| ----------------- | ------------------------------- | ----------------------- | ------------------------------------- |
+| `user_input`      | `str`                           | Initial                 | Raw natural-language requirement      |
+| `structured_spec` | `RequirementSpec`               | Requirement Analyzer    | Parsed application specification      |
+| `project_plan`    | `ProjectPlan`                   | Project Planner         | Full technical plan                   |
+| `frontend_code`   | `CodeArtifact`                  | Frontend Agent          | Frontend files dict                   |
+| `backend_code`    | `CodeArtifact`                  | Backend + Bug Fixer     | Backend files dict (patched in-place) |
+| `database_schema` | `CodeArtifact`                  | Database + Bug Fixer    | DB files dict (patched in-place)      |
+| `review_results`  | `ReviewResult`                  | Code Review             | Issues list + blocked flag            |
+| `test_results`    | `TestResult`                    | Testing Agent           | Pass/fail + failures list             |
+| `deployment_info` | `DeploymentInfo`                | Deployment Agent        | URLs, images, infra paths             |
+| `docs`            | `Documentation`                 | Documentation Agent     | Generated doc files                   |
+| `repo_url`        | `str \| None`                   | Repository Agent        | GitHub repository URL                 |
+| `stage`           | `Annotated[str, _keep_last]`    | All agents              | Current pipeline stage label          |
+| `should_halt`     | `Annotated[bool, _keep_last]`   | Orchestrator / agents   | Abort signal                          |
+| `retry_count`     | `int`                           | Bug Fixing Agent        | Bug-fix iteration counter             |
+| `max_retries`     | `int`                           | Initial (from settings) | Maximum allowed retry cycles          |
+| `errors`          | `Annotated[list, _merge_lists]` | All agents              | Accumulated non-fatal errors          |
+| `agent_logs`      | `Annotated[dict, _merge_dicts]` | All agents              | Per-agent structured logs             |
 
 ---
 
@@ -721,40 +751,40 @@ The `PipelineState` TypedDict (`state/pipeline_state.py`) is the single shared d
 
 ### Generated Frontend Stack
 
-| Layer | Technology |
-|---|---|
-| Framework | React (18/19, configurable via tech registry) |
-| Language | TypeScript |
-| Styling | Tailwind CSS + ShadCN UI |
-| Bundler | Vite |
-| Routing | React Router |
-| State | Context/hooks (simple apps) |
-| HTTP client | fetch (generated API client functions) |
-| Container | Dockerfile (nginx for production) |
+| Layer       | Technology                                    |
+| ----------- | --------------------------------------------- |
+| Framework   | React (18/19, configurable via tech registry) |
+| Language    | TypeScript                                    |
+| Styling     | Tailwind CSS + ShadCN UI                      |
+| Bundler     | Vite                                          |
+| Routing     | React Router                                  |
+| State       | Context/hooks (simple apps)                   |
+| HTTP client | fetch (generated API client functions)        |
+| Container   | Dockerfile (nginx for production)             |
 
 **Tech registry alternatives** (parsed from user input or defaults to React):
 Vue.js, Angular, Svelte, SvelteKit, Next.js, Nuxt.js, Astro, and others.
 
 ### Generated Backend Stack
 
-| Layer | Technology |
-|---|---|
-| Framework | FastAPI (default), Django, Flask, NestJS, Express, Spring Boot (via tech registry) |
-| Language | Python (FastAPI/Django/Flask) or Node.js (Express/NestJS) |
-| ORM | SQLAlchemy (Python backends) |
-| Migrations | Alembic (Python backends) |
-| Auth | JWT (default), session, or none |
-| Validation | Pydantic v2 |
-| Container | Dockerfile (uvicorn/gunicorn for Python, node for JS) |
+| Layer      | Technology                                                                         |
+| ---------- | ---------------------------------------------------------------------------------- |
+| Framework  | FastAPI (default), Django, Flask, NestJS, Express, Spring Boot (via tech registry) |
+| Language   | Python (FastAPI/Django/Flask) or Node.js (Express/NestJS)                          |
+| ORM        | SQLAlchemy (Python backends)                                                       |
+| Migrations | Alembic (Python backends)                                                          |
+| Auth       | JWT (default), session, or none                                                    |
+| Validation | Pydantic v2                                                                        |
+| Container  | Dockerfile (uvicorn/gunicorn for Python, node for JS)                              |
 
 ### Generated Database Stack
 
-| Database | Support |
-|---|---|
-| PostgreSQL | ✅ Full |
-| MySQL | ✅ Full |
-| SQLite | ✅ Full (default, no external service needed) |
-| MongoDB | ❌ Not supported |
+| Database   | Support                                       |
+| ---------- | --------------------------------------------- |
+| PostgreSQL | ✅ Full                                       |
+| MySQL      | ✅ Full                                       |
+| SQLite     | ✅ Full (default, no external service needed) |
+| MongoDB    | ❌ Not supported                              |
 
 ---
 
@@ -780,6 +810,7 @@ The Code Review Agent (`agents/code_review_agent.py`) implements a two-layer rev
 ### Blocking Conditions
 
 `blocked=True` is set if:
+
 - Any `HIGH` or `CRITICAL` severity static analysis issue exists
 - The LLM sets `"blocked": true` in its JSON response (which it should only do for SQL injection, hardcoded secrets, missing auth on protected endpoints, or core logic errors)
 
@@ -794,6 +825,7 @@ The Testing Agent (`agents/testing_agent.py`) integrates test generation with ex
 ### Test Generation
 
 The LLM generates:
+
 - `tests/conftest.py` — SQLite in-memory override for `get_db`, `TestClient` fixture
 - `tests/test_<resource>.py` — happy path + error case per endpoint, auth tests if enabled
 
@@ -848,6 +880,7 @@ The Deployment Agent (`agents/deployment_agent.py`) handles two distinct phases:
 ### Phase 1: Infrastructure File Generation (Always runs)
 
 Generated regardless of GCP configuration:
+
 - `infra/docker-compose.yml` — three-service config (backend, frontend, database) with healthchecks and environment variable references
 - `infra/.github/workflows/ci-cd.yml` — GitHub Actions pipeline: checkout → test → build Docker → push to Artifact Registry → deploy to Cloud Run
 - `infra/.env.production.example` — production environment variable template
@@ -857,6 +890,7 @@ Infrastructure files are generated using tech-registry-aware prompts that adapt 
 ### Phase 2: GCP Deployment (Only if GCP credentials are configured)
 
 When `GCP_PROJECT_ID` is set:
+
 1. `tools/docker_builder.py` — builds Docker images for backend and frontend
 2. Pushes images to GCP Artifact Registry
 3. `tools/cloud_deployer.py` — deploys to GCP Cloud Run using the `google-cloud-run` SDK
@@ -864,6 +898,7 @@ When `GCP_PROJECT_ID` is set:
 When GCP is not configured, the agent logs a message and sets the app URL to `http://localhost:3000 (docker-compose)`.
 
 **Run generated apps locally (no GCP needed):**
+
 ```bash
 cd output/<app_name>
 docker-compose up
@@ -877,12 +912,12 @@ The Documentation Agent generates documentation **for the generated application*
 
 ### Generated Documents
 
-| File | Content |
-|---|---|
-| `README.md` | Project title, features, quick start, tech stack, contributing section |
+| File                    | Content                                                                           |
+| ----------------------- | --------------------------------------------------------------------------------- |
+| `README.md`             | Project title, features, quick start, tech stack, contributing section            |
 | `docs/API_REFERENCE.md` | Per-endpoint reference with method, path, request/response schemas, curl examples |
-| `docs/SETUP.md` | Prerequisites, docker-compose steps, environment variable descriptions |
-| `docs/ARCHITECTURE.md` | High-level architecture description with Mermaid sequence diagram |
+| `docs/SETUP.md`         | Prerequisites, docker-compose steps, environment variable descriptions            |
+| `docs/ARCHITECTURE.md`  | High-level architecture description with Mermaid sequence diagram                 |
 
 Additionally, `README.md` is copied to the project root (`output/<app_name>/README.md`).
 
@@ -900,6 +935,7 @@ The Repository Agent uses **PyGithub** (`tools/github_tool.py`) to:
 2. Push all files from `output/<app_name>/` as an initial commit
 
 **Configuration required:**
+
 - `GITHUB_TOKEN` — GitHub Personal Access Token with `repo` scope
 - `GITHUB_ORG` — Organization name (optional; creates under authenticated user if empty)
 
@@ -940,32 +976,34 @@ sequenceDiagram
 
 ### JWT Configuration
 
-| Setting | Default | Description |
-|---|---|---|
-| `JWT_SECRET` | `eto-agent-secure-secret-key-2026` | Signing key — change in production |
-| `JWT_ALGORITHM` | `HS256` | Signing algorithm |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | 30 | Access token lifetime |
-| `REFRESH_TOKEN_EXPIRE_DAYS` | 7 | Refresh token lifetime (stored in DB) |
+| Setting                       | Default                            | Description                           |
+| ----------------------------- | ---------------------------------- | ------------------------------------- |
+| `JWT_SECRET`                  | `eto-agent-secure-secret-key-2026` | Signing key — change in production    |
+| `JWT_ALGORITHM`               | `HS256`                            | Signing algorithm                     |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | 30                                 | Access token lifetime                 |
+| `REFRESH_TOKEN_EXPIRE_DAYS`   | 7                                  | Refresh token lifetime (stored in DB) |
 
 ### Roles
 
-| Role | Description | Access |
-|---|---|---|
-| `USER` | Default registered user | Hub workspace, project generation |
-| `ADMIN` | Platform administrator | Admin panel + full user management |
-| `SUPER_ADMIN` | Elevated administrator | All admin capabilities + system settings |
-| `SUPPORT` | Support staff | Admin panel (read + limited actions) |
-| `READ_ONLY_ADMIN` | Read-only admin | Admin panel (read only) |
+| Role              | Description             | Access                                   |
+| ----------------- | ----------------------- | ---------------------------------------- |
+| `USER`            | Default registered user | Hub workspace, project generation        |
+| `ADMIN`           | Platform administrator  | Admin panel + full user management       |
+| `SUPER_ADMIN`     | Elevated administrator  | All admin capabilities + system settings |
+| `SUPPORT`         | Support staff           | Admin panel (read + limited actions)     |
+| `READ_ONLY_ADMIN` | Read-only admin         | Admin panel (read only)                  |
 
 ### RBAC Middleware
 
 `modules/auth/rbac.py` provides:
+
 - `get_current_user` — required auth dependency
 - `get_current_user_optional` — optional auth dependency
 - `has_role(role)` — role check dependency factory
 - `has_permission(permission)` — permission check dependency factory
 
 The `auth_guard_middleware` in `ui/main.py` enforces:
+
 - Normal users visiting `/app` are redirected to `/hub`
 - Unauthenticated API requests receive HTTP 401
 - Unauthenticated page requests redirect to `/app/#/login`
@@ -973,17 +1011,17 @@ The `auth_guard_middleware` in `ui/main.py` enforces:
 
 ### Auth API Endpoints
 
-| Method | Path | Description |
-|---|---|---|
-| POST | `/api/auth/register` | Register new user |
-| POST | `/api/auth/login` | Login and receive tokens |
-| POST | `/api/auth/refresh` | Refresh access token |
-| POST | `/api/auth/logout` | Invalidate session |
-| POST | `/api/auth/forgot-password` | Send reset token |
-| POST | `/api/auth/reset-password` | Set new password via token |
-| GET/PATCH | `/api/auth/profile` | Get/update profile |
-| GET/PATCH | `/api/auth/preferences` | Get/update user preferences |
-| POST | `/api/auth/api-keys` | Store external API keys |
+| Method    | Path                        | Description                 |
+| --------- | --------------------------- | --------------------------- |
+| POST      | `/api/auth/register`        | Register new user           |
+| POST      | `/api/auth/login`           | Login and receive tokens    |
+| POST      | `/api/auth/refresh`         | Refresh access token        |
+| POST      | `/api/auth/logout`          | Invalidate session          |
+| POST      | `/api/auth/forgot-password` | Send reset token            |
+| POST      | `/api/auth/reset-password`  | Set new password via token  |
+| GET/PATCH | `/api/auth/profile`         | Get/update profile          |
+| GET/PATCH | `/api/auth/preferences`     | Get/update user preferences |
+| POST      | `/api/auth/api-keys`        | Store external API keys     |
 
 **Password policy:** Minimum 8 characters, requires at least one uppercase, one lowercase, one number.
 
@@ -998,6 +1036,7 @@ The admin panel (`modules/admin/router.py`, frontend page `AdminPanel.tsx`) prov
 ### Admin Dashboard Metrics (`GET /api/admin/dashboard/metrics`)
 
 Real-time system counters:
+
 - **Users:** total, active, suspended, online (active sessions in last 15 min)
 - **Projects:** total, currently running, created today
 - **AI/LLM:** total requests, tokens consumed, estimated costs, requests today
@@ -1006,59 +1045,59 @@ Real-time system counters:
 
 ### User Management
 
-| Endpoint | Description |
-|---|---|
-| `GET /api/admin/users` | Paginated user list with search and status filter |
-| `PATCH /api/admin/users/{id}/status` | Suspend or ban a user |
-| `POST /api/admin/users/{id}/role` | Assign a role to a user |
-| `DELETE /api/admin/users/{id}/role` | Remove a role from a user |
-| `POST /api/admin/users/{id}/impersonate` | Generate impersonation token |
-| `DELETE /api/admin/users/{id}` | Soft-delete a user |
+| Endpoint                                 | Description                                       |
+| ---------------------------------------- | ------------------------------------------------- |
+| `GET /api/admin/users`                   | Paginated user list with search and status filter |
+| `PATCH /api/admin/users/{id}/status`     | Suspend or ban a user                             |
+| `POST /api/admin/users/{id}/role`        | Assign a role to a user                           |
+| `DELETE /api/admin/users/{id}/role`      | Remove a role from a user                         |
+| `POST /api/admin/users/{id}/impersonate` | Generate impersonation token                      |
+| `DELETE /api/admin/users/{id}`           | Soft-delete a user                                |
 
 ### Organization Management
 
-| Endpoint | Description |
-|---|---|
-| `GET /api/admin/organizations` | List organizations |
-| `POST /api/admin/organizations` | Create organization |
+| Endpoint                                    | Description              |
+| ------------------------------------------- | ------------------------ |
+| `GET /api/admin/organizations`              | List organizations       |
+| `POST /api/admin/organizations`             | Create organization      |
 | `PATCH /api/admin/organizations/{id}/quota` | Update storage/AI quotas |
 
 ### AI Usage and Cost Tracking
 
-| Endpoint | Description |
-|---|---|
-| `GET /api/admin/ai/usage` | Paginated AI request log with filters |
-| `GET /api/admin/ai/costs` | Aggregated cost breakdown by provider/model |
-| `GET /api/admin/ai/tokens` | Token usage over time |
+| Endpoint                   | Description                                 |
+| -------------------------- | ------------------------------------------- |
+| `GET /api/admin/ai/usage`  | Paginated AI request log with filters       |
+| `GET /api/admin/ai/costs`  | Aggregated cost breakdown by provider/model |
+| `GET /api/admin/ai/tokens` | Token usage over time                       |
 
 ### Security and Audit
 
-| Endpoint | Description |
-|---|---|
+| Endpoint                         | Description                                     |
+| -------------------------------- | ----------------------------------------------- |
 | `GET /api/admin/security/events` | Security event log (failed logins, brute force) |
-| `GET /api/admin/audit/logs` | Full audit trail of admin actions |
+| `GET /api/admin/audit/logs`      | Full audit trail of admin actions               |
 
 ### Agent Monitoring
 
-| Endpoint | Description |
-|---|---|
+| Endpoint                      | Description                         |
+| ----------------------------- | ----------------------------------- |
 | `GET /api/admin/agents/tasks` | All agent task statuses and metrics |
-| `GET /api/admin/agents/runs` | All pipeline run summaries |
+| `GET /api/admin/agents/runs`  | All pipeline run summaries          |
 
 ### Feature Flags and System Settings
 
-| Endpoint | Description |
-|---|---|
-| `GET /api/admin/feature-flags` | List feature flags |
+| Endpoint                              | Description                 |
+| ------------------------------------- | --------------------------- |
+| `GET /api/admin/feature-flags`        | List feature flags          |
 | `PATCH /api/admin/feature-flags/{id}` | Enable/disable feature flag |
-| `GET /api/admin/system/settings` | Get system settings |
-| `PATCH /api/admin/system/settings` | Update system settings |
+| `GET /api/admin/system/settings`      | Get system settings         |
+| `PATCH /api/admin/system/settings`    | Update system settings      |
 
 ### Export
 
-| Endpoint | Description |
-|---|---|
-| `GET /api/admin/export/users` | Export users as CSV |
+| Endpoint                         | Description            |
+| -------------------------------- | ---------------------- |
+| `GET /api/admin/export/users`    | Export users as CSV    |
 | `GET /api/admin/export/ai-usage` | Export AI usage as CSV |
 
 ---
@@ -1069,26 +1108,26 @@ The Hub (`modules/hub/router.py`) is the main workspace for normal users. It ser
 
 ### Hub Pages (server-rendered HTML)
 
-| Route | Page | Description |
-|---|---|---|
-| `/hub` | Hub Dashboard | Main workspace with pipeline trigger and status |
-| `/agents` | Agent Monitor | Real-time agent task telemetry |
-| `/workflows` | Workflow View | Pipeline run history and details |
-| `/history` | History | History event log |
-| `/templates` | Templates | App templates |
-| `/settings` | Settings | User settings |
-| `/states` | State Showcase | Pipeline state visualization |
+| Route        | Page           | Description                                     |
+| ------------ | -------------- | ----------------------------------------------- |
+| `/hub`       | Hub Dashboard  | Main workspace with pipeline trigger and status |
+| `/agents`    | Agent Monitor  | Real-time agent task telemetry                  |
+| `/workflows` | Workflow View  | Pipeline run history and details                |
+| `/history`   | History        | History event log                               |
+| `/templates` | Templates      | App templates                                   |
+| `/settings`  | Settings       | User settings                                   |
+| `/states`    | State Showcase | Pipeline state visualization                    |
 
 ### Hub REST APIs
 
-| Endpoint | Description |
-|---|---|
-| `GET /api/hub/agents` | Agent task list with status, duration, progress |
-| `POST /api/hub/agents/{id}/restart` | Signal agent task restart |
-| `GET /api/hub/workflows` | Pipeline run list with task breakdown |
-| `GET /api/hub/projects` | User's project list |
-| `GET /api/hub/history` | HistoryEvent log (paginated) |
-| `GET /api/hub/stack-registry` | Available frontend/backend/architecture options |
+| Endpoint                            | Description                                     |
+| ----------------------------------- | ----------------------------------------------- |
+| `GET /api/hub/agents`               | Agent task list with status, duration, progress |
+| `POST /api/hub/agents/{id}/restart` | Signal agent task restart                       |
+| `GET /api/hub/workflows`            | Pipeline run list with task breakdown           |
+| `GET /api/hub/projects`             | User's project list                             |
+| `GET /api/hub/history`              | HistoryEvent log (paginated)                    |
+| `GET /api/hub/stack-registry`       | Available frontend/backend/architecture options |
 
 ---
 
@@ -1096,31 +1135,32 @@ The Hub (`modules/hub/router.py`) is the main workspace for normal users. It ser
 
 ### Database Models
 
-| Model | Purpose |
-|---|---|
-| `HistoryEvent` | Tracks agent, user, and system activity events with full lifecycle metadata |
-| `AuditLog` | Immutable admin action audit trail (login, delete, impersonate, config changes) |
-| `ActivityLog` | User/org/project activity events |
-| `SecurityEvent` | Security-relevant events (failed logins, brute force suspects) |
-| `LoginHistory` | Per-user login attempt history |
+| Model           | Purpose                                                                         |
+| --------------- | ------------------------------------------------------------------------------- |
+| `HistoryEvent`  | Tracks agent, user, and system activity events with full lifecycle metadata     |
+| `AuditLog`      | Immutable admin action audit trail (login, delete, impersonate, config changes) |
+| `ActivityLog`   | User/org/project activity events                                                |
+| `SecurityEvent` | Security-relevant events (failed logins, brute force suspects)                  |
+| `LoginHistory`  | Per-user login attempt history                                                  |
 
 ### HistoryEvent Fields
 
-| Field | Description |
-|---|---|
-| `activity_type` | What happened (e.g., `code_generation`, `deployment`) |
-| `action_type` | Who acted: `USER`, `AGENT`, or `SYSTEM` |
-| `agent_name` | Which agent (if agent action) |
-| `project_name` | Associated project |
-| `workflow_id` / `execution_id` | Pipeline run identifiers |
-| `status` | `QUEUED`, `RUNNING`, `COMPLETED`, `FAILED`, etc. |
-| `started_at` / `completed_at` / `duration_ms` | Timing |
-| `files_generated` | JSON list of generated file paths |
-| `error` / `error_code` | Error details if failed |
+| Field                                         | Description                                           |
+| --------------------------------------------- | ----------------------------------------------------- |
+| `activity_type`                               | What happened (e.g., `code_generation`, `deployment`) |
+| `action_type`                                 | Who acted: `USER`, `AGENT`, or `SYSTEM`               |
+| `agent_name`                                  | Which agent (if agent action)                         |
+| `project_name`                                | Associated project                                    |
+| `workflow_id` / `execution_id`                | Pipeline run identifiers                              |
+| `status`                                      | `QUEUED`, `RUNNING`, `COMPLETED`, `FAILED`, etc.      |
+| `started_at` / `completed_at` / `duration_ms` | Timing                                                |
+| `files_generated`                             | JSON list of generated file paths                     |
+| `error` / `error_code`                        | Error details if failed                               |
 
 ### Logging System (`modules/common/logger.py`)
 
 The platform uses a custom structured logging system with:
+
 - **Color-coded ANSI terminal output** (16 distinct log categories)
 - **Structured JSON log rotation** to `logs/` directory
 - **Non-blocking async queue logging** via background thread
@@ -1139,14 +1179,15 @@ Log levels/categories: `INFO`, `SUCCESS`, `WARNING`, `ERROR`, `CRITICAL`, `START
 
 Pipeline progress is streamed to the browser via SSE:
 
-| Endpoint | Description |
-|---|---|
-| `POST /api/run` | Start pipeline, returns `{run_id, stream_url}` |
-| `GET /api/stream/{run_id}` | SSE stream of pipeline events |
-| `GET /api/status/{run_id}` | Current run status |
-| `GET /api/runs` | List recent runs (last 20) |
+| Endpoint                   | Description                                    |
+| -------------------------- | ---------------------------------------------- |
+| `POST /api/run`            | Start pipeline, returns `{run_id, stream_url}` |
+| `GET /api/stream/{run_id}` | SSE stream of pipeline events                  |
+| `GET /api/status/{run_id}` | Current run status                             |
+| `GET /api/runs`            | List recent runs (last 20)                     |
 
 **Event format:**
+
 ```json
 {
   "type": "progress | complete | error | file_update",
@@ -1162,11 +1203,11 @@ Pipeline progress is streamed to the browser via SSE:
 
 `modules/notifications/websocket.py` provides a WebSocket manager with three connection types:
 
-| Client Type | Query Param | Description |
-|---|---|---|
-| `user` | `target_id=<user_id>` | Per-user notification channel |
-| `admin` | — | Admin panel live feed (broadcasts to all admin sockets) |
-| `project` | `target_id=<project_id>` | Project-specific build updates |
+| Client Type | Query Param              | Description                                             |
+| ----------- | ------------------------ | ------------------------------------------------------- |
+| `user`      | `target_id=<user_id>`    | Per-user notification channel                           |
+| `admin`     | —                        | Admin panel live feed (broadcasts to all admin sockets) |
+| `project`   | `target_id=<project_id>` | Project-specific build updates                          |
 
 **Endpoint:** `GET /ws?client_type=<type>&target_id=<id>&token=<jwt>`
 
@@ -1177,56 +1218,72 @@ The WebSocket endpoint validates the optional JWT token and maintains typed conn
 ## Core Platform Modules
 
 ### `modules/auth/` — Authentication and RBAC
+
 JWT service, password hashing/verification, session management, API key storage, password history, forgot-password/reset-password flows.
 
 ### `modules/admin/` — Administration API
+
 Full platform admin: users, organizations, AI usage, cost tracking, agent monitoring, feature flags, security events, audit logs, export.
 
 ### `modules/database/` — Platform Database Layer
+
 SQLAlchemy models, connection setup, database initialization, seed scripts.
 
 ### `modules/hub/` — User Workspace
+
 Hub pages (Jinja2), agent telemetry API, workflow history API, project list API, stack registry API.
 
 ### `modules/common/` — Shared Utilities
+
 - `logger.py` — custom structured logging, metrics collector, context variables
 - `history.py` — history event helper functions
 - `utils.py` — Jinja2 template setup
 
 ### `modules/build_complete_project/` — Build Module
+
 - `generator.py` — complete project build endpoint logic and file type detection
 - `tech_registry.py` — framework registry (frontend, backend, architecture configs with prompt guidelines and file schemas)
 - `router.py` — `POST /api/build/complete` endpoint
 
 ### `modules/requirement_analyzer/` — Standalone Requirement API
+
 `POST /api/requirements/analyze` — analyze requirements independently of the pipeline.
 
 ### `modules/code_generation/` — Code Generation API
+
 Standalone code generation endpoint.
 
 ### `modules/code_review/` — Code Review Module
+
 - `analyzer.py` — `PythonAnalyzer` (static analysis) + `determine_language()`
 - `generator.py` — review generation logic
 - `router.py` — `POST /api/review/analyze`
 
 ### `modules/database_schema/` — Schema Generation API
+
 `POST /api/db-schema/generate` — standalone database schema generation.
 
 ### `modules/system_design/` — System Design API
+
 `POST /api/system-design/generate` — standalone HLD/LLD generation.
 
 ### `modules/test_case_generator/` — Test Case Generator API
+
 `POST /api/tests/generate` — generate test cases with 35+ framework support, multiple strategies, and export formats.
 
 ### `modules/documentation_generator/` — Documentation Generator API
+
 `POST /api/docs/generate` — standalone documentation generation supporting:
+
 - **Document types:** BRD, PRD, SRS, HLD, LLD, README, User Guide, Deployment Guide, API Reference, Test Plan, Security Documentation, CI/CD Documentation, Release Notes, and more
 - **Output formats:** Word (.docx), PowerPoint (.pptx), PDF, Draw.io (.drawio), JSON, YAML, XML, Markdown, HTML, Plain Text
 
 ### `modules/sql_query_generator/` — SQL Query API
+
 `POST /api/sql/generate` — generate complex SQL queries.
 
 ### `modules/notifications/` — WebSocket Manager
+
 Connection manager and WebSocket endpoint for real-time user and admin notifications.
 
 ---
@@ -1237,21 +1294,21 @@ Connection manager and WebSocket endpoint for real-time user and admin notificat
 
 ### Technology Stack
 
-| Layer | Technology | Version |
-|---|---|---|
-| Framework | React | 19.x |
-| Language | TypeScript | ~6.0 |
-| Build tool | Vite | 8.x |
-| Styling | Tailwind CSS | v4 |
-| State management | Zustand | 5.x |
-| Routing | React Router v7 | 7.x |
-| HTTP / data fetching | TanStack Query | 5.x |
-| Tables | TanStack Table | 8.x |
-| Forms | React Hook Form + Zod v4 | 7.x + 4.x |
-| Charts | Recharts | 3.x |
-| Animations | Framer Motion | 12.x |
-| Icons | Lucide React | 1.x |
-| Linter | OXLint | 1.x |
+| Layer                | Technology               | Version   |
+| -------------------- | ------------------------ | --------- |
+| Framework            | React                    | 19.x      |
+| Language             | TypeScript               | ~6.0      |
+| Build tool           | Vite                     | 8.x       |
+| Styling              | Tailwind CSS             | v4        |
+| State management     | Zustand                  | 5.x       |
+| Routing              | React Router v7          | 7.x       |
+| HTTP / data fetching | TanStack Query           | 5.x       |
+| Tables               | TanStack Table           | 8.x       |
+| Forms                | React Hook Form + Zod v4 | 7.x + 4.x |
+| Charts               | Recharts                 | 3.x       |
+| Animations           | Framer Motion            | 12.x      |
+| Icons                | Lucide React             | 1.x       |
+| Linter               | OXLint                   | 1.x       |
 
 ### Frontend Structure
 
@@ -1276,15 +1333,15 @@ ui/frontend/src/
 
 The React SPA uses **HashRouter** and is served at `/app`. Routes:
 
-| Path | Component | Auth Required | Role Required |
-|---|---|---|---|
-| `/login` | Login | No | — |
-| `/register` | Register | No | — |
-| `/forgot-password` | ForgotPassword | No | — |
-| `/reset-password` | ResetPassword | No | — |
-| `/onboarding` | Onboarding | ✅ | USER |
-| `/admin` | AdminPanel | ✅ | ADMIN / SUPER_ADMIN / SUPPORT / READ_ONLY_ADMIN |
-| `/*` | Redirect | — | — |
+| Path               | Component      | Auth Required | Role Required                                   |
+| ------------------ | -------------- | ------------- | ----------------------------------------------- |
+| `/login`           | Login          | No            | —                                               |
+| `/register`        | Register       | No            | —                                               |
+| `/forgot-password` | ForgotPassword | No            | —                                               |
+| `/reset-password`  | ResetPassword  | No            | —                                               |
+| `/onboarding`      | Onboarding     | ✅            | USER                                            |
+| `/admin`           | AdminPanel     | ✅            | ADMIN / SUPER_ADMIN / SUPPORT / READ_ONLY_ADMIN |
+| `/*`               | Redirect       | —             | —                                               |
 
 ### Authentication State
 
@@ -1310,6 +1367,7 @@ npm run build
 ### Entry Point
 
 `ui/main.py` — FastAPI application with:
+
 - Two HTTP middleware layers (auth guard + request logging)
 - 12 modular router includes
 - SSE pipeline streaming endpoints
@@ -1318,21 +1376,21 @@ npm run build
 
 ### Router Modules
 
-| Router | Prefix | Description |
-|---|---|---|
-| Hub | `/hub`, `/api/hub/*` | Workspace pages and data APIs |
-| Auth | `/api/auth` | Authentication and user management |
-| Admin | `/api/admin` | Administrative management |
-| Build | `/api/build` | Complete project build endpoint |
-| Requirements | `/api/requirements` | Standalone requirement analysis |
-| Code Generation | `/api/codegen` | Standalone code generation |
-| Code Review | `/api/review` | Standalone code review |
-| Database Schema | `/api/db-schema` | Standalone schema generation |
-| System Design | `/api/system-design` | Standalone HLD/LLD generation |
-| Test Cases | `/api/tests` | Standalone test case generation |
-| Documentation | `/api/docs` | Standalone documentation generation |
-| SQL | `/api/sql` | Standalone SQL query generation |
-| WebSocket | `/ws` | Real-time notification WebSocket |
+| Router          | Prefix               | Description                         |
+| --------------- | -------------------- | ----------------------------------- |
+| Hub             | `/hub`, `/api/hub/*` | Workspace pages and data APIs       |
+| Auth            | `/api/auth`          | Authentication and user management  |
+| Admin           | `/api/admin`         | Administrative management           |
+| Build           | `/api/build`         | Complete project build endpoint     |
+| Requirements    | `/api/requirements`  | Standalone requirement analysis     |
+| Code Generation | `/api/codegen`       | Standalone code generation          |
+| Code Review     | `/api/review`        | Standalone code review              |
+| Database Schema | `/api/db-schema`     | Standalone schema generation        |
+| System Design   | `/api/system-design` | Standalone HLD/LLD generation       |
+| Test Cases      | `/api/tests`         | Standalone test case generation     |
+| Documentation   | `/api/docs`          | Standalone documentation generation |
+| SQL             | `/api/sql`           | Standalone SQL query generation     |
+| WebSocket       | `/ws`                | Real-time notification WebSocket    |
 
 ### Database
 
@@ -1350,78 +1408,78 @@ Pipeline runs execute as `asyncio.create_task()` background tasks. The `POST /ap
 
 ### Pipeline APIs
 
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| POST | `/api/run` | ✅ | Start pipeline run |
-| GET | `/api/stream/{run_id}` | No | SSE stream for run progress |
-| GET | `/api/status/{run_id}` | No | Get run status |
-| GET | `/api/runs` | No | List recent runs |
-| GET | `/health` | No | Health check |
+| Method | Path                   | Auth | Description                 |
+| ------ | ---------------------- | ---- | --------------------------- |
+| POST   | `/api/run`             | ✅   | Start pipeline run          |
+| GET    | `/api/stream/{run_id}` | No   | SSE stream for run progress |
+| GET    | `/api/status/{run_id}` | No   | Get run status              |
+| GET    | `/api/runs`            | No   | List recent runs            |
+| GET    | `/health`              | No   | Health check                |
 
 ### Auth APIs
 
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| POST | `/api/auth/register` | No | Register new user |
-| POST | `/api/auth/login` | No | Login |
-| POST | `/api/auth/refresh` | No | Refresh tokens |
-| POST | `/api/auth/logout` | ✅ | Logout |
-| POST | `/api/auth/forgot-password` | No | Request password reset |
-| POST | `/api/auth/reset-password` | No | Reset password |
-| GET | `/api/auth/profile` | ✅ | Get user profile |
-| PATCH | `/api/auth/profile` | ✅ | Update profile |
-| GET | `/api/auth/preferences` | ✅ | Get preferences |
-| PATCH | `/api/auth/preferences` | ✅ | Update preferences |
-| POST | `/api/auth/api-keys` | ✅ | Store API key |
+| Method | Path                        | Auth | Description            |
+| ------ | --------------------------- | ---- | ---------------------- |
+| POST   | `/api/auth/register`        | No   | Register new user      |
+| POST   | `/api/auth/login`           | No   | Login                  |
+| POST   | `/api/auth/refresh`         | No   | Refresh tokens         |
+| POST   | `/api/auth/logout`          | ✅   | Logout                 |
+| POST   | `/api/auth/forgot-password` | No   | Request password reset |
+| POST   | `/api/auth/reset-password`  | No   | Reset password         |
+| GET    | `/api/auth/profile`         | ✅   | Get user profile       |
+| PATCH  | `/api/auth/profile`         | ✅   | Update profile         |
+| GET    | `/api/auth/preferences`     | ✅   | Get preferences        |
+| PATCH  | `/api/auth/preferences`     | ✅   | Update preferences     |
+| POST   | `/api/auth/api-keys`        | ✅   | Store API key          |
 
 ### Hub APIs
 
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| GET | `/api/hub/agents` | ✅ | Agent task telemetry |
-| POST | `/api/hub/agents/{id}/restart` | ✅ | Restart agent task |
-| GET | `/api/hub/workflows` | ✅ | Pipeline run list |
-| GET | `/api/hub/projects` | ✅ | User projects |
-| GET | `/api/hub/history` | ✅ | History event log |
-| GET | `/api/hub/stack-registry` | ✅ | Available tech stack options |
+| Method | Path                           | Auth | Description                  |
+| ------ | ------------------------------ | ---- | ---------------------------- |
+| GET    | `/api/hub/agents`              | ✅   | Agent task telemetry         |
+| POST   | `/api/hub/agents/{id}/restart` | ✅   | Restart agent task           |
+| GET    | `/api/hub/workflows`           | ✅   | Pipeline run list            |
+| GET    | `/api/hub/projects`            | ✅   | User projects                |
+| GET    | `/api/hub/history`             | ✅   | History event log            |
+| GET    | `/api/hub/stack-registry`      | ✅   | Available tech stack options |
 
 ### Module APIs (Standalone)
 
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| POST | `/api/requirements/analyze` | ✅ | Analyze requirements |
-| POST | `/api/build/complete` | ✅ | Build complete project |
-| POST | `/api/codegen/generate` | ✅ | Generate code |
-| POST | `/api/review/analyze` | ✅ | Review code |
-| POST | `/api/db-schema/generate` | ✅ | Generate DB schema |
-| POST | `/api/system-design/generate` | ✅ | Generate HLD/LLD |
-| POST | `/api/tests/generate` | ✅ | Generate test cases |
-| POST | `/api/docs/generate` | ✅ | Generate documentation |
-| POST | `/api/sql/generate` | ✅ | Generate SQL queries |
+| Method | Path                          | Auth | Description            |
+| ------ | ----------------------------- | ---- | ---------------------- |
+| POST   | `/api/requirements/analyze`   | ✅   | Analyze requirements   |
+| POST   | `/api/build/complete`         | ✅   | Build complete project |
+| POST   | `/api/codegen/generate`       | ✅   | Generate code          |
+| POST   | `/api/review/analyze`         | ✅   | Review code            |
+| POST   | `/api/db-schema/generate`     | ✅   | Generate DB schema     |
+| POST   | `/api/system-design/generate` | ✅   | Generate HLD/LLD       |
+| POST   | `/api/tests/generate`         | ✅   | Generate test cases    |
+| POST   | `/api/docs/generate`          | ✅   | Generate documentation |
+| POST   | `/api/sql/generate`           | ✅   | Generate SQL queries   |
 
 ### Admin APIs (Partial list)
 
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| GET | `/api/admin/dashboard/metrics` | Admin | Dashboard counters |
-| GET | `/api/admin/users` | Admin | User list |
-| PATCH | `/api/admin/users/{id}/status` | Admin | Change user status |
-| POST | `/api/admin/users/{id}/role` | Admin | Assign role |
-| GET | `/api/admin/ai/usage` | Admin | AI usage log |
-| GET | `/api/admin/ai/costs` | Admin | Cost breakdown |
-| GET | `/api/admin/security/events` | Admin | Security events |
-| GET | `/api/admin/audit/logs` | Admin | Audit trail |
-| GET | `/api/admin/agents/tasks` | Admin | Agent task monitor |
-| PATCH | `/api/admin/feature-flags/{id}` | Admin | Toggle feature flag |
-| GET | `/api/admin/export/users` | Admin | Export users CSV |
+| Method | Path                            | Auth  | Description         |
+| ------ | ------------------------------- | ----- | ------------------- |
+| GET    | `/api/admin/dashboard/metrics`  | Admin | Dashboard counters  |
+| GET    | `/api/admin/users`              | Admin | User list           |
+| PATCH  | `/api/admin/users/{id}/status`  | Admin | Change user status  |
+| POST   | `/api/admin/users/{id}/role`    | Admin | Assign role         |
+| GET    | `/api/admin/ai/usage`           | Admin | AI usage log        |
+| GET    | `/api/admin/ai/costs`           | Admin | Cost breakdown      |
+| GET    | `/api/admin/security/events`    | Admin | Security events     |
+| GET    | `/api/admin/audit/logs`         | Admin | Audit trail         |
+| GET    | `/api/admin/agents/tasks`       | Admin | Agent task monitor  |
+| PATCH  | `/api/admin/feature-flags/{id}` | Admin | Toggle feature flag |
+| GET    | `/api/admin/export/users`       | Admin | Export users CSV    |
 
 ### WebSocket
 
-| Path | Description |
-|---|---|
-| `GET /ws?client_type=user&target_id={user_id}&token={jwt}` | User notification channel |
-| `GET /ws?client_type=admin&token={jwt}` | Admin live feed |
-| `GET /ws?client_type=project&target_id={project_id}&token={jwt}` | Project build updates |
+| Path                                                             | Description               |
+| ---------------------------------------------------------------- | ------------------------- |
+| `GET /ws?client_type=user&target_id={user_id}&token={jwt}`       | User notification channel |
+| `GET /ws?client_type=admin&token={jwt}`                          | Admin live feed           |
+| `GET /ws?client_type=project&target_id={project_id}&token={jwt}` | Project build updates     |
 
 ---
 
@@ -1473,24 +1531,24 @@ erDiagram
 
 ### Key Models
 
-| Model | Table | Description |
-|---|---|---|
-| `User` | `users` | Platform user with status, soft-delete |
-| `Role` | `roles` | USER, ADMIN, SUPER_ADMIN, SUPPORT, READ_ONLY_ADMIN |
-| `Permission` | `permissions` | Fine-grained RBAC permissions |
-| `UserPreferences` | `user_preferences` | Theme, language, timezone, AI provider |
-| `Session` | `sessions` | Active refresh token sessions |
-| `Organization` | `organizations` | Org with storage/AI/project quotas |
-| `Project` | `projects` | Generated project with status lifecycle |
-| `AgentRun` | `agent_runs` | Pipeline execution record |
-| `AgentTask` | `agent_tasks` | Per-agent task with status and metrics |
-| `AIRequest` | `ai_requests` | LLM call log with tokens and cost |
-| `HistoryEvent` | `history_events` | Full event lifecycle record |
-| `AuditLog` | `audit_logs` | Immutable admin action log |
-| `Notification` | `notifications` | User notifications (info/success/warning/error/security) |
-| `Deployment` | `deployments` | Deployment record with URL and status |
-| `FeatureFlag` | `feature_flags` | Runtime feature toggles |
-| `ApiKey` | `api_keys` | Encrypted external API keys per user |
+| Model             | Table              | Description                                              |
+| ----------------- | ------------------ | -------------------------------------------------------- |
+| `User`            | `users`            | Platform user with status, soft-delete                   |
+| `Role`            | `roles`            | USER, ADMIN, SUPER_ADMIN, SUPPORT, READ_ONLY_ADMIN       |
+| `Permission`      | `permissions`      | Fine-grained RBAC permissions                            |
+| `UserPreferences` | `user_preferences` | Theme, language, timezone, AI provider                   |
+| `Session`         | `sessions`         | Active refresh token sessions                            |
+| `Organization`    | `organizations`    | Org with storage/AI/project quotas                       |
+| `Project`         | `projects`         | Generated project with status lifecycle                  |
+| `AgentRun`        | `agent_runs`       | Pipeline execution record                                |
+| `AgentTask`       | `agent_tasks`      | Per-agent task with status and metrics                   |
+| `AIRequest`       | `ai_requests`      | LLM call log with tokens and cost                        |
+| `HistoryEvent`    | `history_events`   | Full event lifecycle record                              |
+| `AuditLog`        | `audit_logs`       | Immutable admin action log                               |
+| `Notification`    | `notifications`    | User notifications (info/success/warning/error/security) |
+| `Deployment`      | `deployments`      | Deployment record with URL and status                    |
+| `FeatureFlag`     | `feature_flags`    | Runtime feature toggles                                  |
+| `ApiKey`          | `api_keys`         | Encrypted external API keys per user                     |
 
 ---
 
@@ -1498,22 +1556,22 @@ erDiagram
 
 ### Implemented Security Mechanisms
 
-| Area | Implementation |
-|---|---|
-| Password hashing | bcrypt via `passlib` |
-| Password policy | Min 8 chars, upper + lower + digit required |
-| Password history | Previous hashes stored to prevent reuse |
-| JWT tokens | Short-lived access (30 min) + long-lived refresh (7 days) |
-| Session management | Refresh tokens stored in DB, validated on refresh |
-| RBAC | Role + Permission model, middleware enforcement |
-| Admin protection | `/api/admin/*` requires admin role; 403 otherwise |
-| API key encryption | External API keys stored encrypted |
-| HTTPS redirect | Not implemented at application layer (expected at reverse proxy) |
-| CORS | Wide open (`allow_origins=["*"]`) — intended for development; restrict in production |
-| Rate limiting | Not implemented at application layer |
-| Brute force detection | `SecurityEvent` model exists; enforcement not fully wired |
-| Code execution isolation | Generated tests run via subprocess (`pytest`), not in containers |
-| Secret management | All secrets via `.env` and `pydantic_settings` |
+| Area                     | Implementation                                                                       |
+| ------------------------ | ------------------------------------------------------------------------------------ |
+| Password hashing         | bcrypt via `passlib`                                                                 |
+| Password policy          | Min 8 chars, upper + lower + digit required                                          |
+| Password history         | Previous hashes stored to prevent reuse                                              |
+| JWT tokens               | Short-lived access (30 min) + long-lived refresh (7 days)                            |
+| Session management       | Refresh tokens stored in DB, validated on refresh                                    |
+| RBAC                     | Role + Permission model, middleware enforcement                                      |
+| Admin protection         | `/api/admin/*` requires admin role; 403 otherwise                                    |
+| API key encryption       | External API keys stored encrypted                                                   |
+| HTTPS redirect           | Not implemented at application layer (expected at reverse proxy)                     |
+| CORS                     | Wide open (`allow_origins=["*"]`) — intended for development; restrict in production |
+| Rate limiting            | Not implemented at application layer                                                 |
+| Brute force detection    | `SecurityEvent` model exists; enforcement not fully wired                            |
+| Code execution isolation | Generated tests run via subprocess (`pytest`), not in containers                     |
+| Secret management        | All secrets via `.env` and `pydantic_settings`                                       |
 
 ### Important Hardening Notes
 
@@ -1530,6 +1588,7 @@ erDiagram
 ### Agent-Level Error Handling
 
 Each agent wraps its main logic in `try/except`:
+
 - **LLM errors** (network, API rate limit, invalid response): logged, fallback values returned (empty `files`, empty `issues`), pipeline continues
 - **JSON parse errors**: `json-repair` library attempts automatic repair of malformed LLM JSON
 - **Critical errors** that should abort: `should_halt=True` + error message added to `errors` list
@@ -1554,60 +1613,60 @@ If the Bug Fixing Agent produces a patch where `original_snippet` no longer matc
 
 ### Cytron.AI Platform Technologies
 
-| Layer | Technology | Version |
-|---|---|---|
-| **Language** | Python | 3.11+ |
-| **Orchestration** | LangGraph | ≥0.2.0 |
-| **LLM Framework** | LangChain + LangChain Groq | ≥0.2.0 |
-| **LLM Provider** | Groq (Llama 3.3 70B) | ≥0.9.0 |
-| **Vector Store** | ChromaDB | ≥0.5.0 |
-| **Backend Framework** | FastAPI | ≥0.111.0 |
-| **ASGI Server** | Uvicorn | ≥0.30.0 |
-| **Platform Database** | MySQL (via SQLAlchemy) | ≥2.0.0 |
-| **DB Migrations** | Alembic | ≥1.13.0 |
-| **HTTP Client** | httpx | ≥0.27.0 |
-| **Schema Validation** | Pydantic v2 + pydantic-settings | ≥2.7.0 |
-| **SSE Streaming** | sse-starlette | ≥2.1.0 |
-| **GitHub Integration** | PyGithub | ≥2.3.0 |
-| **GCP Integration** | google-cloud-run + google-auth | ≥0.10.0 |
-| **JSON Repair** | json-repair | ≥0.61.0 |
-| **Terminal UI** | Rich | ≥13.7.0 |
-| **Templates** | Jinja2 | ≥3.1.0 |
-| **Async File I/O** | aiofiles | ≥23.2.0 |
-| **Retry Logic** | tenacity | ≥8.3.0 |
-| **Config** | python-dotenv | ≥1.0.0 |
-| **Testing** | pytest + pytest-asyncio | ≥8.2.0 |
-| **System Metrics** | psutil | (transitive) |
+| Layer                  | Technology                      | Version      |
+| ---------------------- | ------------------------------- | ------------ |
+| **Language**           | Python                          | 3.11+        |
+| **Orchestration**      | LangGraph                       | ≥0.2.0       |
+| **LLM Framework**      | LangChain + LangChain Groq      | ≥0.2.0       |
+| **LLM Provider**       | Groq (Llama 3.3 70B)            | ≥0.9.0       |
+| **Vector Store**       | ChromaDB                        | ≥0.5.0       |
+| **Backend Framework**  | FastAPI                         | ≥0.111.0     |
+| **ASGI Server**        | Uvicorn                         | ≥0.30.0      |
+| **Platform Database**  | MySQL (via SQLAlchemy)          | ≥2.0.0       |
+| **DB Migrations**      | Alembic                         | ≥1.13.0      |
+| **HTTP Client**        | httpx                           | ≥0.27.0      |
+| **Schema Validation**  | Pydantic v2 + pydantic-settings | ≥2.7.0       |
+| **SSE Streaming**      | sse-starlette                   | ≥2.1.0       |
+| **GitHub Integration** | PyGithub                        | ≥2.3.0       |
+| **GCP Integration**    | google-cloud-run + google-auth  | ≥0.10.0      |
+| **JSON Repair**        | json-repair                     | ≥0.61.0      |
+| **Terminal UI**        | Rich                            | ≥13.7.0      |
+| **Templates**          | Jinja2                          | ≥3.1.0       |
+| **Async File I/O**     | aiofiles                        | ≥23.2.0      |
+| **Retry Logic**        | tenacity                        | ≥8.3.0       |
+| **Config**             | python-dotenv                   | ≥1.0.0       |
+| **Testing**            | pytest + pytest-asyncio         | ≥8.2.0       |
+| **System Metrics**     | psutil                          | (transitive) |
 
 ### Cytron.AI Frontend Technologies
 
-| Layer | Technology | Version |
-|---|---|---|
-| **Framework** | React | 19.x |
-| **Language** | TypeScript | ~6.0 |
-| **Build Tool** | Vite | 8.x |
-| **Styling** | Tailwind CSS | v4 |
-| **State** | Zustand | 5.x |
-| **Routing** | React Router v7 | 7.x |
-| **Data Fetching** | TanStack Query | 5.x |
-| **Tables** | TanStack Table | 8.x |
-| **Forms** | React Hook Form + Zod | 7.x + 4.x |
-| **Charts** | Recharts | 3.x |
-| **Animations** | Framer Motion | 12.x |
-| **Icons** | Lucide React | 1.x |
+| Layer             | Technology            | Version   |
+| ----------------- | --------------------- | --------- |
+| **Framework**     | React                 | 19.x      |
+| **Language**      | TypeScript            | ~6.0      |
+| **Build Tool**    | Vite                  | 8.x       |
+| **Styling**       | Tailwind CSS          | v4        |
+| **State**         | Zustand               | 5.x       |
+| **Routing**       | React Router v7       | 7.x       |
+| **Data Fetching** | TanStack Query        | 5.x       |
+| **Tables**        | TanStack Table        | 8.x       |
+| **Forms**         | React Hook Form + Zod | 7.x + 4.x |
+| **Charts**        | Recharts              | 3.x       |
+| **Animations**    | Framer Motion         | 12.x      |
+| **Icons**         | Lucide React          | 1.x       |
 
 ### Generated Application Technologies (Defaults)
 
-| Area | Default | Alternatives (via tech registry) |
-|---|---|---|
-| Frontend | React + TypeScript + Tailwind + ShadCN | Vue, Angular, Svelte, Next.js, Nuxt, Astro, etc. |
-| Backend | FastAPI (Python) | Django, Flask, NestJS, Express, Spring Boot, etc. |
-| Database | SQLite | PostgreSQL, MySQL |
-| ORM | SQLAlchemy + Alembic | — |
-| Auth | JWT | Session, None |
-| Container | Docker + docker-compose | — |
-| CI/CD | GitHub Actions | — |
-| Cloud (optional) | GCP Cloud Run | — |
+| Area             | Default                                | Alternatives (via tech registry)                  |
+| ---------------- | -------------------------------------- | ------------------------------------------------- |
+| Frontend         | React + TypeScript + Tailwind + ShadCN | Vue, Angular, Svelte, Next.js, Nuxt, Astro, etc.  |
+| Backend          | FastAPI (Python)                       | Django, Flask, NestJS, Express, Spring Boot, etc. |
+| Database         | SQLite                                 | PostgreSQL, MySQL                                 |
+| ORM              | SQLAlchemy + Alembic                   | —                                                 |
+| Auth             | JWT                                    | Session, None                                     |
+| Container        | Docker + docker-compose                | —                                                 |
+| CI/CD            | GitHub Actions                         | —                                                 |
+| Cloud (optional) | GCP Cloud Run                          | —                                                 |
 
 ---
 
@@ -1784,6 +1843,7 @@ cp .env.example .env   # or create .env manually (see Environment Configuration 
 ```
 
 Edit `.env` and at minimum set:
+
 - `GROQ_API_KEY` — your Groq API key
 - `DATABASE_URL` — your MySQL connection string
 
@@ -1808,32 +1868,32 @@ cd ../..
 
 All configuration is loaded from `.env` via `pydantic-settings`. Keys and defaults:
 
-| Variable | Required | Default | Description |
-|---|---|---|---|
-| `GROQ_API_KEY` | ✅ Required | — | Groq API key for Llama 3 inference |
-| `GROQ_MODEL` | Optional | `llama3-70b-8192` | Groq model name. Use `llama-3.3-70b-versatile` for best results |
-| `DATABASE_URL` | ✅ Required | `mysql+pymysql://root:...` | MySQL connection URL for platform DB |
-| `JWT_SECRET` | ✅ Required (change!) | `eto-agent-secure-secret-key-2026` | JWT signing key — change in production |
-| `JWT_ALGORITHM` | Optional | `HS256` | JWT signing algorithm |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | Optional | `30` | Access token expiry in minutes |
-| `REFRESH_TOKEN_EXPIRE_DAYS` | Optional | `7` | Refresh token expiry in days |
-| `OUTPUT_DIR` | Optional | `./output` | Directory for generated projects |
-| `CHROMA_PATH` | Optional | `./memory/chroma_db` | Local ChromaDB storage path |
-| `CHROMA_API_KEY` | Optional | — | ChromaDB cloud API key (if using Chroma Cloud) |
-| `CHROMA_TENANT` | Optional | — | ChromaDB cloud tenant |
-| `CHROMA_DATABASE` | Optional | — | ChromaDB cloud database name |
-| `MAX_RETRY_CYCLES` | Optional | `3` | Max bug-fix retry iterations |
-| `PIPELINE_TIMEOUT_SECONDS` | Optional | `600` | Hard pipeline timeout |
-| `LOG_LEVEL` | Optional | `INFO` | Logging level |
-| `UI_HOST` | Optional | `0.0.0.0` | Server bind host |
-| `UI_PORT` | Optional | `8000` | Server bind port |
-| `GITHUB_TOKEN` | Optional | — | GitHub PAT with `repo` scope |
-| `GITHUB_ORG` | Optional | — | GitHub organization (uses user if empty) |
-| `GITHUB_DEFAULT_VISIBILITY` | Optional | `private` | `private` or `public` |
-| `GCP_PROJECT_ID` | Optional | — | GCP project ID for deployment |
-| `GCP_REGION` | Optional | `us-central1` | GCP region |
-| `GCP_ARTIFACT_REGISTRY` | Optional | — | Artifact Registry URL |
-| `GOOGLE_APPLICATION_CREDENTIALS` | Optional | `./gcp_service_account.json` | Path to GCP service account key file |
+| Variable                         | Required              | Default                            | Description                                                     |
+| -------------------------------- | --------------------- | ---------------------------------- | --------------------------------------------------------------- |
+| `GROQ_API_KEY`                   | ✅ Required           | —                                  | Groq API key for Llama 3 inference                              |
+| `GROQ_MODEL`                     | Optional              | `llama3-70b-8192`                  | Groq model name. Use `llama-3.3-70b-versatile` for best results |
+| `DATABASE_URL`                   | ✅ Required           | `mysql+pymysql://root:...`         | MySQL connection URL for platform DB                            |
+| `JWT_SECRET`                     | ✅ Required (change!) | `eto-agent-secure-secret-key-2026` | JWT signing key — change in production                          |
+| `JWT_ALGORITHM`                  | Optional              | `HS256`                            | JWT signing algorithm                                           |
+| `ACCESS_TOKEN_EXPIRE_MINUTES`    | Optional              | `30`                               | Access token expiry in minutes                                  |
+| `REFRESH_TOKEN_EXPIRE_DAYS`      | Optional              | `7`                                | Refresh token expiry in days                                    |
+| `OUTPUT_DIR`                     | Optional              | `./output`                         | Directory for generated projects                                |
+| `CHROMA_PATH`                    | Optional              | `./memory/chroma_db`               | Local ChromaDB storage path                                     |
+| `CHROMA_API_KEY`                 | Optional              | —                                  | ChromaDB cloud API key (if using Chroma Cloud)                  |
+| `CHROMA_TENANT`                  | Optional              | —                                  | ChromaDB cloud tenant                                           |
+| `CHROMA_DATABASE`                | Optional              | —                                  | ChromaDB cloud database name                                    |
+| `MAX_RETRY_CYCLES`               | Optional              | `3`                                | Max bug-fix retry iterations                                    |
+| `PIPELINE_TIMEOUT_SECONDS`       | Optional              | `600`                              | Hard pipeline timeout                                           |
+| `LOG_LEVEL`                      | Optional              | `INFO`                             | Logging level                                                   |
+| `UI_HOST`                        | Optional              | `0.0.0.0`                          | Server bind host                                                |
+| `UI_PORT`                        | Optional              | `8000`                             | Server bind port                                                |
+| `GITHUB_TOKEN`                   | Optional              | —                                  | GitHub PAT with `repo` scope                                    |
+| `GITHUB_ORG`                     | Optional              | —                                  | GitHub organization (uses user if empty)                        |
+| `GITHUB_DEFAULT_VISIBILITY`      | Optional              | `private`                          | `private` or `public`                                           |
+| `GCP_PROJECT_ID`                 | Optional              | —                                  | GCP project ID for deployment                                   |
+| `GCP_REGION`                     | Optional              | `us-central1`                      | GCP region                                                      |
+| `GCP_ARTIFACT_REGISTRY`          | Optional              | —                                  | Artifact Registry URL                                           |
+| `GOOGLE_APPLICATION_CREDENTIALS` | Optional              | `./gcp_service_account.json`       | Path to GCP service account key file                            |
 
 ---
 
@@ -1899,15 +1959,15 @@ pytest tests/ --cov=agents --cov=orchestrator --cov=state -v
 
 ### Test Files
 
-| File | What It Tests |
-|---|---|
+| File                           | What It Tests                           |
+| ------------------------------ | --------------------------------------- |
 | `test_requirement_analyzer.py` | Requirement Analyzer agent (mocked LLM) |
-| `test_project_planner.py` | Project Planner agent (mocked LLM) |
-| `test_integration.py` | End-to-end pipeline integration |
-| `test_auth_saas.py` | Authentication + user management |
-| `test_case_generator_test.py` | Test Case Generator module |
-| `test_doc_generator.py` | Documentation Generator module |
-| `test_code_review.py` | Code Review agent (root level) |
+| `test_project_planner.py`      | Project Planner agent (mocked LLM)      |
+| `test_integration.py`          | End-to-end pipeline integration         |
+| `test_auth_saas.py`            | Authentication + user management        |
+| `test_case_generator_test.py`  | Test Case Generator module              |
+| `test_doc_generator.py`        | Documentation Generator module          |
+| `test_code_review.py`          | Code Review agent (root level)          |
 
 ---
 
@@ -1930,6 +1990,7 @@ python main.py --input "Build a project management tool with user authentication
 ```
 
 The CLI streams progress updates to the terminal and shows a summary with:
+
 - App URL (or local docker-compose URL)
 - Repository URL (if GitHub configured)
 - Test pass/fail status
@@ -1938,6 +1999,7 @@ The CLI streams progress updates to the terminal and shows a summary with:
 ### Retrieved Output
 
 Generated project files appear in `output/<app_name>/` as the pipeline runs. The run summary contains:
+
 - `app_name` — slug name used as directory
 - `app_url` — deployment URL or local URL
 - `repo_url` — GitHub repo URL (or null)
@@ -2077,6 +2139,7 @@ sqlalchemy.exc.OperationalError: (pymysql.err.OperationalError) Can't connect to
 ```
 
 **Fix:**
+
 1. Ensure MySQL is running
 2. Check `DATABASE_URL` in `.env` matches your MySQL credentials and database name
 3. Create the database: `CREATE DATABASE eto_agent;`
@@ -2088,6 +2151,7 @@ sqlalchemy.exc.OperationalError: (pymysql.err.OperationalError) Can't connect to
 ```
 
 The `json-repair` library handles most malformed JSON. If this appears frequently:
+
 - Check `GROQ_API_KEY` is valid
 - Try a different model: set `GROQ_MODEL=llama-3.3-70b-versatile` in `.env`
 - Check Groq API status at [status.groq.com](https://status.groq.com)
@@ -2099,12 +2163,14 @@ chromadb.errors.ChromaError: ...
 ```
 
 **Fix:**
+
 1. If using local ChromaDB: ensure `CHROMA_PATH` directory is writable
 2. If using Chroma Cloud: verify `CHROMA_API_KEY`, `CHROMA_TENANT`, `CHROMA_DATABASE` in `.env`
 
 ### Frontend Not Loading (`/app` shows "React UI not built yet")
 
 **Fix:** Build the frontend:
+
 ```bash
 cd ui/frontend
 npm install
@@ -2114,6 +2180,7 @@ npm run build
 ### Test Execution Failures
 
 Generated tests may fail if the backend code references modules not available in the test environment. This is expected and triggers the bug-fix loop. If retries are exhausted, check:
+
 - `output/<app_name>/backend/tests/` for generated test files
 - Run `pytest output/<app_name>/backend/tests/ -v` manually for detailed output
 
@@ -2128,6 +2195,7 @@ If you see `GCP not configured — skipping Docker build and cloud deploy`, this
 ```
 
 **Fix:** Add a GitHub Personal Access Token with `repo` scope to `.env`:
+
 ```
 GITHUB_TOKEN=ghp_your_token_here
 ```
@@ -2256,4 +2324,4 @@ MIT License — see [LICENSE](LICENSE)
 
 ---
 
-*Cytron.AI is an autonomous software engineering platform. Generated code should be reviewed before production deployment. The platform is not liable for the correctness or security of generated applications.*
+_Cytron.AI is an autonomous software engineering platform. Generated code should be reviewed before production deployment. The platform is not liable for the correctness or security of generated applications._

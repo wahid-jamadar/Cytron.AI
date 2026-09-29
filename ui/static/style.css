@@ -31,7 +31,7 @@
   /* Default Theme: Warm Off-White (Light Theme) */
   --bg: #F7F6F2;
   --bg-gradient: linear-gradient(180deg, #FDFDFB 0%, #F7F6F2 100%);
-  --surface: #FFFFFF;
+  --surface: #fafafa;
   --surface-2: #FDFDFB;
   --surface-3: #F1F0EC;
   --border: rgba(23, 23, 28, 0.06);
@@ -45,9 +45,9 @@
   --accent-2: #6366f1;
   --accent-glow: rgba(139, 92, 246, 0.08);
 
-  --sidebar-bg: #FFFFFF;
+  --sidebar-bg: #e4e4e4;
   --topbar-bg: rgba(247, 246, 242, 0.8);
-  --card-bg: #FFFFFF;
+  --card-bg: #FAFAFA;
   --card-border: rgba(23, 23, 28, 0.06);
   
   /* Cyber Layer Accents */
@@ -58,33 +58,6 @@
   --topbar-height: 60px;
 }
 
-/* Dark Theme Overrides */
-html.theme-dark, body.theme-dark {
-  --bg: #0C0C0E;
-  --bg-gradient: radial-gradient(circle at 50% 40%, #121217 0%, #070709 80%);
-  --surface: #121216;
-  --surface-2: #18181F;
-  --surface-3: #22222A;
-  --border: rgba(255, 255, 255, 0.05);
-  --border-glow: rgba(139, 92, 246, 0.35);
-  
-  --text: #E8EAF0;
-  --text-muted: #94A3B8;
-  --text-dim: #64748B;
-  
-  --accent: #8b5cf6;
-  --accent-2: #4f8bff;
-  --accent-glow: rgba(139, 92, 246, 0.20);
-
-  --sidebar-bg: #121216;
-  --topbar-bg: rgba(12, 12, 14, 0.8);
-  --card-bg: #121216;
-  --card-border: rgba(255, 255, 255, 0.04);
-  
-  --cyber-grid: rgba(255, 255, 255, 0.01);
-  --cyber-line: rgba(255, 255, 255, 0.03);
-  --cyber-glow-opacity: 0.25;
-}
 
 /* OLED Theme Overrides */
 html.theme-oled, body.theme-oled {
