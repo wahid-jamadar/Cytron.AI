@@ -1,13 +1,17 @@
+<p align="center">
+  <img src="ui/static/Cytron.AI-Logo.png" alt="Cytron.AI Logo" width="180" />
+</p>
+
 # Cytron.AI
 
 > **Multi-Agent Software Engineering Platform** — describe any web application in plain English and a coordinated pipeline of AI agents will analyze requirements, architect, generate, test, review, fix, document, and optionally deploy it automatically.
- 
+
 [![Python](https://img.shields.io/badge/Python-3.11+-blue)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688)](https://fastapi.tiangolo.com)
 [![React](https://img.shields.io/badge/Frontend-React%2019-61DAFB)](https://react.dev)
 [![LangGraph](https://img.shields.io/badge/Orchestration-LangGraph-purple)](https://github.com/langchain-ai/langgraph)
 [![LLM](https://img.shields.io/badge/LLM-Llama%203.3%2070B%20via%20Groq-orange)](https://groq.com)
-[![TypeScript](https://img.shields.io/badge/TypeScript-~6.0-blue)](https://www.typescriptlang.org)s
+[![TypeScript](https://img.shields.io/badge/TypeScript-~6.0-blue)](https://www.typescriptlang.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
 ---
